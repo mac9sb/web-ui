@@ -140,32 +140,32 @@ public enum Modifier: String, Sendable {
 
     public var rawValue: String {
         switch self {
-            case .xs, .sm, .md, .lg, .xl, .hover, .focus, .active, .placeholder,
-                .dark,
-                .first, .last, .disabled:
-                return "\(self):"
-            case .xl2:
-                return "2xl:"
-            case .motionReduce:
-                return "motion-reduce:"
-            case .ariaBusy:
-                return "aria-busy:"
-            case .ariaChecked:
-                return "aria-checked:"
-            case .ariaDisabled:
-                return "aria-disabled:"
-            case .ariaExpanded:
-                return "aria-expanded:"
-            case .ariaHidden:
-                return "aria-hidden:"
-            case .ariaPressed:
-                return "aria-pressed:"
-            case .ariaReadonly:
-                return "aria-readonly:"
-            case .ariaRequired:
-                return "aria-required:"
-            case .ariaSelected:
-                return "aria-selected:"
+        case .xs, .sm, .md, .lg, .xl, .hover, .focus, .active, .placeholder,
+            .dark,
+            .first, .last, .disabled:
+            return "\(self):"
+        case .xl2:
+            return "2xl:"
+        case .motionReduce:
+            return "motion-reduce:"
+        case .ariaBusy:
+            return "aria-busy:"
+        case .ariaChecked:
+            return "aria-checked:"
+        case .ariaDisabled:
+            return "aria-disabled:"
+        case .ariaExpanded:
+            return "aria-expanded:"
+        case .ariaHidden:
+            return "aria-hidden:"
+        case .ariaPressed:
+            return "aria-pressed:"
+        case .ariaReadonly:
+            return "aria-readonly:"
+        case .ariaRequired:
+            return "aria-required:"
+        case .ariaSelected:
+            return "aria-selected:"
         }
     }
 }

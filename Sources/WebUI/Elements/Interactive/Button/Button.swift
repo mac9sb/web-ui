@@ -101,12 +101,12 @@ public struct Button: Element {
         self.role = role
         self.label = label
         self.data = data
-        
+
         // Create content builder that includes both icon and text
         self.contentBuilder = {
             [
                 SystemImage(systemImage, classes: ["button-icon"]),
-                " \(title)"
+                " \(title)",
             ]
         }
     }
@@ -154,12 +154,12 @@ public struct Button: Element {
         self.role = role
         self.label = label
         self.data = data
-        
+
         // Create content builder that includes both Lucide icon and text
         self.contentBuilder = {
             [
                 SystemImage(systemImage, classes: ["button-icon"]),
-                " \(title)"
+                " \(title)",
             ]
         }
     }

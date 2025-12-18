@@ -84,13 +84,13 @@ public struct ScrollStyleOperation: StyleOperation, @unchecked Sendable {
             for edge in effectiveEdges {
                 let edgePrefix: String
                 switch edge {
-                    case .all: edgePrefix = ""
-                    case .top: edgePrefix = "t"
-                    case .bottom: edgePrefix = "b"
-                    case .leading: edgePrefix = "s"
-                    case .trailing: edgePrefix = "e"
-                    case .horizontal: edgePrefix = "x"
-                    case .vertical: edgePrefix = "y"
+                case .all: edgePrefix = ""
+                case .top: edgePrefix = "t"
+                case .bottom: edgePrefix = "b"
+                case .leading: edgePrefix = "s"
+                case .trailing: edgePrefix = "e"
+                case .horizontal: edgePrefix = "x"
+                case .vertical: edgePrefix = "y"
                 }
 
                 classes.append(
@@ -105,13 +105,13 @@ public struct ScrollStyleOperation: StyleOperation, @unchecked Sendable {
             for edge in effectiveEdges {
                 let edgePrefix: String
                 switch edge {
-                    case .all: edgePrefix = ""
-                    case .top: edgePrefix = "t"
-                    case .bottom: edgePrefix = "b"
-                    case .leading: edgePrefix = "s"
-                    case .trailing: edgePrefix = "e"
-                    case .horizontal: edgePrefix = "x"
-                    case .vertical: edgePrefix = "y"
+                case .all: edgePrefix = ""
+                case .top: edgePrefix = "t"
+                case .bottom: edgePrefix = "b"
+                case .leading: edgePrefix = "s"
+                case .trailing: edgePrefix = "e"
+                case .horizontal: edgePrefix = "x"
+                case .vertical: edgePrefix = "y"
                 }
 
                 classes.append(

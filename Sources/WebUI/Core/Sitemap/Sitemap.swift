@@ -141,7 +141,7 @@ public struct Sitemap {
         routes: [any Document],
         customEntries: [SitemapEntry]? = nil
     ) -> String {
-        return generateExtensibleMarkupLanguageDocument(
+        generateExtensibleMarkupLanguageDocument(
             baseWebAddress: baseURL,
             routes: routes,
             customEntries: customEntries

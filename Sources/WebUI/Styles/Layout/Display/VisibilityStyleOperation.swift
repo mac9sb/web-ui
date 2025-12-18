@@ -33,11 +33,10 @@ public struct VisibilityStyleOperation: StyleOperation, @unchecked Sendable {
     /// - Parameter params: The parameters for visibility styling
     /// - Returns: An array of stylesheet class names to be applied to elements
     public func applyClasses(params: Parameters) -> [String] {
-        if params.isHidden {
-            return ["hidden"]
-        } else {
+        guard params.isHidden else {
             return []
         }
+        return ["hidden"]
     }
 
     /// Shared instance for use across the framework
@@ -99,11 +98,10 @@ extension Markup {
     ///     .hidden(when: !isEditing)
     /// ```
     public func hidden(when condition: Bool) -> AnyMarkup {
-        if condition {
-            return AnyMarkup(hidden(true))
-        } else {
+        guard condition else {
             return AnyMarkup(self)
         }
+        return AnyMarkup(hidden(true))
     }
 }
 

@@ -75,9 +75,9 @@ extension Document {
 
     /// Creates a concrete Document instance for rendering.
     public func render() throws -> String {
-        return try render(websiteScripts: nil, websiteStylesheets: nil, websiteHead: nil)
+        try render(websiteScripts: nil, websiteStylesheets: nil, websiteHead: nil)
     }
-    
+
     /// Creates a concrete Document instance for rendering with website-level configuration.
     public func render(websiteScripts: [Script]?, websiteStylesheets: [String]?, websiteHead: String?) throws -> String {
         var optionalTags: [String] = metadata.tags + []
