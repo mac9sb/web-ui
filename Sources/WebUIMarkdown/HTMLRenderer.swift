@@ -76,50 +76,50 @@ public struct HtmlRenderer {
     /// - Throws: `HtmlRendererError` if rendering encounters invalid content.
     private mutating func renderMarkup(_ markup: Markup) throws {
         switch markup {
-            case let heading as Markdown.Heading:
-                try visitHeading(heading)
-            case let paragraph as Paragraph:
-                try visitParagraph(paragraph)
-            case let text as Markdown.Text:
-                try visitText(text)
-            case let link as Markdown.Link:
-                try visitLink(link)
-            case let emphasis as Markdown.Emphasis:
-                try visitEmphasis(emphasis)
-            case let strong as Markdown.Strong:
-                try visitStrong(strong)
-            case let codeBlock as CodeBlock:
-                try visitCodeBlock(codeBlock)
-            case let inlineCode as InlineCode:
-                try visitInlineCode(inlineCode)
-            case let listItem as ListItem:
-                try visitListItem(listItem)
-            case let unorderedList as UnorderedList:
-                try visitUnorderedList(unorderedList)
-            case let orderedList as OrderedList:
-                try visitOrderedList(orderedList)
-            case let blockQuote as BlockQuote:
-                try visitBlockQuote(blockQuote)
-            case let thematicBreak as ThematicBreak:
-                try visitThematicBreak(thematicBreak)
-            case let image as Markdown.Image:
-                try visitImage(image)
-            case let table as Table:
-                try visitTable(table)
-            case let tableHead as Table.Head:
-                try visitTableHead(tableHead)
-            case let tableRow as Table.Row:
-                try visitTableRow(tableRow)
-            case let tableBody as Table.Body:
-                try visitTableBody(tableBody)
-            case let tableCell as Table.Cell:
-                try visitTableCell(tableCell)
-            case let htmlBlock as Markdown.HTMLBlock:
-                try visitHTMLBlock(htmlBlock)
-            case let inlineHTML as Markdown.InlineHTML:
-                try visitInlineHTML(inlineHTML)
-            default:
-                try defaultVisit(markup)
+        case let heading as Markdown.Heading:
+            try visitHeading(heading)
+        case let paragraph as Paragraph:
+            try visitParagraph(paragraph)
+        case let text as Markdown.Text:
+            try visitText(text)
+        case let link as Markdown.Link:
+            try visitLink(link)
+        case let emphasis as Markdown.Emphasis:
+            try visitEmphasis(emphasis)
+        case let strong as Markdown.Strong:
+            try visitStrong(strong)
+        case let codeBlock as CodeBlock:
+            try visitCodeBlock(codeBlock)
+        case let inlineCode as InlineCode:
+            try visitInlineCode(inlineCode)
+        case let listItem as ListItem:
+            try visitListItem(listItem)
+        case let unorderedList as UnorderedList:
+            try visitUnorderedList(unorderedList)
+        case let orderedList as OrderedList:
+            try visitOrderedList(orderedList)
+        case let blockQuote as BlockQuote:
+            try visitBlockQuote(blockQuote)
+        case let thematicBreak as ThematicBreak:
+            try visitThematicBreak(thematicBreak)
+        case let image as Markdown.Image:
+            try visitImage(image)
+        case let table as Table:
+            try visitTable(table)
+        case let tableHead as Table.Head:
+            try visitTableHead(tableHead)
+        case let tableRow as Table.Row:
+            try visitTableRow(tableRow)
+        case let tableBody as Table.Body:
+            try visitTableBody(tableBody)
+        case let tableCell as Table.Cell:
+            try visitTableCell(tableCell)
+        case let htmlBlock as Markdown.HTMLBlock:
+            try visitHTMLBlock(htmlBlock)
+        case let inlineHTML as Markdown.InlineHTML:
+            try visitInlineHTML(inlineHTML)
+        default:
+            try defaultVisit(markup)
         }
     }
 
@@ -359,17 +359,17 @@ public enum WebUIMarkdownError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-            case .invalidFrontMatter:
-                return "Front matter is not properly closed with '---'"
-            case .noFrontMatter:
-                return "No front matter found in the document"
-            case .malformedFrontMatter(let line):
-                return "Malformed front matter line: '\(line)'"
-            case .dateParsingFailed(let key, let value):
-                return
-                    "Failed to parse date for key '\(key)' with value '\(value)'"
-            case .emptyContent:
-                return "Markdown content is empty or invalid"
+        case .invalidFrontMatter:
+            return "Front matter is not properly closed with '---'"
+        case .noFrontMatter:
+            return "No front matter found in the document"
+        case .malformedFrontMatter(let line):
+            return "Malformed front matter line: '\(line)'"
+        case .dateParsingFailed(let key, let value):
+            return
+                "Failed to parse date for key '\(key)' with value '\(value)'"
+        case .emptyContent:
+            return "Markdown content is empty or invalid"
         }
     }
 }
@@ -387,14 +387,14 @@ public enum HtmlRendererError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-            case .invalidLinkDestination:
-                return "Link destination is missing or invalid"
-            case .missingImageSource:
-                return "Image source is required but missing"
-            case .malformedTable:
-                return "Table structure is malformed"
-            case .invalidCodeBlock:
-                return "Code block contains invalid content"
+        case .invalidLinkDestination:
+            return "Link destination is missing or invalid"
+        case .missingImageSource:
+            return "Image source is required but missing"
+        case .malformedTable:
+            return "Table structure is malformed"
+        case .invalidCodeBlock:
+            return "Code block contains invalid content"
         }
     }
 }

@@ -145,32 +145,7 @@ public struct MarkupClassContainer<Content: Markup>: Markup {
         let tag = renderedContent[tagRange]
 
         // Check if the tag already has a class attribute
-        if tag.contains(" class=\"") {
-            // Extract existing classes using string manipulation
-            let tagString = String(tag)
-
-            guard let classStart = tagString.range(of: " class=\""),
-                let classEnd = tagString.range(
-                    of: "\"", range: classStart.upperBound..<tagString.endIndex)
-            else {
-                return renderedContent
-            }
-
-            let existingClasses = String(
-                tagString[classStart.upperBound..<classEnd.lowerBound])
-            let allClasses =
-                existingClasses.isEmpty
-                ? classes.joined(separator: " ")
-                : "\(existingClasses) \(classes.joined(separator: " "))"
-
-            let modifiedTag = tagString.replacingCharacters(
-                in: classStart.upperBound..<classEnd.lowerBound,
-                with: allClasses
-            )
-
-            return renderedContent.replacingCharacters(
-                in: tagRange, with: modifiedTag)
-        } else {
+        guard tag.contains(" class=\"") else {
             // Insert a class attribute before the closing >
             let modifiedTag = String(tag).replacingOccurrences(
                 of: ">$",
@@ -181,5 +156,29 @@ public struct MarkupClassContainer<Content: Markup>: Markup {
             return renderedContent.replacingCharacters(
                 in: tagRange, with: modifiedTag)
         }
+        // Extract existing classes using string manipulation
+        let tagString = String(tag)
+
+        guard let classStart = tagString.range(of: " class=\""),
+            let classEnd = tagString.range(
+                of: "\"", range: classStart.upperBound..<tagString.endIndex)
+        else {
+            return renderedContent
+        }
+
+        let existingClasses = String(
+            tagString[classStart.upperBound..<classEnd.lowerBound])
+        let allClasses =
+            existingClasses.isEmpty
+            ? classes.joined(separator: " ")
+            : "\(existingClasses) \(classes.joined(separator: " "))"
+
+        let modifiedTag = tagString.replacingCharacters(
+            in: classStart.upperBound..<classEnd.lowerBound,
+            with: allClasses
+        )
+
+        return renderedContent.replacingCharacters(
+            in: tagRange, with: modifiedTag)
     }
 }

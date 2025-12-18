@@ -30,7 +30,7 @@ public enum LucideIcon: String, CaseIterable {
     case minus = "minus"
     case moreHorizontal = "more-horizontal"
     case moreVertical = "more-vertical"
-    
+
     // MARK: - Actions & States
     case check = "check"
     case checkCircle = "check-circle"
@@ -53,7 +53,7 @@ public enum LucideIcon: String, CaseIterable {
     case rotate = "rotate-cw"
     case undo = "undo"
     case redo = "redo"
-    
+
     // MARK: - Media & Content
     case play = "play"
     case pause = "pause"
@@ -69,7 +69,7 @@ public enum LucideIcon: String, CaseIterable {
     case fileText = "file-text"
     case folder = "folder"
     case folderOpen = "folder-open"
-    
+
     // MARK: - Communication
     case mail = "mail"
     case phone = "phone"
@@ -80,7 +80,7 @@ public enum LucideIcon: String, CaseIterable {
     case share2 = "share-2"
     case bell = "bell"
     case bellOff = "bell-off"
-    
+
     // MARK: - User & Profile
     case user = "user"
     case users = "users"
@@ -93,7 +93,7 @@ public enum LucideIcon: String, CaseIterable {
     case bookmark = "bookmark"
     case thumbsUp = "thumbs-up"
     case thumbsDown = "thumbs-down"
-    
+
     // MARK: - Layout & View
     case grid = "grid-3x3"
     case list = "list"
@@ -107,7 +107,7 @@ public enum LucideIcon: String, CaseIterable {
     case eyeOff = "eye-off"
     case layout = "layout"
     case layoutGrid = "layout-grid"
-    
+
     // MARK: - Settings & Configuration
     case settings = "settings"
     case sliders = "sliders"
@@ -121,7 +121,7 @@ public enum LucideIcon: String, CaseIterable {
     case lock = "lock"
     case unlock = "unlock"
     case key = "key"
-    
+
     // MARK: - Data & Statistics
     case barChart = "bar-chart"
     case lineChart = "line-chart"
@@ -133,7 +133,7 @@ public enum LucideIcon: String, CaseIterable {
     case database = "database"
     case server = "server"
     case hardDrive = "hard-drive"
-    
+
     // MARK: - E-commerce & Shopping
     case shoppingCart = "shopping-cart"
     case shoppingBag = "shopping-bag"
@@ -142,7 +142,7 @@ public enum LucideIcon: String, CaseIterable {
     case tag = "tag"
     case package = "package"
     case gift = "gift"
-    
+
     // MARK: - Social & External
     case github = "github"
     case twitter = "twitter"
@@ -153,7 +153,7 @@ public enum LucideIcon: String, CaseIterable {
     case externalLink = "external-link"
     case link = "link"
     case linkOff = "link-off"
-    
+
     // MARK: - Device & System
     case smartphone = "smartphone"
     case tablet = "tablet"
@@ -166,7 +166,7 @@ public enum LucideIcon: String, CaseIterable {
     case power = "power"
     case cpu = "cpu"
     case memory = "memory-stick"
-    
+
     // MARK: - Weather & Location
     case sun = "sun"
     case moon = "moon"
@@ -178,7 +178,7 @@ public enum LucideIcon: String, CaseIterable {
     case navigation = "navigation"
     case compass = "compass"
     case globe = "globe"
-    
+
     // MARK: - Time & Calendar
     case clock = "clock"
     case calendar = "calendar"
@@ -186,7 +186,7 @@ public enum LucideIcon: String, CaseIterable {
     case timer = "timer"
     case stopwatch = "stopwatch"
     case hourglass = "hourglass"
-    
+
     // MARK: - Shapes & Graphics
     case circle = "circle"
     case square = "square"
@@ -198,7 +198,7 @@ public enum LucideIcon: String, CaseIterable {
     case zap = "zap"
     case shield = "shield"
     case shieldCheck = "shield-check"
-    
+
     // MARK: - Transportation
     case car = "car"
     case truck = "truck"
@@ -207,7 +207,7 @@ public enum LucideIcon: String, CaseIterable {
     case bike = "bike"
     case bus = "bus"
     case ship = "ship"
-    
+
     // MARK: - Multimedia & Entertainment
     case airplay = "airplay"
     case cast = "cast"
@@ -218,7 +218,7 @@ public enum LucideIcon: String, CaseIterable {
     case cameraOff = "camera-off"
     case film = "film"
     case gamepad = "gamepad-2"
-    
+
     /// Returns the CSS class name for this Lucide icon.
     ///
     /// The class name follows the Lucide convention of "lucide-{icon-name}".
@@ -227,9 +227,9 @@ public enum LucideIcon: String, CaseIterable {
     ///
     /// - Returns: The CSS class name (e.g., "lucide-airplay")
     public var cssClass: String {
-        return "lucide-\(self.rawValue)"
+        "lucide-\(self.rawValue)"
     }
-    
+
     /// Returns the icon identifier string.
     ///
     /// This is the same as the rawValue but provides a more semantic
@@ -237,9 +237,9 @@ public enum LucideIcon: String, CaseIterable {
     ///
     /// - Returns: The icon identifier (e.g., "airplay")
     public var identifier: String {
-        return self.rawValue
+        self.rawValue
     }
-    
+
     /// Returns a human-readable name for the icon.
     ///
     /// Converts the kebab-case identifier to a title-case name
@@ -247,7 +247,7 @@ public enum LucideIcon: String, CaseIterable {
     ///
     /// - Returns: A title-case name (e.g., "Air Play")
     public var displayName: String {
-        return self.rawValue
+        self.rawValue
             .split(separator: "-")
             .map { $0.capitalized }
             .joined(separator: " ")
@@ -283,6 +283,6 @@ extension LucideIcon: CustomStringConvertible {
     /// Returns the raw identifier string, making it easy to use
     /// LucideIcon values in string contexts.
     public var description: String {
-        return self.rawValue
+        self.rawValue
     }
 }

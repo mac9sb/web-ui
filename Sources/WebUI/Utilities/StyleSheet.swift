@@ -128,75 +128,75 @@ extension StyleSheet {
         public static let fadeIn = StyleSheet.keyframes(
             "fade-in",
             keyframes: """
-            from { opacity: 0; }
-            to { opacity: 1; }
-            """
+                from { opacity: 0; }
+                to { opacity: 1; }
+                """
         )
 
         /// Slide up animation
         public static let slideUp = StyleSheet.keyframes(
             "slide-up",
             keyframes: """
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            """
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                """
         )
 
         /// Slide down animation
         public static let slideDown = StyleSheet.keyframes(
             "slide-down",
             keyframes: """
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            """
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                """
         )
 
         /// Scale up animation
         public static let scaleUp = StyleSheet.keyframes(
             "scale-up",
             keyframes: """
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-            """
+                from {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                """
         )
 
         /// Jelly animation (elastic bounce)
         public static let jellyIn = StyleSheet.keyframes(
             "jelly-in",
             keyframes: """
-            0% {
-                opacity: 0;
-                transform: scale(0.8) translateY(-10px);
-            }
-            50% {
-                transform: scale(1.05) translateY(0);
-            }
-            70% {
-                transform: scale(0.95);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-            """
+                0% {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(-10px);
+                }
+                50% {
+                    transform: scale(1.05) translateY(0);
+                }
+                70% {
+                    transform: scale(0.95);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+                """
         )
     }
 
@@ -206,13 +206,13 @@ extension StyleSheet {
         public static let reducedMotion = StyleSheet.mediaQuery(
             .prefersReducedMotion,
             styles: """
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-                scroll-behavior: auto !important;
-            }
-            """
+                *, *::before, *::after {
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                    transition-duration: 0.01ms !important;
+                    scroll-behavior: auto !important;
+                }
+                """
         )
     }
 }

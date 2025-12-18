@@ -279,20 +279,20 @@ public enum WebsiteBuildError: Error, CustomStringConvertible {
 
     public var description: String {
         switch self {
-            case .oldOutputDirectoryDeletionFailed(let path):
-                return "Failed to delete old output directory at path: \(path)"
-            case .directoryCreationFailed(let path):
-                return "Failed to create directory at path: \(path)"
-            case .assetCopyFailed(let source, let destination):
-                return "Failed to copy assets from \(source) to \(destination)"
-            case .htmlEncodingFailed(let path):
-                return "Failed to encode HTML for file: \(path)"
-            case .sitemapEncodingFailed:
-                return "Failed to encode sitemap.xml content"
-            case .robotsTxtEncodingFailed:
-                return "Failed to encode robots.txt content"
-            case .fileWriteFailed(let path):
-                return "Failed to write file at path: \(path)"
+        case .oldOutputDirectoryDeletionFailed(let path):
+            return "Failed to delete old output directory at path: \(path)"
+        case .directoryCreationFailed(let path):
+            return "Failed to create directory at path: \(path)"
+        case .assetCopyFailed(let source, let destination):
+            return "Failed to copy assets from \(source) to \(destination)"
+        case .htmlEncodingFailed(let path):
+            return "Failed to encode HTML for file: \(path)"
+        case .sitemapEncodingFailed:
+            return "Failed to encode sitemap.xml content"
+        case .robotsTxtEncodingFailed:
+            return "Failed to encode robots.txt content"
+        case .fileWriteFailed(let path):
+            return "Failed to write file at path: \(path)"
         }
     }
 }

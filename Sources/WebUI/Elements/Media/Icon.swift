@@ -52,17 +52,17 @@ public struct Icon: Element {
 
     /// Size presets for icons.
     public enum IconSize: String {
-        case small = "lucide-sm"      // 16px
-        case medium = "lucide-md"     // 20px (default)
-        case large = "lucide-lg"      // 24px
-        case extraLarge = "lucide-xl" // 32px
+        case small = "lucide-sm"  // 16px
+        case medium = "lucide-md"  // 20px (default)
+        case large = "lucide-lg"  // 24px
+        case extraLarge = "lucide-xl"  // 32px
 
         /// The CSS class name for this icon size.
         public var cssClass: String {
-            return self.rawValue
+            self.rawValue
         }
     }
-    
+
     /// Creates a new icon element using a LucideIcon enum value.
     ///
     /// This is the preferred type-safe way to create icons using predefined
@@ -102,7 +102,7 @@ public struct Icon: Element {
         self.label = label
         self.data = data
     }
-    
+
     /// Creates a new icon element using a string identifier.
     ///
     /// This initializer provides flexibility for custom or unlisted icons
@@ -142,11 +142,11 @@ public struct Icon: Element {
         self.label = label
         self.data = data
     }
-    
+
     public var body: some Markup {
         MarkupString(content: renderTag())
     }
-    
+
     private func renderTag() -> String {
         switch mode {
         case .cssFont:
@@ -233,7 +233,7 @@ extension Icon {
         classes: [String]? = nil,
         label: String? = nil
     ) -> Icon {
-        return Icon(icon, size: .small, mode: mode, classes: classes, label: label)
+        Icon(icon, size: .small, mode: mode, classes: classes, label: label)
     }
 
     /// Creates a large icon.
@@ -250,7 +250,7 @@ extension Icon {
         classes: [String]? = nil,
         label: String? = nil
     ) -> Icon {
-        return Icon(icon, size: .large, mode: mode, classes: classes, label: label)
+        Icon(icon, size: .large, mode: mode, classes: classes, label: label)
     }
 
     /// Creates an extra large icon.
@@ -267,6 +267,6 @@ extension Icon {
         classes: [String]? = nil,
         label: String? = nil
     ) -> Icon {
-        return Icon(icon, size: .extraLarge, mode: mode, classes: classes, label: label)
+        Icon(icon, size: .extraLarge, mode: mode, classes: classes, label: label)
     }
 }

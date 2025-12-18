@@ -127,8 +127,7 @@ public struct ModifierGroup {
     }
 
     /// Creates a responsive modification with the combined modifiers.
-    public func callAsFunction(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification
-    {
+    public func callAsFunction(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
         MultiModifierModification(modifiers: modifiers, styleModification: content())
     }
 }

@@ -80,10 +80,9 @@ extension Markup {
     ///     .if(isLarge) { $0.font(size: .xl) }
     /// ```
     public func `if`<T: Markup>(_ condition: Bool, _ modifier: (Self) -> T) -> AnyMarkup {
-        if condition {
-            return AnyMarkup(modifier(self))
-        } else {
+        guard condition else {
             return AnyMarkup(self)
         }
+        return AnyMarkup(modifier(self))
     }
 }
