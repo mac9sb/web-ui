@@ -33,7 +33,7 @@ public struct DisplayStyleOperation: StyleOperation, @unchecked Sendable {
     /// - Parameter params: The parameters for display styling
     /// - Returns: An array of stylesheet class names to be applied to elements
     public func applyClasses(params: Parameters) -> [String] {
-        ["display-\(params.type.rawValue)"]
+        [params.type.rawValue]
     }
 
     /// Shared instance for use across the framework
