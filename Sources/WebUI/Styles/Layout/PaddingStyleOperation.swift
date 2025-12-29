@@ -7,13 +7,14 @@ import Foundation
 public struct PaddingStyleOperation: StyleOperation, @unchecked Sendable {
     /// Parameters for padding styling
     public struct Parameters {
-        /// The padding value
+        /// The padding value (Int for scale, String for percentages/arbitrary values)
         public let length: Int?
+        public let percentage: String?
 
         /// The edges to apply the padding to
         public let edges: [Edge]
 
-        /// Creates parameters for padding styling
+        /// Creates parameters for padding styling with scale value
         ///
         /// - Parameters:
         ///   - length: The padding value
@@ -23,6 +24,21 @@ public struct PaddingStyleOperation: StyleOperation, @unchecked Sendable {
             edges: [Edge] = [.all]
         ) {
             self.length = length
+            self.percentage = nil
+            self.edges = edges.isEmpty ? [.all] : edges
+        }
+
+        /// Creates parameters for padding styling with percentage/arbitrary value
+        ///
+        /// - Parameters:
+        ///   - percentage: The padding value as percentage or arbitrary CSS value
+        ///   - edges: The edges to apply the padding to
+        public init(
+            percentage: String,
+            edges: [Edge] = [.all]
+        ) {
+            self.length = nil
+            self.percentage = percentage
             self.edges = edges.isEmpty ? [.all] : edges
         }
 
@@ -45,13 +61,15 @@ public struct PaddingStyleOperation: StyleOperation, @unchecked Sendable {
     public func applyClasses(params: Parameters) -> [String] {
         var classes: [String] = []
 
-        guard let length = params.length else {
-            return classes
-        }
-
         for edge in params.edges {
             let prefix = edge == .all ? "p" : "p\(edge.rawValue)"
-            classes.append("\(prefix)-\(length)")
+
+            if let percentage = params.percentage {
+                // Use Tailwind arbitrary value syntax for percentages
+                classes.append("\(prefix)-[\(percentage)]")
+            } else if let length = params.length {
+                classes.append("\(prefix)-\(length)")
+            }
         }
 
         return classes
@@ -80,6 +98,30 @@ extension Markup {
     ) -> some Markup {
         let params = PaddingStyleOperation.Parameters(
             length: length,
+            edges: edges
+        )
+
+        return PaddingStyleOperation.shared.applyTo(
+            self,
+            params: params,
+            modifiers: modifiers
+        )
+    }
+
+    /// Applies padding styling with percentage or arbitrary value.
+    ///
+    /// - Parameters:
+    ///   - percentage: The padding value as percentage (e.g., "50%", "10px") or arbitrary CSS value.
+    ///   - edges: One or more edges to apply the padding to. Defaults to `.all`.
+    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
+    /// - Returns: A new element with updated padding classes.
+    public func padding(
+        of percentage: String,
+        at edges: Edge...,
+        on modifiers: Modifier...
+    ) -> some Markup {
+        let params = PaddingStyleOperation.Parameters(
+            percentage: percentage,
             edges: edges
         )
 
