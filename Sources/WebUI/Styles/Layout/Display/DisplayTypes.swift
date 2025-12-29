@@ -3,7 +3,7 @@
 /// Specifies how an element is displayed in the layout.
 public enum DisplayType: String {
     /// Makes the element not display at all (removed from layout flow).
-    case none
+    case none = "hidden"
     /// Standard block element (takes full width, creates new line).
     case block
     /// Inline element (flows with text, no line breaks).

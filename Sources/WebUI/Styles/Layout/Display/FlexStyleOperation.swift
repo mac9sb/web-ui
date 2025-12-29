@@ -19,6 +19,9 @@ public struct FlexStyleOperation: StyleOperation, @unchecked Sendable {
         /// The flex grow property
         public let grow: FlexGrow?
 
+        /// The flex wrap property
+        public let wrap: FlexWrap?
+
         /// Creates parameters for flex styling
         ///
         /// - Parameters:
@@ -26,16 +29,19 @@ public struct FlexStyleOperation: StyleOperation, @unchecked Sendable {
         ///   - justify: The justify content property
         ///   - align: The align items property
         ///   - grow: The flex grow property
+        ///   - wrap: The flex wrap property
         public init(
             direction: FlexDirection? = nil,
             justify: FlexJustify? = nil,
             align: FlexAlign? = nil,
-            grow: FlexGrow? = nil
+            grow: FlexGrow? = nil,
+            wrap: FlexWrap? = nil
         ) {
             self.direction = direction
             self.justify = justify
             self.align = align
             self.grow = grow
+            self.wrap = wrap
         }
 
         /// Creates parameters from a StyleParameters container
@@ -47,7 +53,8 @@ public struct FlexStyleOperation: StyleOperation, @unchecked Sendable {
                 direction: params.get("direction"),
                 justify: params.get("justify"),
                 align: params.get("align"),
-                grow: params.get("grow")
+                grow: params.get("grow"),
+                wrap: params.get("wrap")
             )
         }
     }
@@ -80,6 +87,10 @@ public struct FlexStyleOperation: StyleOperation, @unchecked Sendable {
 
         if let grow = params.grow {
             classes.append("flex-\(grow.rawValue)")
+        }
+
+        if let wrap = params.wrap {
+            classes.append("flex-\(wrap.rawValue)")
         }
 
         return classes
@@ -155,6 +166,18 @@ public enum FlexGrow: String {
     case one = "1"
 }
 
+/// Defines the flex wrap behavior
+public enum FlexWrap: String {
+    /// Items will not wrap (single line)
+    case nowrap = "nowrap"
+
+    /// Items will wrap onto multiple lines
+    case wrap
+
+    /// Items will wrap onto multiple lines in reverse
+    case wrapReverse = "wrap-reverse"
+}
+
 // Extension for Markup to provide flex styling
 extension Markup {
     /// Sets flex container properties with optional modifiers.
@@ -164,6 +187,7 @@ extension Markup {
     ///   - justify: How to align items along the main axis.
     ///   - align: How to align items along the cross axis.
     ///   - grow: The flex grow factor.
+    ///   - wrap: The flex wrap behavior.
     ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated flex classes.
     ///
@@ -176,6 +200,9 @@ extension Markup {
     /// // Create a flex container with row layout and centered content
     /// Stack()(tag: "div").flex(direction: .row, justify: .center, align: .center)
     ///
+    /// // Create a wrapping flex container
+    /// Stack()(tag: "div").flex(direction: .row, wrap: .wrap)
+    ///
     /// // Apply flex layout only on medium screens and up
     /// Stack()(tag: "div").flex(direction: .row, on: .md)
     /// ```
@@ -184,13 +211,15 @@ extension Markup {
         justify: FlexJustify? = nil,
         align: FlexAlign? = nil,
         grow: FlexGrow? = nil,
+        wrap: FlexWrap? = nil,
         on modifiers: Modifier...
     ) -> some Markup {
         let params = FlexStyleOperation.Parameters(
             direction: direction,
             justify: justify,
             align: align,
-            grow: grow
+            grow: grow,
+            wrap: wrap
         )
 
         return FlexStyleOperation.shared.applyTo(
@@ -210,19 +239,22 @@ extension ResponsiveBuilder {
     ///   - justify: How to align items along the main axis.
     ///   - align: How to align items along the cross axis.
     ///   - grow: The flex grow factor.
+    ///   - wrap: The flex wrap behavior.
     /// - Returns: The builder for method chaining.
     @discardableResult
     public func flex(
         direction: FlexDirection? = nil,
         justify: FlexJustify? = nil,
         align: FlexAlign? = nil,
-        grow: FlexGrow? = nil
+        grow: FlexGrow? = nil,
+        wrap: FlexWrap? = nil
     ) -> ResponsiveBuilder {
         let params = FlexStyleOperation.Parameters(
             direction: direction,
             justify: justify,
             align: align,
-            grow: grow
+            grow: grow,
+            wrap: wrap
         )
 
         return FlexStyleOperation.shared.applyToBuilder(self, params: params)
@@ -237,18 +269,21 @@ extension ResponsiveBuilder {
 ///   - justify: How to align items along the main axis.
 ///   - align: How to align items along the cross axis.
 ///   - grow: The flex grow factor.
+///   - wrap: The flex wrap behavior.
 /// - Returns: A responsive modification for flex container.
 public func flex(
     direction: FlexDirection? = nil,
     justify: FlexJustify? = nil,
     align: FlexAlign? = nil,
-    grow: FlexGrow? = nil
+    grow: FlexGrow? = nil,
+    wrap: FlexWrap? = nil
 ) -> ResponsiveModification {
     let params = FlexStyleOperation.Parameters(
         direction: direction,
         justify: justify,
         align: align,
-        grow: grow
+        grow: grow,
+        wrap: wrap
     )
 
     return FlexStyleOperation.shared.asModification(params: params)

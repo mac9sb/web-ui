@@ -61,6 +61,27 @@ public let ariaRequired: Modifier = .ariaRequired
 /// ARIA selected state modifier constant for comma-separated syntax.
 public let ariaSelected: Modifier = .ariaSelected
 
+/// Before pseudo-element modifier constant for comma-separated syntax.
+public let before: Modifier = .before
+
+/// After pseudo-element modifier constant for comma-separated syntax.
+public let after: Modifier = .after
+
+/// Focus-within state modifier constant for comma-separated syntax.
+public let focusWithin: Modifier = .focusWithin
+
+/// Open attribute state modifier constant for comma-separated syntax.
+public let open: Modifier = .open
+
+/// Checked state modifier constant for comma-separated syntax.
+public let checked: Modifier = .checked
+
+/// Odd child modifier constant for comma-separated syntax.
+public let odd: Modifier = .odd
+
+/// Even child modifier constant for comma-separated syntax.
+public let even: Modifier = .even
+
 // MARK: - Breakpoint Constants for Comma-Separated Syntax
 
 /// Extra-small breakpoint modifier constant for comma-separated syntax.
@@ -471,4 +492,74 @@ public func ariaSelected(
 ) -> ResponsiveModification {
     BreakpointModification(
         breakpoint: .ariaSelected, styleModification: content())
+}
+
+/// Creates a ::before pseudo-element responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for the ::before pseudo-element.
+/// - Returns: A responsive modification for the ::before pseudo-element.
+public func before(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .before, styleModification: content())
+}
+
+/// Creates an ::after pseudo-element responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for the ::after pseudo-element.
+/// - Returns: A responsive modification for the ::after pseudo-element.
+public func after(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .after, styleModification: content())
+}
+
+/// Creates a focus-within state responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for the focus-within state.
+/// - Returns: A responsive modification for the focus-within state.
+public func focusWithin(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .focusWithin, styleModification: content())
+}
+
+/// Creates an [open] attribute responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for the [open] attribute state.
+/// - Returns: A responsive modification for the [open] attribute.
+public func open(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .open, styleModification: content())
+}
+
+/// Creates a checked state responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for the checked state.
+/// - Returns: A responsive modification for the checked state.
+public func checked(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .checked, styleModification: content())
+}
+
+/// Creates an odd children responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for odd children.
+/// - Returns: A responsive modification for odd children.
+public func odd(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .odd, styleModification: content())
+}
+
+/// Creates an even children responsive modification.
+///
+/// - Parameter content: A closure containing style modifications for even children.
+/// - Returns: A responsive modification for even children.
+public func even(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .even, styleModification: content())
 }

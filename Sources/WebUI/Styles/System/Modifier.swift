@@ -138,14 +138,171 @@ public enum Modifier: String, Sendable {
     /// Use to style elements that are in a selected state, like tabs or menu items.
     case ariaSelected = "aria-selected"
 
+    // MARK: - Pseudo-elements
+
+    /// Applies styles to the ::before pseudo-element.
+    ///
+    /// Use to insert decorative content before an element.
+    case before
+
+    /// Applies styles to the ::after pseudo-element.
+    ///
+    /// Use to insert decorative content after an element.
+    case after
+
+    /// Applies styles to the ::selection pseudo-element.
+    ///
+    /// Use to style the portion of text selected by the user.
+    case selection
+
+    /// Applies styles to the ::marker pseudo-element.
+    ///
+    /// Use to style list item markers.
+    case marker
+
+    /// Applies styles to the ::file-selector-button pseudo-element.
+    ///
+    /// Use to style the file input button.
+    case file
+
+    /// Applies styles to the ::first-line pseudo-element.
+    ///
+    /// Use to style the first line of a block element.
+    case firstLine = "first-line"
+
+    /// Applies styles to the ::first-letter pseudo-element.
+    ///
+    /// Use to style the first letter of a block element.
+    case firstLetter = "first-letter"
+
+    // MARK: - Additional Pseudo-classes
+
+    /// Applies styles when an element or its descendants have focus.
+    ///
+    /// Use for styling containers when any child element is focused.
+    case focusWithin = "focus-within"
+
+    /// Applies styles when an element has visible keyboard focus.
+    ///
+    /// Use to style focus states that should only appear for keyboard navigation.
+    case focusVisible = "focus-visible"
+
+    /// Applies styles to visited links.
+    ///
+    /// Use to style links that have been visited.
+    case visited
+
+    /// Applies styles when an element is the target of the URL fragment.
+    ///
+    /// Use to highlight elements targeted by hash links.
+    case target
+
+    /// Applies styles when an element has the [open] attribute.
+    ///
+    /// Use to style elements like <details> when expanded.
+    case open
+
+    /// Applies styles when a form element is required.
+    ///
+    /// Use to style required form inputs.
+    case required
+
+    /// Applies styles when a form element fails validation.
+    ///
+    /// Use to highlight invalid form inputs.
+    case invalid
+
+    /// Applies styles when a form element passes validation.
+    ///
+    /// Use to indicate valid form inputs.
+    case valid
+
+    /// Applies styles when a checkbox or radio button is checked.
+    ///
+    /// Use to style checked form elements.
+    case checked
+
+    /// Applies styles when a checkbox is in an indeterminate state.
+    ///
+    /// Use to style tri-state checkboxes.
+    case indeterminate
+
+    /// Applies styles when a form element is read-only.
+    ///
+    /// Use to style read-only form inputs.
+    case readOnly = "read-only"
+
+    /// Applies styles when an element has no children.
+    ///
+    /// Use to style empty containers.
+    case empty
+
+    /// Applies styles when a form element is enabled.
+    ///
+    /// Use to style enabled form inputs.
+    case enabled
+
+    // MARK: - Child Selectors
+
+    /// Applies styles to all direct children.
+    ///
+    /// Use to target all immediate child elements.
+    case allChildren = "*"
+
+    /// Applies styles when an element is the only child.
+    ///
+    /// Use to style elements that have no siblings.
+    case only
+
+    /// Applies styles to odd-numbered children.
+    ///
+    /// Use for zebra-striping lists or tables.
+    case odd
+
+    /// Applies styles to even-numbered children.
+    ///
+    /// Use for zebra-striping lists or tables.
+    case even
+
+    /// Applies styles to the first child of its type.
+    ///
+    /// Use to style the first occurrence of a specific element type.
+    case firstOfType = "first-of-type"
+
+    /// Applies styles to the last child of its type.
+    ///
+    /// Use to style the last occurrence of a specific element type.
+    case lastOfType = "last-of-type"
+
+    /// Applies styles when an element is the only child of its type.
+    ///
+    /// Use to style unique element types within a container.
+    case onlyOfType = "only-of-type"
+
     public var rawValue: String {
         switch self {
         case .xs, .sm, .md, .lg, .xl, .hover, .focus, .active, .placeholder,
-            .dark,
-            .first, .last, .disabled:
+            .dark, .first, .last, .disabled, .before, .after, .selection,
+            .marker, .file, .focusWithin, .visited, .target, .open,
+            .required, .invalid, .valid, .checked, .indeterminate, .empty,
+            .enabled, .allChildren, .only, .odd, .even:
             return "\(self):"
         case .xl2:
             return "2xl:"
+        case .firstLine:
+            return "first-line:"
+        case .firstLetter:
+            return "first-letter:"
+        case .focusVisible:
+            return "focus-visible:"
+        case .readOnly:
+            return "read-only:"
+        case .firstOfType:
+            return "first-of-type:"
+        case .lastOfType:
+            return "last-of-type:"
+        case .onlyOfType:
+            return "only-of-type:"
         case .motionReduce:
             return "motion-reduce:"
         case .ariaBusy:

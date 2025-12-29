@@ -326,6 +326,66 @@ public class ResponsiveBuilder {
         BreakpointModification(breakpoint: .ariaSelected, styleModification: content())
     }
 
+    // MARK: - Pseudo-element Functions
+
+    /// Creates a ::before pseudo-element responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for the ::before pseudo-element.
+    /// - Returns: A responsive modification for ::before pseudo-element styling.
+    public func before(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .before, styleModification: content())
+    }
+
+    /// Creates an ::after pseudo-element responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for the ::after pseudo-element.
+    /// - Returns: A responsive modification for ::after pseudo-element styling.
+    public func after(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .after, styleModification: content())
+    }
+
+    // MARK: - Additional Pseudo-class Functions
+
+    /// Creates a focus-within state responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for the focus-within state.
+    /// - Returns: A responsive modification for focus-within state styling.
+    public func focusWithin(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .focusWithin, styleModification: content())
+    }
+
+    /// Creates an [open] attribute responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for the [open] attribute state.
+    /// - Returns: A responsive modification for [open] attribute styling.
+    public func open(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .open, styleModification: content())
+    }
+
+    /// Creates a checked state responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for the checked state.
+    /// - Returns: A responsive modification for checked state styling.
+    public func checked(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .checked, styleModification: content())
+    }
+
+    /// Creates an odd children responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for odd children.
+    /// - Returns: A responsive modification for odd children styling.
+    public func odd(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .odd, styleModification: content())
+    }
+
+    /// Creates an even children responsive modification.
+    ///
+    /// - Parameter content: A closure containing style modifications for even children.
+    /// - Returns: A responsive modification for even children styling.
+    public func even(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
+        BreakpointModification(breakpoint: .even, styleModification: content())
+    }
+
     /// A concrete wrapper that preserves Element conformance
     private struct AnyElement: Element {
         private let base: any Element
