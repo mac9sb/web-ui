@@ -7,8 +7,9 @@ import Foundation
 public struct MarginsStyleOperation: StyleOperation, @unchecked Sendable {
     /// Parameters for margin styling
     public struct Parameters {
-        /// The margin value
+        /// The margin value (Int for scale, String for percentages/arbitrary values)
         public let length: Int?
+        public let percentage: String?
 
         /// The edges to apply the margin to
         public let edges: [Edge]
@@ -16,7 +17,7 @@ public struct MarginsStyleOperation: StyleOperation, @unchecked Sendable {
         /// Whether to use automatic margins
         public let auto: Bool
 
-        /// Creates parameters for margin styling
+        /// Creates parameters for margin styling with scale value
         ///
         /// - Parameters:
         ///   - length: The margin value
@@ -28,8 +29,24 @@ public struct MarginsStyleOperation: StyleOperation, @unchecked Sendable {
             auto: Bool = false
         ) {
             self.length = length
+            self.percentage = nil
             self.edges = edges.isEmpty ? [.all] : edges
             self.auto = auto
+        }
+
+        /// Creates parameters for margin styling with percentage/arbitrary value
+        ///
+        /// - Parameters:
+        ///   - percentage: The margin value as percentage or arbitrary CSS value
+        ///   - edges: The edges to apply the margin to
+        public init(
+            percentage: String,
+            edges: [Edge] = [.all]
+        ) {
+            self.length = nil
+            self.percentage = percentage
+            self.edges = edges.isEmpty ? [.all] : edges
+            self.auto = false
         }
 
         /// Creates parameters from a StyleParameters container
@@ -57,6 +74,9 @@ public struct MarginsStyleOperation: StyleOperation, @unchecked Sendable {
 
             if params.auto {
                 classes.append("\(prefix)-auto")
+            } else if let percentage = params.percentage {
+                // Use Tailwind arbitrary value syntax for percentages
+                classes.append("\(prefix)-[\(percentage)]")
             } else if let length = params.length {
                 classes.append("\(prefix)-\(length)")
             }
@@ -92,6 +112,30 @@ extension Markup {
             length: length,
             edges: edges,
             auto: auto
+        )
+
+        return MarginsStyleOperation.shared.applyTo(
+            self,
+            params: params,
+            modifiers: modifiers
+        )
+    }
+
+    /// Applies margin styling with percentage or arbitrary value.
+    ///
+    /// - Parameters:
+    ///   - percentage: The margin value as percentage (e.g., "50%", "-50%") or arbitrary CSS value.
+    ///   - edges: One or more edges to apply the margin to. Defaults to `.all`.
+    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
+    /// - Returns: Markup with updated margin classes.
+    public func margins(
+        of percentage: String,
+        at edges: Edge...,
+        on modifiers: Modifier...
+    ) -> some Markup {
+        let params = MarginsStyleOperation.Parameters(
+            percentage: percentage,
+            edges: edges
         )
 
         return MarginsStyleOperation.shared.applyTo(
