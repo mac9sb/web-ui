@@ -162,7 +162,6 @@ extension Markup {
     ///   - gap: The gap between grid items.
     ///   - columnStart: The starting column position.
     ///   - rowStart: The starting row position.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated grid classes.
     ///
     /// ## Example
@@ -187,8 +186,7 @@ extension Markup {
         rowSpan: Int? = nil,
         gap: Int? = nil,
         columnStart: Int? = nil,
-        rowStart: Int? = nil,
-        on modifiers: Modifier...
+        rowStart: Int? = nil
     ) -> some Markup {
         let params = GridStyleOperation.Parameters(
             columns: columns,
@@ -203,8 +201,7 @@ extension Markup {
 
         return GridStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

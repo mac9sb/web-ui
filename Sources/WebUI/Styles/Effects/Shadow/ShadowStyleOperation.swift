@@ -72,7 +72,6 @@ extension Markup {
     /// - Parameters:
     ///   - size: The shadow size (sm, md, lg).
     ///   - color: The shadow color.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated shadow classes.
     ///
     /// ## Example
@@ -83,8 +82,7 @@ extension Markup {
     /// ```
     public func shadow(
         size: ShadowSize,
-        color: Color? = nil,
-        on modifiers: Modifier...
+        color: Color? = nil
     ) -> some Markup {
         let params = ShadowStyleOperation.Parameters(
             size: size,
@@ -93,8 +91,7 @@ extension Markup {
 
         return ShadowStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

@@ -51,7 +51,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - value: Specifies the z-index value as an integer.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated z-index classes.
     ///
     /// ## Example
@@ -65,15 +64,13 @@ extension Markup {
     ///   .zIndex(10, on: .hover)
     /// ```
     public func zIndex(
-        _ value: Int,
-        on modifiers: Modifier...
+        _ value: Int
     ) -> some Markup {
         let params = ZIndexStyleOperation.Parameters(value: value)
 
         return ZIndexStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

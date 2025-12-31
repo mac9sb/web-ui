@@ -64,18 +64,15 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The white-space type
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated white-space classes.
     public func whiteSpace(
-        _ type: WhiteSpaceType,
-        on modifiers: Modifier...
+        _ type: WhiteSpaceType
     ) -> some Markup {
         let params = WhiteSpaceStyleOperation.Parameters(type: type)
 
         return WhiteSpaceStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

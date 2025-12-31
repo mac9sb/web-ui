@@ -158,7 +158,6 @@ extension Markup {
     ///   - snapAlign: Sets the scroll snap alignment (start, end, center).
     ///   - snapStop: Sets the scroll snap stop behavior (normal, always).
     ///   - snapType: Sets the scroll snap type (x, y, both, mandatory, proximity).
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated scroll-related classes.
     public func scroll(
         behavior: ScrollBehavior? = nil,
@@ -166,8 +165,7 @@ extension Markup {
         padding: (value: Int, edges: [Edge])? = nil,
         snapAlign: ScrollSnapAlign? = nil,
         snapStop: ScrollSnapStop? = nil,
-        snapType: ScrollSnapType? = nil,
-        on modifiers: Modifier...
+        snapType: ScrollSnapType? = nil
     ) -> some Markup {
         let params = ScrollStyleOperation.Parameters(
             behavior: behavior,
@@ -180,8 +178,7 @@ extension Markup {
 
         return ScrollStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

@@ -111,14 +111,12 @@ extension Markup {
     ///   - rotate: Specifies the rotation angle in degrees.
     ///   - translate: Sets translation distance(s) as an optional (x: Int?, y: Int?) tuple.
     ///   - skew: Sets skew angle(s) as an optional (x: Int?, y: Int?) tuple.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated transform classes.
     public func transform(
         scale: (x: Int?, y: Int?)? = nil,
         rotate: Int? = nil,
         translate: (x: Int?, y: Int?)? = nil,
-        skew: (x: Int?, y: Int?)? = nil,
-        on modifiers: Modifier...
+        skew: (x: Int?, y: Int?)? = nil
     ) -> some Markup {
         let params = TransformStyleOperation.Parameters(
             scale: scale,
@@ -129,8 +127,7 @@ extension Markup {
 
         return TransformStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

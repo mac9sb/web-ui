@@ -54,7 +54,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - value: The pointer-events value to apply.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated pointer-events classes.
     ///
     /// ## Example
@@ -63,15 +62,13 @@ extension Markup {
     /// Stack {}.pointerEvents(.none)
     /// ```
     public func pointerEvents(
-        _ value: PointerEventsValue,
-        on modifiers: Modifier...
+        _ value: PointerEventsValue
     ) -> some Markup {
         let params = PointerEventsStyleOperation.Parameters(value: value)
 
         return PointerEventsStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

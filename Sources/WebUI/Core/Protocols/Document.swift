@@ -75,13 +75,37 @@ extension Document {
 
     /// Creates a concrete Document instance for rendering.
     public func render() throws -> String {
-        try render(websiteScripts: nil, websiteStylesheets: nil, websiteHead: nil)
+        try render(websiteScripts: nil, websiteStylesheets: nil, websiteHead: nil, cssConfig: nil)
     }
 
     /// Creates a concrete Document instance for rendering with website-level configuration.
-    public func render(websiteScripts: [Script]?, websiteStylesheets: [String]?, websiteHead: String?) throws -> String {
+    public func render(
+        websiteScripts: [Script]?,
+        websiteStylesheets: [String]?,
+        websiteHead: String?,
+        cssConfig: CSSOutputConfig? = nil
+    ) throws -> String {
+        // Clear previous class collection
+        ClassCollector.shared.clear()
+
+        // Render body to collect all CSS classes
+        let renderedBody = body.render()
+
+        // Generate CSS from collected classes
+        let generatedCSS = ClassCollector.shared.generateCSS()
+
+        // Write CSS to disk and get link path
+        let config = cssConfig ?? .staticDefault
+        let writer = CSSWriter(config: config)
+
+        // Use page path as slug for page-specific CSS
+        let slug = path ?? "index"
+        try writer.writePageCSS(generatedCSS, slug: slug)
+        let pageCSSPath = writer.pageCSSPath(slug: slug)
+
         var optionalTags: [String] = metadata.tags + []
         var bodyTags: [String] = []
+
         // Combine website scripts with document scripts
         let allScripts = (websiteScripts ?? []) + (scripts ?? [])
         if !allScripts.isEmpty {
@@ -92,8 +116,9 @@ extension Document {
                     : bodyTags.append(scriptTag)
             }
         }
-        // Combine website stylesheets with document stylesheets
-        let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? [])
+
+        // Combine website stylesheets with document stylesheets + generated CSS
+        let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? []) + [pageCSSPath]
         if !allStylesheets.isEmpty {
             for stylesheet in allStylesheets {
                 optionalTags.append(
@@ -101,6 +126,8 @@ extension Document {
                 )
             }
         }
+
+        // Build final HTML
         let html = """
             <!DOCTYPE html>
             <html lang="\(metadata.locale.rawValue)">
@@ -109,12 +136,10 @@ extension Document {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>\(metadata.pageTitle)</title>
                 \(optionalTags.joined(separator: "\n"))
-                <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-                <script src="https://unpkg.com/lucide@latest"></script>
                 <meta name="generator" content="WebUI" />
                 \(websiteHead ?? "")\(head ?? "")
               </head>
-              \(body.render())
+              \(renderedBody)
               \(bodyTags.joined(separator: "\n"))
             </html>
             """

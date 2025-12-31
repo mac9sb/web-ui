@@ -98,7 +98,6 @@ extension Markup {
     ///   - style: The outline style (solid, dashed, etc.).
     ///   - color: The outline color.
     ///   - offset: The outline offset in pixels.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated outline classes.
     ///
     /// ## Example
@@ -116,8 +115,7 @@ extension Markup {
         of width: Int? = nil,
         style: BorderStyle? = nil,
         color: Color? = nil,
-        offset: Int? = nil,
-        on modifiers: Modifier...
+        offset: Int? = nil
     ) -> some Markup {
         let params = OutlineStyleOperation.Parameters(
             width: width,
@@ -128,8 +126,7 @@ extension Markup {
 
         return OutlineStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

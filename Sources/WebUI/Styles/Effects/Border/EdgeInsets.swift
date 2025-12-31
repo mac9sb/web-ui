@@ -69,7 +69,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - insets: The edge insets to apply as margins.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated margin classes.
     ///
     /// ## Example
@@ -77,11 +76,10 @@ extension Markup {
     /// Stack().margins(EdgeInsets(vertical: 2, horizontal: 4))
     /// ```
     public func margins(
-        _ insets: EdgeInsets,
-        on modifiers: Modifier...
+        _ insets: EdgeInsets
     ) -> some Markup {
         let classes = EdgeInsets.marginClasses(from: insets)
-        let newClasses = StyleUtilities.combineClasses(classes, withModifiers: modifiers)
+        let newClasses = StyleUtilities.combineClasses(classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 
@@ -89,7 +87,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - insets: The edge insets to apply as padding.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated padding classes.
     ///
     /// ## Example
@@ -97,11 +94,10 @@ extension Markup {
     /// Stack().padding(EdgeInsets(top: 2, leading: 1, bottom: 2, trailing: 1))
     /// ```
     public func padding(
-        _ insets: EdgeInsets,
-        on modifiers: Modifier...
+        _ insets: EdgeInsets
     ) -> some Markup {
         let classes = EdgeInsets.paddingClasses(from: insets)
-        let newClasses = StyleUtilities.combineClasses(classes, withModifiers: modifiers)
+        let newClasses = StyleUtilities.combineClasses(classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 }

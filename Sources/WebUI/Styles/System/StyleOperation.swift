@@ -82,14 +82,13 @@ extension StyleOperation {
     /// - Parameters:
     ///   - content: The markup content to apply styles to
     ///   - params: The parameters for this style operation
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
     /// - Returns: A new element with the styles applied
     public func applyTo<T: Markup>(
         _ content: T, params: Parameters, modifiers: [Modifier] = []
     ) -> StyleModifier<T> {
         let classes = applyClasses(params: params)
         let newClasses = StyleUtilities.combineClasses(
-            classes, withModifiers: modifiers)
+            classes)
 
         return StyleModifier(content: content, classes: newClasses)
     }
@@ -99,12 +98,11 @@ extension StyleOperation {
     /// - Parameters:
     ///   - element: The element to apply styles to
     ///   - params: The parameters for this style operation
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
     /// - Returns: A new element with the styles applied
     public func applyToElement<T: Markup>(
         _ element: T, params: Parameters, modifiers: Modifier...
     ) -> StyleModifier<T> {
-        applyTo(element, params: params, modifiers: modifiers)
+        applyTo(element, params: params)
     }
 
     /// Internal adapter for use with the responsive builder
@@ -140,12 +138,11 @@ extension StyleOperation {
     /// - Parameters:
     ///   - content: The markup content to apply styles to
     ///   - configuration: The parameters for this style operation
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
     /// - Returns: A new element with the styles applied
     public func applyTo<T: Markup>(
         _ content: T, using configuration: Parameters, modifiers: [Modifier] = []
     ) -> StyleModifier<T> {
-        applyTo(content, params: configuration, modifiers: modifiers)
+        applyTo(content, params: configuration)
     }
 
     /// Applies style to an element and returns the modified element (improved clarity)
@@ -153,12 +150,11 @@ extension StyleOperation {
     /// - Parameters:
     ///   - element: The element to apply styles to
     ///   - configuration: The parameters for this style operation
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
     /// - Returns: A new element with the styles applied
     public func applyToElement<T: Markup>(
         _ element: T, using configuration: Parameters, modifiers: Modifier...
     ) -> StyleModifier<T> {
-        applyTo(element, params: configuration, modifiers: Array(modifiers))
+        applyTo(element, params: configuration)
     }
 
     /// Internal adapter for use with the responsive builder (improved clarity)

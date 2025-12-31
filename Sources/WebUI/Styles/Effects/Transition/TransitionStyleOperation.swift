@@ -105,14 +105,12 @@ extension Markup {
     ///   - duration: Sets the transition duration in milliseconds.
     ///   - easing: Defines the timing function for the transition.
     ///   - delay: Sets the delay before the transition starts in milliseconds.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated transition classes.
     public func transition(
         of property: TransitionProperty? = nil,
         for duration: Int? = nil,
         easing: Easing? = nil,
-        delay: Int? = nil,
-        on modifiers: Modifier...
+        delay: Int? = nil
     ) -> some Markup {
         let params = TransitionStyleOperation.Parameters(
             property: property,
@@ -123,8 +121,7 @@ extension Markup {
 
         return TransitionStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

@@ -71,12 +71,10 @@ extension Markup {
     /// - Parameters:
     ///   - length: The spacing value in `0.25rem` increments.
     ///   - direction: The direction(s) to apply spacing (`horizontal`, `vertical`, or both).
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated spacing classes.
     public func spacing(
         of length: Int? = 4,
-        along direction: Axis = .both,
-        on modifiers: Modifier...
+        along direction: Axis = .both
     ) -> some Markup {
         let params = SpacingStyleOperation.Parameters(
             length: length,
@@ -85,8 +83,7 @@ extension Markup {
 
         return SpacingStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

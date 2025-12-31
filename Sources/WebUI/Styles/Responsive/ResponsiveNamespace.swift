@@ -6,7 +6,7 @@ import Foundation
 /// ## Problem
 /// Swift has difficulty resolving function calls in responsive contexts due to namespace
 /// collision between:
-/// - HTML instance methods like `.font(..., on modifiers: Modifier...)`
+/// - HTML instance methods like `.font(...)`
 /// - Global functions like `font(...) -> ResponsiveModification`
 ///
 /// ## Solution

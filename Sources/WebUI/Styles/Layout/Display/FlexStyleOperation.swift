@@ -188,7 +188,6 @@ extension Markup {
     ///   - align: How to align items along the cross axis.
     ///   - grow: The flex grow factor.
     ///   - wrap: The flex wrap behavior.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated flex classes.
     ///
     /// ## Example
@@ -211,8 +210,7 @@ extension Markup {
         justify: FlexJustify? = nil,
         align: FlexAlign? = nil,
         grow: FlexGrow? = nil,
-        wrap: FlexWrap? = nil,
-        on modifiers: Modifier...
+        wrap: FlexWrap? = nil
     ) -> some Markup {
         let params = FlexStyleOperation.Parameters(
             direction: direction,
@@ -224,8 +222,7 @@ extension Markup {
 
         return FlexStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

@@ -100,13 +100,11 @@ extension Markup {
     ///   - length: The spacing value in `0.25rem` increments.
     ///   - edges: One or more edges to apply the margin to. Defaults to `.all`.
     ///   - auto: Whether to use automatic margins instead of a specific length.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated margin classes.
     public func margins(
         of length: Int? = 4,
         at edges: Edge...,
-        auto: Bool = false,
-        on modifiers: Modifier...
+        auto: Bool = false
     ) -> some Markup {
         let params = MarginsStyleOperation.Parameters(
             length: length,
@@ -116,8 +114,7 @@ extension Markup {
 
         return MarginsStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 
@@ -126,12 +123,10 @@ extension Markup {
     /// - Parameters:
     ///   - percentage: The margin value as percentage (e.g., "50%", "-50%") or arbitrary CSS value.
     ///   - edges: One or more edges to apply the margin to. Defaults to `.all`.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated margin classes.
     public func margins(
         of percentage: String,
-        at edges: Edge...,
-        on modifiers: Modifier...
+        at edges: Edge...
     ) -> some Markup {
         let params = MarginsStyleOperation.Parameters(
             percentage: percentage,
@@ -140,8 +135,7 @@ extension Markup {
 
         return MarginsStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }
@@ -166,4 +160,30 @@ public func margins(
     )
 
     return MarginsStyleOperation.shared.asModification(params: params)
+}
+
+// MARK: - ResponsiveBuilder Extension
+
+extension ResponsiveBuilder {
+    /// Applies margin styling in a responsive context.
+    ///
+    /// - Parameters:
+    ///   - length: The margin value in `0.25rem` increments.
+    ///   - edges: The edges to apply margins to (e.g., `.top`, `.horizontal`).
+    ///   - auto: Whether to use `auto` margins for centering.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func margins(
+        of length: Int? = 4,
+        at edges: Edge...,
+        auto: Bool = false
+    ) -> ResponsiveBuilder {
+        let params = MarginsStyleOperation.Parameters(
+            length: length,
+            edges: edges.isEmpty ? [.all] : edges,
+            auto: auto
+        )
+
+        return MarginsStyleOperation.shared.applyToBuilder(self, params: params)
+    }
 }

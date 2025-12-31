@@ -82,6 +82,31 @@ public let odd: Modifier = .odd
 /// Even child modifier constant for comma-separated syntax.
 public let even: Modifier = .even
 
+// MARK: - Group Modifiers
+
+/// Group hover modifier constant for comma-separated syntax.
+public let groupHover: Modifier = .groupHover
+
+/// Group focus modifier constant for comma-separated syntax.
+public let groupFocus: Modifier = .groupFocus
+
+/// Group active modifier constant for comma-separated syntax.
+public let groupActive: Modifier = .groupActive
+
+/// Group focus-within modifier constant for comma-separated syntax.
+public let groupFocusWithin: Modifier = .groupFocusWithin
+
+// MARK: - Peer Modifiers
+
+/// Peer hover modifier constant for comma-separated syntax.
+public let peerHover: Modifier = .peerHover
+
+/// Peer focus modifier constant for comma-separated syntax.
+public let peerFocus: Modifier = .peerFocus
+
+/// Peer checked modifier constant for comma-separated syntax.
+public let peerChecked: Modifier = .peerChecked
+
 // MARK: - Breakpoint Constants for Comma-Separated Syntax
 
 /// Extra-small breakpoint modifier constant for comma-separated syntax.
@@ -299,6 +324,87 @@ extension ResponsiveBuilder {
         -> ResponsiveBuilder
     {
         modifiers(.ariaSelected, modifications: modifications)
+    }
+
+    // MARK: - Group Modifiers
+
+    /// Applies styles to children when the parent with class="group" is hovered.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func groupHover(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.groupHover, modifications: modifications)
+    }
+
+    /// Applies styles to children when the parent with class="group" has focus.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func groupFocus(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.groupFocus, modifications: modifications)
+    }
+
+    /// Applies styles to children when the parent with class="group" is active.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func groupActive(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.groupActive, modifications: modifications)
+    }
+
+    /// Applies styles to children when the parent with class="group" has focus-within.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func groupFocusWithin(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.groupFocusWithin, modifications: modifications)
+    }
+
+    // MARK: - Peer Modifiers
+
+    /// Applies styles when a preceding sibling with class="peer" is hovered.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func peerHover(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.peerHover, modifications: modifications)
+    }
+
+    /// Applies styles when a preceding sibling with class="peer" has focus.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func peerFocus(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.peerFocus, modifications: modifications)
+    }
+
+    /// Applies styles when a preceding sibling with class="peer" is checked.
+    ///
+    /// - Parameter modifications: A closure containing style modifications.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func peerChecked(_ modifications: (ResponsiveBuilder) -> Void)
+        -> ResponsiveBuilder
+    {
+        modifiers(.peerChecked, modifications: modifications)
     }
 }
 
@@ -562,4 +668,79 @@ public func even(
     @ResponsiveStyleBuilder content: () -> ResponsiveModification
 ) -> ResponsiveModification {
     BreakpointModification(breakpoint: .even, styleModification: content())
+}
+
+// MARK: - Group Modifier DSL Functions
+
+/// Creates a group-hover responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a parent with class="group" is hovered.
+/// - Returns: A responsive modification for the group-hover state.
+public func groupHover(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .groupHover, styleModification: content())
+}
+
+/// Creates a group-focus responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a parent with class="group" has focus.
+/// - Returns: A responsive modification for the group-focus state.
+public func groupFocus(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .groupFocus, styleModification: content())
+}
+
+/// Creates a group-active responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a parent with class="group" is active.
+/// - Returns: A responsive modification for the group-active state.
+public func groupActive(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .groupActive, styleModification: content())
+}
+
+/// Creates a group-focus-within responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a parent with class="group" has focus-within.
+/// - Returns: A responsive modification for the group-focus-within state.
+public func groupFocusWithin(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(
+        breakpoint: .groupFocusWithin, styleModification: content())
+}
+
+// MARK: - Peer Modifier DSL Functions
+
+/// Creates a peer-hover responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a preceding sibling with class="peer" is hovered.
+/// - Returns: A responsive modification for the peer-hover state.
+public func peerHover(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .peerHover, styleModification: content())
+}
+
+/// Creates a peer-focus responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a preceding sibling with class="peer" has focus.
+/// - Returns: A responsive modification for the peer-focus state.
+public func peerFocus(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .peerFocus, styleModification: content())
+}
+
+/// Creates a peer-checked responsive modification.
+///
+/// - Parameter content: A closure containing style modifications applied when a preceding sibling with class="peer" is checked.
+/// - Returns: A responsive modification for the peer-checked state.
+public func peerChecked(
+    @ResponsiveStyleBuilder content: () -> ResponsiveModification
+) -> ResponsiveModification {
+    BreakpointModification(breakpoint: .peerChecked, styleModification: content())
 }

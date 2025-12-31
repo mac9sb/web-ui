@@ -53,7 +53,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - color: Sets the background color from the color palette or a custom value.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated background color classes.
     ///
     /// ## Example
@@ -68,15 +67,13 @@ extension Markup {
     ///   .background(color: .blue(._500), on: .hover)
     /// ```
     public func background(
-        color: Color,
-        on modifiers: Modifier...
+        color: Color
     ) -> some Markup {
         let params = BackgroundStyleOperation.Parameters(color: color)
 
         return BackgroundStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

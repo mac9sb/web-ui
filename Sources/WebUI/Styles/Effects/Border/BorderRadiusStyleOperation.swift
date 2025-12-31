@@ -71,7 +71,6 @@ extension Markup {
     /// - Parameters:
     ///   - size: The radius size from none to full.
     ///   - sides: Zero or more sides to apply the radius to. Defaults to all sides.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated border radius classes.
     ///
     /// ## Example
@@ -85,8 +84,7 @@ extension Markup {
     /// ```
     public func rounded(
         _ size: RadiusSize? = .md,
-        _ sides: RadiusSide...,
-        on modifiers: Modifier...
+        _ sides: RadiusSide...
     ) -> some Markup {
         let params = BorderRadiusStyleOperation.Parameters(
             size: size,
@@ -95,8 +93,7 @@ extension Markup {
 
         return BorderRadiusStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

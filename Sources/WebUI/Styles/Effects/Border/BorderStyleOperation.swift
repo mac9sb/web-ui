@@ -110,7 +110,6 @@ extension Markup {
     ///   - edges: One or more edges to apply the border to. Defaults to `.all`.
     ///   - style: The border style (solid, dashed, etc.).
     ///   - color: The border color.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated border classes.
     ///
     /// ## Example
@@ -123,8 +122,7 @@ extension Markup {
         of width: Int? = nil,
         at edges: Edge...,
         style: BorderStyle? = nil,
-        color: Color? = nil,
-        on modifiers: Modifier...
+        color: Color? = nil
     ) -> some Markup {
         let params = BorderStyleOperation.Parameters(
             width: width,
@@ -135,8 +133,7 @@ extension Markup {
 
         return BorderStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

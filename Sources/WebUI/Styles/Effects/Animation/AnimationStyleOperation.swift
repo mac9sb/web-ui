@@ -160,7 +160,6 @@ extension Markup {
     ///   - direction: Direction of animation playback.
     ///   - fillMode: How styles are applied before/after animation.
     ///   - playState: Whether animation is running or paused.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the animation.
     /// - Returns: A new element with animation classes applied.
     public func animate(
         _ name: AnimationName,
@@ -170,8 +169,7 @@ extension Markup {
         iterationCount: AnimationIterationCount? = nil,
         direction: AnimationDirection? = nil,
         fillMode: AnimationFillMode? = nil,
-        playState: AnimationPlayState? = nil,
-        on modifiers: Modifier...
+        playState: AnimationPlayState? = nil
     ) -> some Markup {
         let params = AnimationStyleOperation.Parameters(
             name: name,
@@ -186,8 +184,7 @@ extension Markup {
 
         return AnimationStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }
