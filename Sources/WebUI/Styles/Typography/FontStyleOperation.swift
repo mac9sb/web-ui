@@ -137,7 +137,6 @@ extension Markup {
     ///   - wrapping: The text wrapping behavior.
     ///   - color: The text color from the color palette.
     ///   - family: The font family name or stack (e.g., "sans-serif").
-    ///   - modifiers: Zero or more modifiers to scope the styles (e.g., responsive breakpoints or states).
     /// - Returns: A new element with updated font styling classes.
     ///
     /// ## Example
@@ -165,8 +164,7 @@ extension Markup {
         decoration: Decoration? = nil,
         wrapping: Wrapping? = nil,
         color: Color? = nil,
-        family: String? = nil,
-        on modifiers: Modifier...
+        family: String? = nil
     ) -> some Markup {
         let params = FontStyleOperation.Parameters(
             size: size,
@@ -182,8 +180,7 @@ extension Markup {
 
         return FontStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }
@@ -226,4 +223,48 @@ public func font(
     )
 
     return FontStyleOperation.shared.asModification(params: params)
+}
+
+// MARK: - ResponsiveBuilder Extension
+
+extension ResponsiveBuilder {
+    /// Applies font styling in a responsive context.
+    ///
+    /// - Parameters:
+    ///   - size: The font size.
+    ///   - weight: The font weight.
+    ///   - alignment: The text alignment.
+    ///   - tracking: The letter spacing.
+    ///   - leading: The line height.
+    ///   - decoration: The text decoration.
+    ///   - wrapping: The text wrapping behavior.
+    ///   - color: The text color.
+    ///   - family: The font family.
+    /// - Returns: The builder for method chaining.
+    @discardableResult
+    public func font(
+        size: TextSize? = nil,
+        weight: Weight? = nil,
+        alignment: Alignment? = nil,
+        tracking: Tracking? = nil,
+        leading: Leading? = nil,
+        decoration: Decoration? = nil,
+        wrapping: Wrapping? = nil,
+        color: Color? = nil,
+        family: String? = nil
+    ) -> ResponsiveBuilder {
+        let params = FontStyleOperation.Parameters(
+            size: size,
+            weight: weight,
+            alignment: alignment,
+            tracking: tracking,
+            leading: leading,
+            decoration: decoration,
+            wrapping: wrapping,
+            color: color,
+            family: family
+        )
+
+        return FontStyleOperation.shared.applyToBuilder(self, params: params)
+    }
 }

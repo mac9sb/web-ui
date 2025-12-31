@@ -12,15 +12,15 @@ import Foundation
 ///   .font(size: .sm)
 ///   .background(color: .neutral(._500))
 ///   .on {
-///     md {
-///       font(size: .lg)
-///       background(color: .neutral(._700))
-///       padding(of: 4)
+///     $0.md {
+///       $0.font(size: .lg)
+///       $0.background(color: .neutral(._700))
+///       $0.padding(of: 4)
 ///     }
-///     lg {
-///       font(size: .xl)
-///       background(color: .neutral(._900))
-///       font(alignment: .center)
+///     $0.lg {
+///       $0.font(size: .xl)
+///       $0.background(color: .neutral(._900))
+///       $0.font(alignment: .center)
 ///     }
 ///   }
 /// ```
@@ -30,7 +30,7 @@ extension Element {
     /// This method provides a clean, declarative way to define styles for multiple
     /// breakpoints in a single block, improving code readability and maintainability.
     ///
-    /// - Parameter content: A closure defining responsive style configurations using the result builder.
+    /// - Parameter content: A closure that receives a ResponsiveBuilder for configuring responsive styles.
     /// - Returns: An element with responsive styles applied.
     ///
     /// ## Example
@@ -38,24 +38,23 @@ extension Element {
     /// Button { "Submit" }
     ///   .background(color: .blue(._500))
     ///   .on {
-    ///     sm {
-    ///       padding(of: 2)
-    ///       font(size: .sm)
+    ///     $0.sm {
+    ///       $0.padding(of: 2)
+    ///       $0.font(size: .sm)
     ///     }
-    ///     md {
-    ///       padding(of: 4)
-    ///       font(size: .base)
+    ///     $0.md {
+    ///       $0.padding(of: 4)
+    ///       $0.font(size: .base)
     ///     }
-    ///     lg {
-    ///       padding(of: 6)
-    ///       font(size: .lg)
+    ///     $0.lg {
+    ///       $0.padding(of: 6)
+    ///       $0.font(size: .lg)
     ///     }
     ///   }
     /// ```
-    public func on(@ResponsiveStyleBuilder _ content: () -> ResponsiveModification) -> some Markup {
+    public func on(_ content: (ResponsiveBuilder) -> Void) -> some Markup {
         let builder = ResponsiveBuilder(element: self)
-        let modification = content()
-        modification.apply(to: builder)
+        content(builder)
         return MarkupString(content: builder.element.render())
     }
 }
@@ -66,14 +65,13 @@ extension Markup {
     /// This method provides a clean, declarative way to define styles for multiple
     /// breakpoints in a single block, improving code readability and maintainability.
     ///
-    /// - Parameter content: A closure defining responsive style configurations using the result builder.
+    /// - Parameter content: A closure that receives a ResponsiveBuilder for configuring responsive styles.
     /// - Returns: A markup element with responsive styles applied.
-    public func on(@ResponsiveStyleBuilder _ content: () -> ResponsiveModification) -> AnyMarkup {
+    public func on(_ content: (ResponsiveBuilder) -> Void) -> AnyMarkup {
         // Wrap Markup in an Element to use responsive functionality
         let elementWrapper = MarkupElementWrapper(self)
         let builder = ResponsiveBuilder(element: elementWrapper)
-        let modification = content()
-        modification.apply(to: builder)
+        content(builder)
         return AnyMarkup(MarkupString(content: builder.element.render()))
     }
 }
@@ -117,7 +115,6 @@ public class ResponsiveBuilder {
     /// Applies styles for one or more modifiers (breakpoints or states).
     ///
     /// - Parameters:
-    ///   - modifiers: One or more modifiers to apply (e.g., .hover, .dark, .md).
     ///   - modifications: A closure containing style modifications.
     /// - Returns: The builder for method chaining.
     @discardableResult
@@ -132,7 +129,6 @@ public class ResponsiveBuilder {
     /// Applies styles for an array of modifiers (breakpoints or states).
     ///
     /// - Parameters:
-    ///   - modifiers: Array of modifiers to apply (e.g., [.hover, .dark]).
     ///   - modifications: A closure containing style modifications.
     /// - Returns: The builder for method chaining.
     @discardableResult
@@ -178,78 +174,6 @@ public class ResponsiveBuilder {
     @discardableResult
     public func xl2(_ modifications: (ResponsiveBuilder) -> Void) -> ResponsiveBuilder {
         modifiers(.xl2, modifications: modifications)
-    }
-
-    /// Creates a hover state responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the hover state.
-    /// - Returns: A responsive modification for the hover state.
-    public func hover(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .hover, styleModification: content())
-    }
-
-    /// Creates a focus state responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the focus state.
-    /// - Returns: A responsive modification for the focus state.
-    public func focus(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .focus, styleModification: content())
-    }
-
-    /// Creates an active state responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the active state.
-    /// - Returns: A responsive modification for the active state.
-    public func active(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .active, styleModification: content())
-    }
-
-    /// Creates a placeholder responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for placeholder text.
-    /// - Returns: A responsive modification for placeholder styling.
-    public func placeholder(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .placeholder, styleModification: content())
-    }
-
-    /// Creates a dark mode responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for dark mode.
-    /// - Returns: A responsive modification for dark mode styling.
-    public func dark(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .dark, styleModification: content())
-    }
-
-    /// Creates a first child responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the first child element.
-    /// - Returns: A responsive modification for first child styling.
-    public func first(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .first, styleModification: content())
-    }
-
-    /// Creates a last child responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the last child element.
-    /// - Returns: A responsive modification for last child styling.
-    public func last(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .last, styleModification: content())
-    }
-
-    /// Creates a disabled state responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for the disabled state.
-    /// - Returns: A responsive modification for disabled state styling.
-    public func disabled(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .disabled, styleModification: content())
-    }
-
-    /// Creates a reduced motion responsive modification.
-    ///
-    /// - Parameter content: A closure containing style modifications for reduced motion preference.
-    /// - Returns: A responsive modification for reduced motion styling.
-    public func motionReduce(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -> ResponsiveModification {
-        BreakpointModification(breakpoint: .motionReduce, styleModification: content())
     }
 
     // MARK: - ARIA State Functions
@@ -418,6 +342,9 @@ public class ResponsiveBuilder {
         let modifierPrefix = currentModifiers.map { $0.rawValue }.joined()
         let responsiveClasses = pendingClasses.map { "\(modifierPrefix)\($0)" }
 
+        // Collect responsive classes for CSS generation
+        ClassCollector.shared.addClasses(responsiveClasses)
+
         let wrapped = AnyElement(self.element)
         let styledModifier = StyleModifierWithDeduplication(
             content: wrapped, classes: responsiveClasses)
@@ -429,6 +356,9 @@ public class ResponsiveBuilder {
     /// Add a class to the pending list of classes
     public func addClass(_ className: String) {
         pendingClasses.append(className)
+
+        // Collect class for CSS generation
+        ClassCollector.shared.addClass(className)
     }
 }
 

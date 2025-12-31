@@ -79,7 +79,6 @@ extension Markup {
     /// - Parameters:
     ///   - size: The width of the ring.
     ///   - color: The ring color.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated ring classes.
     ///
     /// ## Example
@@ -90,8 +89,7 @@ extension Markup {
     /// ```
     public func ring(
         size: Int = 1,
-        color: Color? = nil,
-        on modifiers: Modifier...
+        color: Color? = nil
     ) -> some Markup {
         let params = RingStyleOperation.Parameters(
             size: size,
@@ -100,8 +98,7 @@ extension Markup {
 
         return RingStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

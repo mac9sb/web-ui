@@ -51,7 +51,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The list style type to apply.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated list-style classes.
     ///
     /// ## Example
@@ -67,15 +66,13 @@ extension Markup {
     ///     .listStyle(.disc, on: .hover)
     /// ```
     public func listStyle(
-        _ type: ListStyleType,
-        on modifiers: Modifier...
+        _ type: ListStyleType
     ) -> some Markup {
         let params = ListStyleOperation.Parameters(type: type)
 
         return ListStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

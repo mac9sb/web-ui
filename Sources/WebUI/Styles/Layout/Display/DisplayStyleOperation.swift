@@ -49,7 +49,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The display type to apply.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated display classes.
     ///
     /// ## Example
@@ -64,15 +63,13 @@ extension Markup {
     /// Element(tag: "div").display(.table, on: .md)
     /// ```
     public func display(
-        _ type: DisplayType,
-        on modifiers: Modifier...
+        _ type: DisplayType
     ) -> some Markup {
         let params = DisplayStyleOperation.Parameters(type: type)
 
         return DisplayStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

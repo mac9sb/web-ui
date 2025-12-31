@@ -64,7 +64,6 @@ extension Markup {
     /// - Parameters:
     ///   - type: Determines the overflow behavior (e.g., hidden, scroll).
     ///   - axis: Specifies the axis for overflow (defaults to both).
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated overflow classes.
     ///
     /// ## Example
@@ -79,8 +78,7 @@ extension Markup {
     /// ```
     public func overflow(
         _ type: OverflowType,
-        axis: Axis = .both,
-        on modifiers: Modifier...
+        axis: Axis = .both
     ) -> some Markup {
         let params = OverflowStyleOperation.Parameters(
             type: type,
@@ -89,8 +87,7 @@ extension Markup {
 
         return OverflowStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

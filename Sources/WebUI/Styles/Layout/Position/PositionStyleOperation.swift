@@ -97,13 +97,11 @@ extension Markup {
     ///   - type: Specifies the positioning method (e.g., absolute, fixed).
     ///   - edges: One or more edges to apply the inset to. Defaults to `.all`.
     ///   - length: The distance value for the specified edges (e.g., "0", "4", "auto").
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated position classes.
     public func position(
         _ type: PositionType? = nil,
         at edges: Edge...,
-        offset length: Int? = nil,
-        on modifiers: Modifier...
+        offset length: Int? = nil
     ) -> some Markup {
         let params = PositionStyleOperation.Parameters(
             type: type,
@@ -113,8 +111,7 @@ extension Markup {
 
         return PositionStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

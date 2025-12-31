@@ -242,6 +242,45 @@ public enum Modifier: String, Sendable {
     /// Use to style enabled form inputs.
     case enabled
 
+    // MARK: - Group Modifiers
+
+    /// Applies styles to children when the parent with class="group" is hovered.
+    ///
+    /// Use to create coordinated hover effects across parent-child relationships.
+    case groupHover = "group-hover"
+
+    /// Applies styles to children when the parent with class="group" has focus.
+    ///
+    /// Use to highlight child elements when parent container is focused.
+    case groupFocus = "group-focus"
+
+    /// Applies styles to children when the parent with class="group" is active.
+    ///
+    /// Use to create press effects that cascade to children.
+    case groupActive = "group-active"
+
+    /// Applies styles to children when the parent with class="group" has focus-within.
+    ///
+    /// Use to style children when any element within the parent group is focused.
+    case groupFocusWithin = "group-focus-within"
+
+    // MARK: - Peer Modifiers
+
+    /// Applies styles when a preceding sibling with class="peer" is hovered.
+    ///
+    /// Use for sibling-dependent hover effects.
+    case peerHover = "peer-hover"
+
+    /// Applies styles when a preceding sibling with class="peer" has focus.
+    ///
+    /// Use for focus-dependent sibling styling.
+    case peerFocus = "peer-focus"
+
+    /// Applies styles when a preceding sibling with class="peer" is checked.
+    ///
+    /// Use for custom checkbox/radio styling patterns.
+    case peerChecked = "peer-checked"
+
     // MARK: - Child Selectors
 
     /// Applies styles to all direct children.
@@ -305,6 +344,20 @@ public enum Modifier: String, Sendable {
             return "only-of-type:"
         case .motionReduce:
             return "motion-reduce:"
+        case .groupHover:
+            return "group-hover:"
+        case .groupFocus:
+            return "group-focus:"
+        case .groupActive:
+            return "group-active:"
+        case .groupFocusWithin:
+            return "group-focus-within:"
+        case .peerHover:
+            return "peer-hover:"
+        case .peerFocus:
+            return "peer-focus:"
+        case .peerChecked:
+            return "peer-checked:"
         case .ariaBusy:
             return "aria-busy:"
         case .ariaChecked:

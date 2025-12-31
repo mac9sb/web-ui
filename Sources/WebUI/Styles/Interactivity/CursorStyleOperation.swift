@@ -59,7 +59,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The cursor type.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated cursor classes.
     ///
     /// ## Example
@@ -71,15 +70,13 @@ extension Markup {
     ///   .cursor(.notAllowed, on: .hover)
     /// ```
     public func cursor(
-        _ type: CursorType,
-        on modifiers: Modifier...
+        _ type: CursorType
     ) -> some Markup {
         let params = CursorStyleOperation.Parameters(type: type)
 
         return CursorStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

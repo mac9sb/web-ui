@@ -85,7 +85,7 @@ public func xl2(@ResponsiveStyleBuilder content: () -> ResponsiveModification) -
 public func modifiers(_ modifiers: Modifier..., @ResponsiveStyleBuilder content: () -> ResponsiveModification)
     -> ResponsiveModification
 {
-    MultiModifierModification(modifiers: modifiers, styleModification: content())
+    MultiModifierModification(modifiers: Array(modifiers), styleModification: content())
 }
 
 // MARK: - Tuple Syntax Support Functions

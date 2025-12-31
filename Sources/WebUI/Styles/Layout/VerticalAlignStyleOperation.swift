@@ -68,18 +68,15 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The vertical-align type
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated vertical-align classes.
     public func verticalAlign(
-        _ type: VerticalAlignType,
-        on modifiers: Modifier...
+        _ type: VerticalAlignType
     ) -> some Markup {
         let params = VerticalAlignStyleOperation.Parameters(type: type)
 
         return VerticalAlignStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

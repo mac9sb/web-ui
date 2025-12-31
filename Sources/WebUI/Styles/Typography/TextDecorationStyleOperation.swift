@@ -58,18 +58,15 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - type: The text decoration type
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated text decoration classes.
     public func textDecoration(
-        _ type: TextDecorationType,
-        on modifiers: Modifier...
+        _ type: TextDecorationType
     ) -> some Markup {
         let params = TextDecorationStyleOperation.Parameters(type: type)
 
         return TextDecorationStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 }

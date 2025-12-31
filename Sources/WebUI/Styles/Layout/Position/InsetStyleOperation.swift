@@ -58,7 +58,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - value: The inset value to apply.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated inset classes.
     ///
     /// ## Example
@@ -67,15 +66,13 @@ extension Markup {
     /// Stack {}.inset(.px)
     /// ```
     public func inset(
-        _ value: InsetValue,
-        on modifiers: Modifier...
+        _ value: InsetValue
     ) -> some Markup {
         let params = InsetStyleOperation.Parameters(value: value)
 
         return InsetStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

@@ -11,24 +11,20 @@ public enum ElementStyling {
     public static func applyClasses<T: Markup>(_ content: T, classes: [String])
         -> some Markup
     {
-        content.addingClasses(classes)
+        // Collect classes for CSS generation
+        ClassCollector.shared.addClasses(classes)
+        return content.addingClasses(classes)
     }
 
-    /// Combines base classes with modifier classes
+    /// Combines base classes
     ///
     /// - Parameters:
     ///   - baseClasses: The base stylesheet classes
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
-    /// - Returns: Combined array of stylesheet classes
+    /// - Returns: The stylesheet classes unchanged
     public static func combineClasses(
-        _ baseClasses: [String], withModifiers modifiers: [Modifier]
+        _ baseClasses: [String]
     ) -> [String] {
-        guard !modifiers.isEmpty else {
-            return baseClasses
-        }
-
-        let modifierPrefix = modifiers.map { $0.rawValue }.joined()
-        return baseClasses.map { "\(modifierPrefix)\($0)" }
+        return baseClasses
     }
 }
 
@@ -50,17 +46,15 @@ extension Markup {
         addingClasses(classNames)
     }
 
-    /// Applies a style with modifier to the element
+    /// Applies a style to the element
     ///
     /// - Parameters:
     ///   - baseClasses: The base stylesheet classes to apply
-    ///   - modifiers: The modifiers to apply (e.g., .hover, .md)
     /// - Returns: Markup with the styled classes applied
-    public func applyStyle(baseClasses: [String], modifiers: [Modifier] = [])
+    public func applyStyle(baseClasses: [String])
         -> some Markup
     {
-        let classes = ElementStyling.combineClasses(
-            baseClasses, withModifiers: modifiers)
+        let classes = ElementStyling.combineClasses(baseClasses)
         return addingClasses(classes)
     }
 

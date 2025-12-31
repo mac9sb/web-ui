@@ -207,7 +207,6 @@ extension Markup {
     ///   - maxWidth: The maximum width value.
     ///   - minHeight: The minimum height value.
     ///   - maxHeight: The maximum height value.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: A new element with updated sizing classes.
     public func frame(
         width: SizingValue? = nil,
@@ -215,8 +214,7 @@ extension Markup {
         minWidth: SizingValue? = nil,
         maxWidth: SizingValue? = nil,
         minHeight: SizingValue? = nil,
-        maxHeight: SizingValue? = nil,
-        on modifiers: Modifier...
+        maxHeight: SizingValue? = nil
     ) -> some Markup {
         let params = SizingStyleOperation.FrameParameters(
             width: width,
@@ -229,8 +227,7 @@ extension Markup {
 
         return SizingStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: Array(modifiers)
+            params: params
         )
     }
 
@@ -270,16 +267,15 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - size: The size value to apply to both width and height.
-    ///   - modifiers: Zero or more modifiers to scope the styles.
     /// - Returns: A new element with updated sizing classes.
-    public func size(_ size: SizingValue, on modifiers: Modifier...)
+    public func size(_ size: SizingValue)
         -> some Markup
     {
         let params = SizingStyleOperation.SizeParameters(value: size)
         let classes = SizingStyleOperation.shared.applySizeClasses(
             params: params)
         let newClasses = StyleUtilities.combineClasses(
-            classes, withModifiers: modifiers)
+            classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 
@@ -290,45 +286,42 @@ extension Markup {
     /// - Parameters:
     ///   - width: The width for the aspect ratio calculation.
     ///   - height: The height for the aspect ratio calculation.
-    ///   - modifiers: Zero or more modifiers to scope the styles.
     /// - Returns: A new element with aspect ratio classes.
     public func aspectRatio(
-        _ width: Double, _ height: Double, on modifiers: Modifier...
+        _ width: Double, _ height: Double
     ) -> some Markup {
         let params = SizingStyleOperation.AspectRatioParameters(
             width: width, height: height)
         let classes = SizingStyleOperation.shared.applyAspectRatioClasses(
             params: params)
         let newClasses = StyleUtilities.combineClasses(
-            classes, withModifiers: modifiers)
+            classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 
     /// Sets the aspect ratio to square (1:1).
     ///
     /// - Parameters:
-    ///   - modifiers: Zero or more modifiers to scope the styles.
     /// - Returns: A new element with square aspect ratio.
-    public func aspectRatio(on modifiers: Modifier...) -> some Markup {
+    public func aspectRatio() -> some Markup {
         let params = SizingStyleOperation.AspectRatioParameters(isSquare: true)
         let classes = SizingStyleOperation.shared.applyAspectRatioClasses(
             params: params)
         let newClasses = StyleUtilities.combineClasses(
-            classes, withModifiers: modifiers)
+            classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 
     /// Sets the aspect ratio to video dimensions (16:9).
     ///
     /// - Parameters:
-    ///   - modifiers: Zero or more modifiers to scope the styles.
     /// - Returns: A new element with video aspect ratio.
-    public func aspectRatioVideo(on modifiers: Modifier...) -> some Markup {
+    public func aspectRatioVideo() -> some Markup {
         let params = SizingStyleOperation.AspectRatioParameters(isVideo: true)
         let classes = SizingStyleOperation.shared.applyAspectRatioClasses(
             params: params)
         let newClasses = StyleUtilities.combineClasses(
-            classes, withModifiers: modifiers)
+            classes)
         return StyleModifier(content: self, classes: newClasses)
     }
 }

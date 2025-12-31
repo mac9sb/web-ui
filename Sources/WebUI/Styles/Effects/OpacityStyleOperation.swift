@@ -49,7 +49,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - value: The opacity value, typically between 0 and 100.
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated opacity classes including applied modifiers.
     ///
     /// ## Example
@@ -59,15 +58,13 @@ extension Markup {
     ///   .opacity(100, on: .hover)
     /// ```
     public func opacity(
-        _ value: Int,
-        on modifiers: Modifier...
+        _ value: Int
     ) -> some Markup {
         let params = OpacityStyleOperation.Parameters(value: value)
 
         return OpacityStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 }

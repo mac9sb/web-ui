@@ -13,48 +13,29 @@ public enum StyleUtilities {
         varargs.isEmpty ? [] : varargs
     }
 
-    /// Safely combines a class with modifiers
+    /// Safely combines a class
     ///
-    /// This is a safer version of the combineClasses function that handles
-    /// nil or empty arrays gracefully.
+    /// Returns the base class as an array.
     ///
     /// - Parameters:
     ///   - baseClass: The base class name
-    ///   - modifiers: The modifiers to apply
-    /// - Returns: The combined class names
+    /// - Returns: The class name in an array
     public static func combineClass(
-        _ baseClass: String, withModifiers modifiers: [Modifier]
+        _ baseClass: String
     ) -> [String] {
-        if modifiers.isEmpty {
-            return [baseClass]
-        }
-
-        let modifierPrefix = modifiers.map { modifier in modifier.rawValue }
-            .joined()
-        return ["\(modifierPrefix)\(baseClass)"]
+        return [baseClass]
     }
 
-    /// Safely combines multiple classes with modifiers
+    /// Safely combines multiple classes
     ///
-    /// This is a safer version of the combineClasses function that handles
-    /// nil or empty arrays gracefully.
+    /// Returns the base classes unchanged.
     ///
     /// - Parameters:
     ///   - baseClasses: The base class names
-    ///   - modifiers: The modifiers to apply
-    /// - Returns: The combined class names
+    /// - Returns: The class names
     public static func combineClasses(
-        _ baseClasses: [String], withModifiers modifiers: [Modifier]
+        _ baseClasses: [String]
     ) -> [String] {
-        if baseClasses.isEmpty {
-            return []
-        }
-
-        if modifiers.isEmpty {
-            return baseClasses
-        }
-
-        let modifierPrefix = modifiers.map { $0.rawValue }.joined()
-        return baseClasses.map { "\(modifierPrefix)\($0)" }
+        return baseClasses
     }
 }

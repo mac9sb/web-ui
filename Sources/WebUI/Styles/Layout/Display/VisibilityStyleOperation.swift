@@ -52,7 +52,6 @@ extension Markup {
     ///
     /// - Parameters:
     ///   - isHidden: Whether the element should be hidden (default: true).
-    ///   - modifiers: Zero or more modifiers (e.g., `.hover`, `.md`) to scope the styles.
     /// - Returns: Markup with updated visibility classes.
     ///
     /// ## Example
@@ -70,15 +69,13 @@ extension Markup {
     /// Stack()(tag: "div").hidden(false, on: .md)
     /// ```
     public func hidden(
-        _ isHidden: Bool = true,
-        on modifiers: Modifier...
+        _ isHidden: Bool = true
     ) -> some Markup {
         let params = VisibilityStyleOperation.Parameters(isHidden: isHidden)
 
         return VisibilityStyleOperation.shared.applyTo(
             self,
-            params: params,
-            modifiers: modifiers
+            params: params
         )
     }
 
