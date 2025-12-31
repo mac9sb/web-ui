@@ -116,6 +116,8 @@ public struct MarkupClassContainer<Content: Markup>: Markup {
     public init(content: Content, classes: [String]) {
         self.content = content
         self.classes = classes
+        // Collect classes for CSS generation
+        ClassCollector.shared.addClasses(classes)
     }
 
     public var body: MarkupString {
