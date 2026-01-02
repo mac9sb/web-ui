@@ -62,8 +62,16 @@ public enum CSSGenerator {
             }
         }
 
-        // Build final CSS
-        var result = cssRules.joined(separator: "\n")
+        // Build final CSS with reset
+        let cssReset = """
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        a { text-decoration: none; color: inherit; }
+        summary { transition: transform 0.3s ease-in-out; }
+        details.group[open] > summary { transform: rotate(-180deg); }
+        """
+
+        var result = cssReset + "\n" + cssRules.joined(separator: "\n")
 
         // Add media queries
         for (mediaQuery, rules) in mediaQueries.sorted(by: { $0.key < $1.key }) {
@@ -134,23 +142,31 @@ public enum CSSGenerator {
     ///   - modifiers: Array of modifier strings
     /// - Returns: Escaped selector string
     private static func buildSelector(for baseClass: String, modifiers: [String]) -> String {
-        let stateModifiers = modifiers.filter { !isBreakpoint($0) }
-        var selector = baseClass.replacingOccurrences(of: ":", with: "\\:")
+        var selector = baseClass
+            .replacingOccurrences(of: "#", with: "\\#")
+            .replacingOccurrences(of: "[", with: "\\[")
+            .replacingOccurrences(of: "]", with: "\\]")
+            .replacingOccurrences(of: ":", with: "\\:")
 
-        // Add pseudo-class selectors
-        for modifier in stateModifiers {
+        // Add all modifiers to the selector (including breakpoints)
+        // Breakpoints get media queries, but still need to be in the class name
+        for modifier in modifiers.reversed() {  // Reversed to maintain order: md:hover:flex
             selector = "\(modifier)\\:\(selector)"
-            switch modifier {
-            case "hover": selector += ":hover"
-            case "focus": selector += ":focus"
-            case "active": selector += ":active"
-            case "disabled": selector += ":disabled"
-            case "group-hover": selector = "group:hover \(selector)"
-            case "group-focus": selector = "group:focus \(selector)"
-            case "peer-hover": selector = "peer:hover ~ \(selector)"
-            case "peer-focus": selector = "peer:focus ~ \(selector)"
-            case "peer-checked": selector = "peer:checked ~ \(selector)"
-            default: break
+
+            // Add pseudo-class selectors for state modifiers
+            if !isBreakpoint(modifier) {
+                switch modifier {
+                case "hover": selector += ":hover"
+                case "focus": selector += ":focus"
+                case "active": selector += ":active"
+                case "disabled": selector += ":disabled"
+                case "group-hover": selector = "group:hover \(selector)"
+                case "group-focus": selector = "group:focus \(selector)"
+                case "peer-hover": selector = "peer:hover ~ \(selector)"
+                case "peer-focus": selector = "peer:focus ~ \(selector)"
+                case "peer-checked": selector = "peer:checked ~ \(selector)"
+                default: break
+                }
             }
         }
 
@@ -375,11 +391,11 @@ public enum CSSGenerator {
         }
 
         // Border sides
-        if baseClass == "border-t" { return "border-top-width: 1px;" }
-        if baseClass == "border-b" { return "border-bottom-width: 1px;" }
-        if baseClass == "border-l" { return "border-left-width: 1px;" }
-        if baseClass == "border-r" { return "border-right-width: 1px;" }
-        if baseClass == "border" { return "border-width: 1px;" }
+        if baseClass == "border-t" { return "border-top-width: 1px; border-top-style: solid;" }
+        if baseClass == "border-b" { return "border-bottom-width: 1px; border-bottom-style: solid;" }
+        if baseClass == "border-l" { return "border-left-width: 1px; border-left-style: solid;" }
+        if baseClass == "border-r" { return "border-right-width: 1px; border-right-style: solid;" }
+        if baseClass == "border" { return "border-width: 1px; border-style: solid;" }
 
         // Border radius
         if baseClass.hasPrefix("rounded") {
@@ -807,19 +823,19 @@ public enum CSSGenerator {
     /// Parses border width utilities
     private static func parseBorderWidth(from className: String) -> String? {
         if className == "border" {
-            return "border-width: 1px;"
+            return "border-width: 1px; border-style: solid;"
         }
         if className == "border-0" {
             return "border-width: 0;"
         }
         if className == "border-2" {
-            return "border-width: 2px;"
+            return "border-width: 2px; border-style: solid;"
         }
         if className == "border-4" {
-            return "border-width: 4px;"
+            return "border-width: 4px; border-style: solid;"
         }
         if className == "border-8" {
-            return "border-width: 8px;"
+            return "border-width: 8px; border-style: solid;"
         }
         return nil
     }
