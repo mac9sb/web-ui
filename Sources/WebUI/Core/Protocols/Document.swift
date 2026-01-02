@@ -83,25 +83,38 @@ extension Document {
         websiteScripts: [Script]?,
         websiteStylesheets: [String]?,
         websiteHead: String?,
-        cssConfig: CSSOutputConfig? = nil
+        cssConfig: CSSOutputConfig? = nil,
+        slug: String? = nil
     ) throws -> String {
-        // Clear previous class collection
-        ClassCollector.shared.clear()
-
-        // Render body to collect all CSS classes
+        // Render body
         let renderedBody = body.render()
 
-        // Generate CSS from collected classes
-        let generatedCSS = ClassCollector.shared.generateCSS()
-
-        // Write CSS to disk and get link path
+        // Get CSS paths based on rendering mode
         let config = cssConfig ?? .staticDefault
         let writer = CSSWriter(config: config)
+        let cssSlug = slug ?? path ?? "index"
 
-        // Use page path as slug for page-specific CSS
-        let slug = path ?? "index"
-        try writer.writePageCSS(generatedCSS, slug: slug)
-        let pageCSSPath = writer.pageCSSPath(slug: slug)
+        // In SSR mode, CSS is pre-generated - just link to the files
+        // In static mode, generate CSS on-the-fly
+        var cssFiles: [String] = []
+
+        switch config.mode {
+        case .ssr:
+            // Link to pre-generated global + page CSS
+            cssFiles = [
+                writer.globalCSSPath(),
+                writer.pageCSSPath(slug: cssSlug),
+            ]
+
+        case .staticSite:
+            // Generate CSS on-the-fly for static site generation
+            ClassCollector.shared.clear()
+            _ = body.render()  // Re-render to collect classes
+
+            let generatedCSS = ClassCollector.shared.generateCSS()
+            try writer.writePageCSS(generatedCSS, slug: cssSlug)
+            cssFiles = [writer.pageCSSPath(slug: cssSlug)]
+        }
 
         var optionalTags: [String] = metadata.tags + []
         var bodyTags: [String] = []
@@ -118,7 +131,7 @@ extension Document {
         }
 
         // Combine website stylesheets with document stylesheets + generated CSS
-        let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? []) + [pageCSSPath]
+        let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? []) + cssFiles
         if !allStylesheets.isEmpty {
             for stylesheet in allStylesheets {
                 optionalTags.append(
@@ -139,8 +152,10 @@ extension Document {
                 <meta name="generator" content="WebUI" />
                 \(websiteHead ?? "")\(head ?? "")
               </head>
-              \(renderedBody)
-              \(bodyTags.joined(separator: "\n"))
+              <body>
+                \(renderedBody)
+                \(bodyTags.joined(separator: "\n"))
+              </body>
             </html>
             """
         return HTMLMinifier.minify(html)
