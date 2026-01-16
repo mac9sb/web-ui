@@ -30,6 +30,9 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
 
         /// The text color
         public let color: Color?
+        
+        /// The text casing
+        public let casing: Casing?
 
         /// The font family
         public let family: String?
@@ -55,6 +58,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
             decoration: Decoration? = nil,
             wrapping: Wrapping? = nil,
             color: Color? = nil,
+            casing: Casing? = nil,
             family: String? = nil
         ) {
             self.size = size
@@ -65,6 +69,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
             self.decoration = decoration
             self.wrapping = wrapping
             self.color = color
+            self.casing = casing
             self.family = family
         }
 
@@ -82,6 +87,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
                 decoration: params.get("decoration"),
                 wrapping: params.get("wrapping"),
                 color: params.get("color"),
+                casing: params.get("casing"),
                 family: params.get("family")
             )
         }
@@ -106,6 +112,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
         }
         if let wrapping = params.wrapping { classes.append(wrapping.className) }
         if let color = params.color { classes.append("text-\(color.rawValue)") }
+        if let casing = params.casing { classes.append(casing.className)}
         if let family = params.family { classes.append("font-[\(family)]") }
 
         return classes
@@ -164,6 +171,7 @@ extension Markup {
         decoration: Decoration? = nil,
         wrapping: Wrapping? = nil,
         color: Color? = nil,
+        casing: Casing? = nil,
         family: String? = nil
     ) -> some Markup {
         let params = FontStyleOperation.Parameters(
@@ -175,6 +183,7 @@ extension Markup {
             decoration: decoration,
             wrapping: wrapping,
             color: color,
+            casing: casing,
             family: family
         )
 

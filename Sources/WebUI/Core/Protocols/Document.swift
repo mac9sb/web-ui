@@ -134,8 +134,17 @@ extension Document {
         let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? []) + cssFiles
         if !allStylesheets.isEmpty {
             for stylesheet in allStylesheets {
+                // Don't prefix external URLs (http/https) with /public/
+                let href: String
+                if stylesheet.hasPrefix("http://") || stylesheet.hasPrefix("https://") {
+                    href = stylesheet
+                } else if stylesheet.hasPrefix("/") {
+                    href = "/public\(stylesheet)"
+                } else {
+                    href = "/public/\(stylesheet)"
+                }
                 optionalTags.append(
-                    "<link rel=\"stylesheet\" href=\"\(stylesheet)\">"
+                    "<link rel=\"stylesheet\" href=\"\(href)\">"
                 )
             }
         }

@@ -111,13 +111,17 @@ public struct CSSWriter {
     ///
     /// - Parameters:
     ///   - css: CSS content to write
-    ///   - slug: Page slug (e.g., "about", "contact")
+    ///   - slug: Page slug (e.g., "about", "contact", "logs/post-name")
     /// - Throws: File I/O errors
     public func writePageCSS(_ css: String, slug: String) throws {
         let stylesDir = "\(config.outputDirectory)/styles"
-        try createDirectoryIfNeeded(stylesDir)
-
         let filePath = "\(stylesDir)/page-\(slug).css"
+
+        // Create intermediate directories if slug contains path components
+        let fileURL = URL(fileURLWithPath: filePath)
+        let parentDir = fileURL.deletingLastPathComponent().path
+        try createDirectoryIfNeeded(parentDir)
+
         try css.write(toFile: filePath, atomically: true, encoding: .utf8)
     }
 

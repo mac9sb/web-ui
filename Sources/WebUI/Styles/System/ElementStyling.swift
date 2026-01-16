@@ -24,7 +24,7 @@ public enum ElementStyling {
     public static func combineClasses(
         _ baseClasses: [String]
     ) -> [String] {
-        return baseClasses
+        baseClasses
     }
 }
 

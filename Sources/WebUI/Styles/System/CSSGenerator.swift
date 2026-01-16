@@ -64,12 +64,12 @@ public enum CSSGenerator {
 
         // Build final CSS with reset
         let cssReset = """
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; }
-        a { text-decoration: none; color: inherit; }
-        summary { transition: transform 0.3s ease-in-out; }
-        details.group[open] > summary { transform: rotate(-180deg); }
-        """
+            * { box-sizing: border-box; }
+            html, body { margin: 0; padding: 0; }
+            a { text-decoration: none; color: inherit; }
+            summary { transition: transform 0.3s ease-in-out; }
+            details.group[open] > summary { transform: rotate(-180deg); }
+            """
 
         var result = cssReset + "\n" + cssRules.joined(separator: "\n")
 
@@ -132,7 +132,12 @@ public enum CSSGenerator {
             return nil
         }
 
-        return ".\(selector) { \(properties) }"
+        switch true {
+        case selector.starts(with: "space-"):
+            return ".\(selector) > * + * { \(properties) }"
+        default:
+            return ".\(selector) { \(properties) }"
+        }
     }
 
     /// Builds a CSS selector with modifiers.
@@ -142,7 +147,8 @@ public enum CSSGenerator {
     ///   - modifiers: Array of modifier strings
     /// - Returns: Escaped selector string
     private static func buildSelector(for baseClass: String, modifiers: [String]) -> String {
-        var selector = baseClass
+        var selector =
+            baseClass
             .replacingOccurrences(of: "#", with: "\\#")
             .replacingOccurrences(of: "[", with: "\\[")
             .replacingOccurrences(of: "]", with: "\\]")
@@ -160,11 +166,11 @@ public enum CSSGenerator {
                 case "focus": selector += ":focus"
                 case "active": selector += ":active"
                 case "disabled": selector += ":disabled"
-                case "group-hover": selector = "group:hover \(selector)"
-                case "group-focus": selector = "group:focus \(selector)"
-                case "peer-hover": selector = "peer:hover ~ \(selector)"
-                case "peer-focus": selector = "peer:focus ~ \(selector)"
-                case "peer-checked": selector = "peer:checked ~ \(selector)"
+                case "group-hover": selector = "group:hover .\(selector)"
+                case "group-focus": selector = "group:focus .\(selector)"
+                case "peer-hover": selector = "peer:hover ~ .\(selector)"
+                case "peer-focus": selector = "peer:focus ~ .\(selector)"
+                case "peer-checked": selector = "peer:checked ~ .\(selector)"
                 default: break
                 }
             }
@@ -220,6 +226,26 @@ public enum CSSGenerator {
         if baseClass.hasPrefix("items-") {
             if let value = parseFlexAlign(from: baseClass) {
                 return "align-items: \(value);"
+            }
+        }
+
+        // Align content (for grid/flexbox)
+        if baseClass == "content-start" { return "align-content: flex-start;" }
+        if baseClass == "content-end" { return "align-content: flex-end;" }
+        if baseClass == "content-center" { return "align-content: center;" }
+        if baseClass == "content-between" { return "align-content: space-between;" }
+        if baseClass == "content-around" { return "align-content: space-around;" }
+        if baseClass == "content-evenly" { return "align-content: space-evenly;" }
+
+        // Space between (gap for flex/grid children)
+        if baseClass.hasPrefix("space-x-") {
+            if let space = parseSpaceBetween(from: baseClass, axis: "x") {
+                return space
+            }
+        }
+        if baseClass.hasPrefix("space-y-") {
+            if let space = parseSpaceBetween(from: baseClass, axis: "y") {
+                return space
             }
         }
 
@@ -279,9 +305,9 @@ public enum CSSGenerator {
         if baseClass == "inset-full" { return "top: 100%; right: 100%; bottom: 100%; left: 100%;" }
 
         // Individual inset positions
-        if baseClass.hasPrefix("top-") || baseClass.hasPrefix("left-") ||
-           baseClass.hasPrefix("right-") || baseClass.hasPrefix("bottom-") ||
-           baseClass.hasPrefix("inset-x-") || baseClass.hasPrefix("inset-y-") {
+        if baseClass.hasPrefix("top-") || baseClass.hasPrefix("left-") || baseClass.hasPrefix("right-") || baseClass.hasPrefix("bottom-") || baseClass.hasPrefix("inset-x-")
+            || baseClass.hasPrefix("inset-y-")
+        {
             if let inset = parseInset(from: baseClass) {
                 return inset
             }
@@ -327,16 +353,18 @@ public enum CSSGenerator {
         }
 
         // Padding
-        if baseClass.hasPrefix("p-") || baseClass.hasPrefix("px-") || baseClass.hasPrefix("py-") ||
-           baseClass.hasPrefix("pt-") || baseClass.hasPrefix("pr-") || baseClass.hasPrefix("pb-") || baseClass.hasPrefix("pl-") {
+        if baseClass.hasPrefix("p-") || baseClass.hasPrefix("px-") || baseClass.hasPrefix("py-") || baseClass.hasPrefix("pt-") || baseClass.hasPrefix("pr-")
+            || baseClass.hasPrefix("pb-") || baseClass.hasPrefix("pl-")
+        {
             if let spacing = parseSpacing(from: baseClass) {
                 return spacing
             }
         }
 
         // Margin
-        if baseClass.hasPrefix("m-") || baseClass.hasPrefix("mx-") || baseClass.hasPrefix("my-") ||
-           baseClass.hasPrefix("mt-") || baseClass.hasPrefix("mr-") || baseClass.hasPrefix("mb-") || baseClass.hasPrefix("ml-") {
+        if baseClass.hasPrefix("m-") || baseClass.hasPrefix("mx-") || baseClass.hasPrefix("my-") || baseClass.hasPrefix("mt-") || baseClass.hasPrefix("mr-")
+            || baseClass.hasPrefix("mb-") || baseClass.hasPrefix("ml-")
+        {
             if let spacing = parseSpacing(from: baseClass) {
                 return spacing
             }
@@ -363,6 +391,12 @@ public enum CSSGenerator {
                 return "font-family: \(fontFamily);"
             }
         }
+        
+        // Casing
+        if baseClass == "uppercase" { return "text-transform: uppercase;" }
+        if baseClass == "lowerase" { return "text-transform: lowercase;" }
+        if baseClass == "capitalize" { return "text-transform: capitalize;" }
+        if baseClass == "normal-case" { return "text-transform: none;" }
 
         // Leading (line-height)
         if baseClass.hasPrefix("leading-") {
@@ -378,8 +412,11 @@ public enum CSSGenerator {
             }
         }
 
-        // Border colors
-        if baseClass.hasPrefix("border-") && !baseClass.contains("border-t") && !baseClass.contains("border-b") && !baseClass.contains("border-l") && !baseClass.contains("border-r") {
+        // Border colors (not edge-specific like border-t-, border-b-, etc.)
+        if baseClass.hasPrefix("border-") && !baseClass.hasPrefix("border-t-") && !baseClass.hasPrefix("border-b-") && !baseClass.hasPrefix("border-l-")
+            && !baseClass.hasPrefix("border-r-") && !baseClass.hasPrefix("border-x-") && !baseClass.hasPrefix("border-y-") && baseClass != "border-t" && baseClass != "border-b"
+            && baseClass != "border-l" && baseClass != "border-r" && baseClass != "border-x" && baseClass != "border-y"
+        {
             // Check for border width first
             if let borderWidth = parseBorderWidth(from: baseClass) {
                 return borderWidth
@@ -390,12 +427,24 @@ public enum CSSGenerator {
             }
         }
 
-        // Border sides
+        // Border sides (basic)
         if baseClass == "border-t" { return "border-top-width: 1px; border-top-style: solid;" }
         if baseClass == "border-b" { return "border-bottom-width: 1px; border-bottom-style: solid;" }
         if baseClass == "border-l" { return "border-left-width: 1px; border-left-style: solid;" }
         if baseClass == "border-r" { return "border-right-width: 1px; border-right-style: solid;" }
+        if baseClass == "border-x" { return "border-left-width: 1px; border-left-style: solid; border-right-width: 1px; border-right-style: solid;" }
+        if baseClass == "border-y" { return "border-top-width: 1px; border-top-style: solid; border-bottom-width: 1px; border-bottom-style: solid;" }
         if baseClass == "border" { return "border-width: 1px; border-style: solid;" }
+
+        // Border sides with widths (e.g., border-b-1, border-x-2)
+        if let borderSide = parseBorderSide(from: baseClass) {
+            return borderSide
+        }
+
+        // Border sides with colors (e.g., border-b-black, border-t-zinc-800)
+        if let borderSideColor = parseBorderSideColor(from: baseClass) {
+            return borderSideColor
+        }
 
         // Border radius
         if baseClass.hasPrefix("rounded") {
@@ -508,6 +557,35 @@ public enum CSSGenerator {
             }
         }
 
+        // Filter utilities
+        if baseClass == "invert" { return "filter: invert(100%);" }
+        if baseClass == "invert-0" { return "filter: invert(0);" }
+        if baseClass.hasPrefix("invert-") {
+            let value = String(baseClass.dropFirst(7))
+            if let amount = Int(value) {
+                return "filter: invert(\(amount)%);"
+            }
+        }
+        if baseClass == "grayscale" { return "filter: grayscale(100%);" }
+        if baseClass == "grayscale-0" { return "filter: grayscale(0);" }
+        if baseClass.hasPrefix("brightness-") {
+            let value = String(baseClass.dropFirst(11))
+            if let amount = Int(value) {
+                return "filter: brightness(\(Double(amount) / 100));"
+            }
+        }
+        if baseClass.hasPrefix("contrast-") {
+            let value = String(baseClass.dropFirst(9))
+            if let amount = Int(value) {
+                return "filter: contrast(\(Double(amount) / 100));"
+            }
+        }
+        if baseClass.hasPrefix("blur-") {
+            if let blur = parseBlur(from: baseClass) {
+                return "filter: blur(\(blur));"
+            }
+        }
+
         // Arbitrary values (e.g., bg-[#020617], text-[#F8FAFC], font-[system-ui])
         if baseClass.contains("[") && baseClass.contains("]") {
             if let arbitraryValue = parseArbitraryValue(from: baseClass) {
@@ -528,14 +606,302 @@ public enum CSSGenerator {
     private static func parseColor(from className: String, prefix: String) -> String? {
         let colorPart = className.replacingOccurrences(of: prefix, with: "")
 
-        // Simple color mapping (would need comprehensive color palette)
+        // Complete Tailwind CSS color palette
         let colors: [String: String] = [
-            "blue-500": "rgb(59 130 246)",
-            "blue-600": "rgb(37 99 235)",
+            // White and Black
+            "white": "rgb(255 255 255)",
+            "black": "rgb(0 0 0)",
+
+            // Slate
+            "slate-50": "rgb(248 250 252)",
+            "slate-100": "rgb(241 245 249)",
+            "slate-200": "rgb(226 232 240)",
+            "slate-300": "rgb(203 213 225)",
+            "slate-400": "rgb(148 163 184)",
+            "slate-500": "rgb(100 116 139)",
+            "slate-600": "rgb(71 85 105)",
+            "slate-700": "rgb(51 65 85)",
+            "slate-800": "rgb(30 41 59)",
+            "slate-900": "rgb(15 23 42)",
+            "slate-950": "rgb(2 6 23)",
+
+            // Gray
+            "gray-50": "rgb(249 250 251)",
+            "gray-100": "rgb(243 244 246)",
+            "gray-200": "rgb(229 231 235)",
+            "gray-300": "rgb(209 213 219)",
+            "gray-400": "rgb(156 163 175)",
+            "gray-500": "rgb(107 114 128)",
+            "gray-600": "rgb(75 85 99)",
+            "gray-700": "rgb(55 65 81)",
+            "gray-800": "rgb(31 41 55)",
             "gray-900": "rgb(17 24 39)",
             "gray-950": "rgb(3 7 18)",
-            "white": "rgb(255 255 255)",
-            // Add more colors as needed
+
+            // Zinc
+            "zinc-50": "rgb(250 250 250)",
+            "zinc-100": "rgb(244 244 245)",
+            "zinc-200": "rgb(228 228 231)",
+            "zinc-300": "rgb(212 212 216)",
+            "zinc-400": "rgb(161 161 170)",
+            "zinc-500": "rgb(113 113 122)",
+            "zinc-600": "rgb(82 82 91)",
+            "zinc-700": "rgb(63 63 70)",
+            "zinc-800": "rgb(39 39 42)",
+            "zinc-900": "rgb(24 24 27)",
+            "zinc-950": "rgb(9 9 11)",
+
+            // Neutral
+            "neutral-50": "rgb(250 250 250)",
+            "neutral-100": "rgb(245 245 245)",
+            "neutral-200": "rgb(229 229 229)",
+            "neutral-300": "rgb(212 212 212)",
+            "neutral-400": "rgb(163 163 163)",
+            "neutral-500": "rgb(115 115 115)",
+            "neutral-600": "rgb(82 82 82)",
+            "neutral-700": "rgb(64 64 64)",
+            "neutral-800": "rgb(38 38 38)",
+            "neutral-900": "rgb(23 23 23)",
+            "neutral-950": "rgb(10 10 10)",
+
+            // Stone
+            "stone-50": "rgb(250 250 249)",
+            "stone-100": "rgb(245 245 244)",
+            "stone-200": "rgb(231 229 228)",
+            "stone-300": "rgb(214 211 209)",
+            "stone-400": "rgb(168 162 158)",
+            "stone-500": "rgb(120 113 108)",
+            "stone-600": "rgb(87 83 78)",
+            "stone-700": "rgb(68 64 60)",
+            "stone-800": "rgb(41 37 36)",
+            "stone-900": "rgb(28 25 23)",
+            "stone-950": "rgb(12 10 9)",
+
+            // Red
+            "red-50": "rgb(254 242 242)",
+            "red-100": "rgb(254 226 226)",
+            "red-200": "rgb(254 202 202)",
+            "red-300": "rgb(252 165 165)",
+            "red-400": "rgb(248 113 113)",
+            "red-500": "rgb(239 68 68)",
+            "red-600": "rgb(220 38 38)",
+            "red-700": "rgb(185 28 28)",
+            "red-800": "rgb(153 27 27)",
+            "red-900": "rgb(127 29 29)",
+            "red-950": "rgb(69 10 10)",
+
+            // Orange
+            "orange-50": "rgb(255 247 237)",
+            "orange-100": "rgb(255 237 213)",
+            "orange-200": "rgb(254 215 170)",
+            "orange-300": "rgb(253 186 116)",
+            "orange-400": "rgb(251 146 60)",
+            "orange-500": "rgb(249 115 22)",
+            "orange-600": "rgb(234 88 12)",
+            "orange-700": "rgb(194 65 12)",
+            "orange-800": "rgb(154 52 18)",
+            "orange-900": "rgb(124 45 18)",
+            "orange-950": "rgb(67 20 7)",
+
+            // Amber
+            "amber-50": "rgb(255 251 235)",
+            "amber-100": "rgb(254 243 199)",
+            "amber-200": "rgb(253 230 138)",
+            "amber-300": "rgb(252 211 77)",
+            "amber-400": "rgb(251 191 36)",
+            "amber-500": "rgb(245 158 11)",
+            "amber-600": "rgb(217 119 6)",
+            "amber-700": "rgb(180 83 9)",
+            "amber-800": "rgb(146 64 14)",
+            "amber-900": "rgb(120 53 15)",
+            "amber-950": "rgb(69 26 3)",
+
+            // Yellow
+            "yellow-50": "rgb(254 252 232)",
+            "yellow-100": "rgb(254 249 195)",
+            "yellow-200": "rgb(254 240 138)",
+            "yellow-300": "rgb(253 224 71)",
+            "yellow-400": "rgb(250 204 21)",
+            "yellow-500": "rgb(234 179 8)",
+            "yellow-600": "rgb(202 138 4)",
+            "yellow-700": "rgb(161 98 7)",
+            "yellow-800": "rgb(133 77 14)",
+            "yellow-900": "rgb(113 63 18)",
+            "yellow-950": "rgb(66 32 6)",
+
+            // Lime
+            "lime-50": "rgb(247 254 231)",
+            "lime-100": "rgb(236 252 203)",
+            "lime-200": "rgb(217 249 157)",
+            "lime-300": "rgb(190 242 100)",
+            "lime-400": "rgb(163 230 53)",
+            "lime-500": "rgb(132 204 22)",
+            "lime-600": "rgb(101 163 13)",
+            "lime-700": "rgb(77 124 15)",
+            "lime-800": "rgb(63 98 18)",
+            "lime-900": "rgb(54 83 20)",
+            "lime-950": "rgb(26 46 5)",
+
+            // Green
+            "green-50": "rgb(240 253 244)",
+            "green-100": "rgb(220 252 231)",
+            "green-200": "rgb(187 247 208)",
+            "green-300": "rgb(134 239 172)",
+            "green-400": "rgb(74 222 128)",
+            "green-500": "rgb(34 197 94)",
+            "green-600": "rgb(22 163 74)",
+            "green-700": "rgb(21 128 61)",
+            "green-800": "rgb(22 101 52)",
+            "green-900": "rgb(20 83 45)",
+            "green-950": "rgb(5 46 22)",
+
+            // Emerald
+            "emerald-50": "rgb(236 253 245)",
+            "emerald-100": "rgb(209 250 229)",
+            "emerald-200": "rgb(167 243 208)",
+            "emerald-300": "rgb(110 231 183)",
+            "emerald-400": "rgb(52 211 153)",
+            "emerald-500": "rgb(16 185 129)",
+            "emerald-600": "rgb(5 150 105)",
+            "emerald-700": "rgb(4 120 87)",
+            "emerald-800": "rgb(6 95 70)",
+            "emerald-900": "rgb(6 78 59)",
+            "emerald-950": "rgb(2 44 34)",
+
+            // Teal
+            "teal-50": "rgb(240 253 250)",
+            "teal-100": "rgb(204 251 241)",
+            "teal-200": "rgb(153 246 228)",
+            "teal-300": "rgb(94 234 212)",
+            "teal-400": "rgb(45 212 191)",
+            "teal-500": "rgb(20 184 166)",
+            "teal-600": "rgb(13 148 136)",
+            "teal-700": "rgb(15 118 110)",
+            "teal-800": "rgb(17 94 89)",
+            "teal-900": "rgb(19 78 74)",
+            "teal-950": "rgb(4 47 46)",
+
+            // Cyan
+            "cyan-50": "rgb(236 254 255)",
+            "cyan-100": "rgb(207 250 254)",
+            "cyan-200": "rgb(165 243 252)",
+            "cyan-300": "rgb(103 232 249)",
+            "cyan-400": "rgb(34 211 238)",
+            "cyan-500": "rgb(6 182 212)",
+            "cyan-600": "rgb(8 145 178)",
+            "cyan-700": "rgb(14 116 144)",
+            "cyan-800": "rgb(21 94 117)",
+            "cyan-900": "rgb(22 78 99)",
+            "cyan-950": "rgb(8 51 68)",
+
+            // Sky
+            "sky-50": "rgb(240 249 255)",
+            "sky-100": "rgb(224 242 254)",
+            "sky-200": "rgb(186 230 253)",
+            "sky-300": "rgb(125 211 252)",
+            "sky-400": "rgb(56 189 248)",
+            "sky-500": "rgb(14 165 233)",
+            "sky-600": "rgb(2 132 199)",
+            "sky-700": "rgb(3 105 161)",
+            "sky-800": "rgb(7 89 133)",
+            "sky-900": "rgb(12 74 110)",
+            "sky-950": "rgb(8 47 73)",
+
+            // Blue
+            "blue-50": "rgb(239 246 255)",
+            "blue-100": "rgb(219 234 254)",
+            "blue-200": "rgb(191 219 254)",
+            "blue-300": "rgb(147 197 253)",
+            "blue-400": "rgb(96 165 250)",
+            "blue-500": "rgb(59 130 246)",
+            "blue-600": "rgb(37 99 235)",
+            "blue-700": "rgb(29 78 216)",
+            "blue-800": "rgb(30 64 175)",
+            "blue-900": "rgb(30 58 138)",
+            "blue-950": "rgb(23 37 84)",
+
+            // Indigo
+            "indigo-50": "rgb(238 242 255)",
+            "indigo-100": "rgb(224 231 255)",
+            "indigo-200": "rgb(199 210 254)",
+            "indigo-300": "rgb(165 180 252)",
+            "indigo-400": "rgb(129 140 248)",
+            "indigo-500": "rgb(99 102 241)",
+            "indigo-600": "rgb(79 70 229)",
+            "indigo-700": "rgb(67 56 202)",
+            "indigo-800": "rgb(55 48 163)",
+            "indigo-900": "rgb(49 46 129)",
+            "indigo-950": "rgb(30 27 75)",
+
+            // Violet
+            "violet-50": "rgb(245 243 255)",
+            "violet-100": "rgb(237 233 254)",
+            "violet-200": "rgb(221 214 254)",
+            "violet-300": "rgb(196 181 253)",
+            "violet-400": "rgb(167 139 250)",
+            "violet-500": "rgb(139 92 246)",
+            "violet-600": "rgb(124 58 237)",
+            "violet-700": "rgb(109 40 217)",
+            "violet-800": "rgb(91 33 182)",
+            "violet-900": "rgb(76 29 149)",
+            "violet-950": "rgb(46 16 101)",
+
+            // Purple
+            "purple-50": "rgb(250 245 255)",
+            "purple-100": "rgb(243 232 255)",
+            "purple-200": "rgb(233 213 255)",
+            "purple-300": "rgb(216 180 254)",
+            "purple-400": "rgb(192 132 252)",
+            "purple-500": "rgb(168 85 247)",
+            "purple-600": "rgb(147 51 234)",
+            "purple-700": "rgb(126 34 206)",
+            "purple-800": "rgb(107 33 168)",
+            "purple-900": "rgb(88 28 135)",
+            "purple-950": "rgb(59 7 100)",
+
+            // Fuchsia
+            "fuchsia-50": "rgb(253 244 255)",
+            "fuchsia-100": "rgb(250 232 255)",
+            "fuchsia-200": "rgb(245 208 254)",
+            "fuchsia-300": "rgb(240 171 252)",
+            "fuchsia-400": "rgb(232 121 249)",
+            "fuchsia-500": "rgb(217 70 239)",
+            "fuchsia-600": "rgb(192 38 211)",
+            "fuchsia-700": "rgb(162 28 175)",
+            "fuchsia-800": "rgb(134 25 143)",
+            "fuchsia-900": "rgb(112 26 117)",
+            "fuchsia-950": "rgb(74 4 78)",
+
+            // Pink
+            "pink-50": "rgb(253 242 248)",
+            "pink-100": "rgb(252 231 243)",
+            "pink-200": "rgb(251 207 232)",
+            "pink-300": "rgb(249 168 212)",
+            "pink-400": "rgb(244 114 182)",
+            "pink-500": "rgb(236 72 153)",
+            "pink-600": "rgb(219 39 119)",
+            "pink-700": "rgb(190 24 93)",
+            "pink-800": "rgb(157 23 77)",
+            "pink-900": "rgb(131 24 67)",
+            "pink-950": "rgb(80 7 36)",
+
+            // Rose
+            "rose-50": "rgb(255 241 242)",
+            "rose-100": "rgb(255 228 230)",
+            "rose-200": "rgb(254 205 211)",
+            "rose-300": "rgb(253 164 175)",
+            "rose-400": "rgb(251 113 133)",
+            "rose-500": "rgb(244 63 94)",
+            "rose-600": "rgb(225 29 72)",
+            "rose-700": "rgb(190 18 60)",
+            "rose-800": "rgb(159 18 57)",
+            "rose-900": "rgb(136 19 55)",
+            "rose-950": "rgb(76 5 25)",
+
+            // Transparent
+            "transparent": "transparent",
+            "current": "currentColor",
+            "inherit": "inherit",
         ]
 
         return colors[colorPart]
@@ -548,7 +914,7 @@ public enum CSSGenerator {
     private static func parseSpacing(from className: String) -> String? {
         // Check for auto margins
         if className.hasSuffix("-auto") {
-            let prefix = String(className.dropLast(5)) // Remove "-auto"
+            let prefix = String(className.dropLast(5))  // Remove "-auto"
             switch prefix {
             case "m": return "margin: auto;"
             case "mx": return "margin-left: auto; margin-right: auto;"
@@ -564,11 +930,12 @@ public enum CSSGenerator {
         // Check for arbitrary values like mb-[-50%]
         if className.contains("[") && className.contains("]") {
             guard let startIndex = className.firstIndex(of: "["),
-                  let endIndex = className.firstIndex(of: "]") else {
+                let endIndex = className.firstIndex(of: "]")
+            else {
                 return nil
             }
 
-            let prefix = String(className[..<startIndex]).dropLast() // Remove trailing "-"
+            let prefix = String(className[..<startIndex]).dropLast()  // Remove trailing "-"
             let value = String(className[className.index(after: startIndex)..<endIndex])
 
             switch prefix {
@@ -633,7 +1000,8 @@ public enum CSSGenerator {
     /// Parses arbitrary value syntax (e.g., bg-[#020617], text-[#F8FAFC])
     private static func parseArbitraryValue(from className: String) -> String? {
         guard let startIndex = className.firstIndex(of: "["),
-              let endIndex = className.firstIndex(of: "]") else {
+            let endIndex = className.firstIndex(of: "]")
+        else {
             return nil
         }
 
@@ -667,6 +1035,7 @@ public enum CSSGenerator {
     /// Parses font size utilities
     private static func parseFontSize(from className: String) -> String? {
         let sizes: [String: String] = [
+            "text-xs2": "font-size: 0.65rem; line-height: 1rem;",
             "text-xs": "font-size: 0.75rem; line-height: 1rem;",
             "text-sm": "font-size: 0.875rem; line-height: 1.25rem;",
             "text-base": "font-size: 1rem; line-height: 1.5rem;",
@@ -704,7 +1073,7 @@ public enum CSSGenerator {
     private static func parseFontFamily(from className: String) -> String? {
         // Font families are typically arbitrary values like font-[system-ui]
         // This is handled by parseArbitraryValue
-        return nil
+        nil
     }
 
     /// Parses line height utilities
@@ -726,13 +1095,23 @@ public enum CSSGenerator {
     private static func parseSizing(from className: String, prefix: String) -> String? {
         let sizePart = className.replacingOccurrences(of: prefix, with: "")
 
+        // Handle arbitrary values like [220px], [3.5rem], [100dvh]
+        if sizePart.hasPrefix("[") && sizePart.hasSuffix("]") {
+            let value = String(sizePart.dropFirst().dropLast())
+            return value
+        }
+
         let sizes: [String: String] = [
             "auto": "auto",
             "full": "100%",
             "screen": prefix.contains("h") ? "100vh" : "100vw",
+            "dvh": "100dvh",
+            "svh": "100svh",
+            "lvh": "100lvh",
             "min": "min-content",
             "max": "max-content",
             "fit": "fit-content",
+            "px": "1px",
         ]
 
         if let size = sizes[sizePart] {
@@ -756,17 +1135,17 @@ public enum CSSGenerator {
         // Container max-width values
         if prefix == "max-w-" {
             let maxWidths: [String: String] = [
-                "xs": "20rem",      // 320px
-                "sm": "24rem",      // 384px
-                "md": "28rem",      // 448px
-                "lg": "32rem",      // 512px
-                "xl": "36rem",      // 576px
-                "2xl": "42rem",     // 672px
-                "3xl": "48rem",     // 768px
-                "4xl": "56rem",     // 896px
-                "5xl": "64rem",     // 1024px
-                "6xl": "72rem",     // 1152px
-                "7xl": "80rem",     // 1280px
+                "xs": "20rem",  // 320px
+                "sm": "24rem",  // 384px
+                "md": "28rem",  // 448px
+                "lg": "32rem",  // 512px
+                "xl": "36rem",  // 576px
+                "2xl": "42rem",  // 672px
+                "3xl": "48rem",  // 768px
+                "4xl": "56rem",  // 896px
+                "5xl": "64rem",  // 1024px
+                "6xl": "72rem",  // 1152px
+                "7xl": "80rem",  // 1280px
                 // Specific pixel values
                 "320": "320px",
                 "350": "350px",
@@ -779,6 +1158,20 @@ public enum CSSGenerator {
                 "screen": "100vw",
             ]
             return maxWidths[sizePart]
+        }
+
+        // Min height presets
+        if prefix == "min-h-" {
+            let minHeights: [String: String] = [
+                "0": "0px",
+                "screen": "100vh",
+                "dvh": "100dvh",
+                "svh": "100svh",
+                "lvh": "100lvh",
+            ]
+            if let height = minHeights[sizePart] {
+                return height
+            }
         }
 
         return nil
@@ -827,6 +1220,9 @@ public enum CSSGenerator {
         }
         if className == "border-0" {
             return "border-width: 0;"
+        }
+        if className == "border-1" {
+            return "border-width: 1px; border-style: solid;"
         }
         if className == "border-2" {
             return "border-width: 2px; border-style: solid;"
@@ -885,8 +1281,10 @@ public enum CSSGenerator {
         let transitions: [String: String] = [
             "transition-none": "transition-property: none;",
             "transition-all": "transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
-            "transition": "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
-            "transition-colors": "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
+            "transition":
+                "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
+            "transition-colors":
+                "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
             "transition-opacity": "transition-property: opacity; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
             "transition-shadow": "transition-property: box-shadow; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
             "transition-transform": "transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms;",
@@ -924,6 +1322,22 @@ public enum CSSGenerator {
             return "\(Double(value) / 100)"
         }
         return nil
+    }
+
+    /// Parses blur utilities
+    private static func parseBlur(from className: String) -> String? {
+        let blurPart = className.replacingOccurrences(of: "blur-", with: "")
+        let blurs: [String: String] = [
+            "none": "0",
+            "sm": "4px",
+            "": "8px",
+            "md": "12px",
+            "lg": "16px",
+            "xl": "24px",
+            "2xl": "40px",
+            "3xl": "64px",
+        ]
+        return blurs[blurPart]
     }
 
     /// Parses vertical align utilities
@@ -1038,5 +1452,95 @@ public enum CSSGenerator {
             "tracking-widest": "0.1em",
         ]
         return trackings[className]
+    }
+
+    /// Parses border side utilities with widths (e.g., border-b-1, border-x-2)
+    private static func parseBorderSide(from className: String) -> String? {
+        // Match patterns like border-b-1, border-t-2, border-x-4, border-y-8
+        let sideWidthPatterns: [(prefix: String, cssProperty: String)] = [
+            ("border-t-", "border-top"),
+            ("border-b-", "border-bottom"),
+            ("border-l-", "border-left"),
+            ("border-r-", "border-right"),
+        ]
+
+        for (prefix, cssProperty) in sideWidthPatterns {
+            if className.hasPrefix(prefix) {
+                let widthPart = className.replacingOccurrences(of: prefix, with: "")
+                // Check if it's a number (width value)
+                if let width = Int(widthPart) {
+                    let pixelWidth = width == 1 ? "1px" : "\(width)px"
+                    return "\(cssProperty)-width: \(pixelWidth); \(cssProperty)-style: solid;"
+                }
+            }
+        }
+
+        // Handle border-x and border-y with widths
+        if className.hasPrefix("border-x-") {
+            let widthPart = className.replacingOccurrences(of: "border-x-", with: "")
+            if let width = Int(widthPart) {
+                let pixelWidth = width == 1 ? "1px" : "\(width)px"
+                return "border-left-width: \(pixelWidth); border-left-style: solid; border-right-width: \(pixelWidth); border-right-style: solid;"
+            }
+        }
+
+        if className.hasPrefix("border-y-") {
+            let widthPart = className.replacingOccurrences(of: "border-y-", with: "")
+            if let width = Int(widthPart) {
+                let pixelWidth = width == 1 ? "1px" : "\(width)px"
+                return "border-top-width: \(pixelWidth); border-top-style: solid; border-bottom-width: \(pixelWidth); border-bottom-style: solid;"
+            }
+        }
+
+        return nil
+    }
+
+    /// Parses space between utilities (e.g., space-y-4, space-x-2)
+    /// Uses CSS custom property to set the spacing value
+    private static func parseSpaceBetween(from className: String, axis: String) -> String? {
+        let prefix = "space-\(axis)-"
+        let valuePart = className.replacingOccurrences(of: prefix, with: "")
+
+        if let value = Int(valuePart) {
+            let spacing = "\(Double(value) * 0.25)rem"
+            guard axis == "y" else {
+                return "--space-x-reverse: 0; margin-left: calc(\(spacing) * calc(1 - var(--space-x-reverse))); margin-right: calc(\(spacing) * var(--space-x-reverse));"
+            }
+            return "--space-y-reverse: 0; margin-top: calc(\(spacing) * calc(1 - var(--space-y-reverse))); margin-bottom: calc(\(spacing) * var(--space-y-reverse));"
+        }
+
+        return nil
+    }
+
+    /// Parses border side color utilities (e.g., border-b-black, border-t-zinc-800)
+    private static func parseBorderSideColor(from className: String) -> String? {
+        let sidePrefixes: [(prefix: String, cssProperty: String)] = [
+            ("border-t-", "border-top-color"),
+            ("border-b-", "border-bottom-color"),
+            ("border-l-", "border-left-color"),
+            ("border-r-", "border-right-color"),
+            ("border-x-", "border-left-color: {0}; border-right-color"),
+            ("border-y-", "border-top-color: {0}; border-bottom-color"),
+        ]
+
+        for (prefix, cssProperty) in sidePrefixes {
+            if className.hasPrefix(prefix) {
+                let colorPart = className.replacingOccurrences(of: prefix, with: "")
+                // Skip if it's a number (that's a width, not a color)
+                if Int(colorPart) != nil {
+                    continue
+                }
+                // Try to parse as color
+                if let color = parseColor(from: "border-\(colorPart)", prefix: "border-") {
+                    if cssProperty.contains("{0}") {
+                        // For x/y borders, we need to set both sides
+                        return cssProperty.replacingOccurrences(of: "{0}", with: color) + ": \(color);"
+                    }
+                    return "\(cssProperty): \(color);"
+                }
+            }
+        }
+
+        return nil
     }
 }
