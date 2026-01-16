@@ -13,6 +13,10 @@
 ///   .font(size: .xs)
 /// ```
 public enum TextSize: String {
+    /// Represents an extra-small font size (0.563rem/9px)
+    ///
+    /// Suitable for footer and copyright text
+    case xs2
     /// Represents an extra-small font size (0.75rem/12px)
     ///
     /// Suitable for footnotes, legal text, or fine print.
@@ -240,4 +244,25 @@ public enum Wrapping: String {
 
     /// The corresponding stylesheet class name for this wrapping behavior.
     var className: String { "text-\(rawValue)" }
+}
+
+/// Text casing options for transforming text letter case.
+///
+/// Controls the capitalization style applied to text, such as converting all characters to uppercase, lowercase, or capitalizing each word.
+///
+/// ## Example
+/// ```swift
+/// Text { "section header" }
+///   .font(casing: .uppercase)
+/// ```
+public enum Casing: String {
+    /// Transforms all letters to uppercase.
+    case uppercase
+    /// Transforms all letters to lowercase.
+    case lowercase
+    /// Capitalizes the first letter of each word.
+    case capitalize
+
+    /// The corresponding stylesheet class name for this decoration.
+    var className: String { "\(rawValue)" }
 }

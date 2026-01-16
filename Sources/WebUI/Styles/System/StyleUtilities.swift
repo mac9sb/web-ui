@@ -23,7 +23,7 @@ public enum StyleUtilities {
     public static func combineClass(
         _ baseClass: String
     ) -> [String] {
-        return [baseClass]
+        [baseClass]
     }
 
     /// Safely combines multiple classes
@@ -36,6 +36,6 @@ public enum StyleUtilities {
     public static func combineClasses(
         _ baseClasses: [String]
     ) -> [String] {
-        return baseClasses
+        baseClasses
     }
 }
