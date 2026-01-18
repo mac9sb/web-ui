@@ -14,6 +14,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-markdown", from: "0.6.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.3"),
+        .package(url: "https://github.com/swiftlang/swift-testing", from: "0.11.0"),
     ],
     targets: [
         .target(
@@ -25,7 +26,19 @@ let package = Package(
                 .product(name: "Markdown", package: "swift-markdown")
             ]
         ),
-        .testTarget(name: "WebUITests", dependencies: ["WebUI"]),
-        .testTarget(name: "WebUIMarkdownTests", dependencies: ["WebUIMarkdown"]),
+        .testTarget(
+            name: "WebUITests",
+            dependencies: [
+                "WebUI",
+                .product(name: "Testing", package: "swift-testing")
+            ]
+        ),
+        .testTarget(
+            name: "WebUIMarkdownTests",
+            dependencies: [
+                "WebUIMarkdown",
+                .product(name: "Testing", package: "swift-testing")
+            ]
+        ),
     ]
 )

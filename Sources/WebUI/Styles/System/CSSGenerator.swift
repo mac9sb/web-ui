@@ -49,9 +49,9 @@ public enum CSSGenerator {
 
             // Generate CSS rule
             if let rule = generateRule(for: baseClass, modifiers: modifiers) {
-                // Check if this is a responsive rule
-                if let breakpoint = modifiers.first(where: { isBreakpoint($0) }) {
-                    let mediaQuery = breakpointToMediaQuery(breakpoint)
+                // Check if this needs a media query (responsive breakpoint or dark mode)
+                if let mediaModifier = modifiers.first(where: { isMediaQueryModifier($0) }) {
+                    let mediaQuery = modifierToMediaQuery(mediaModifier)
                     if mediaQueries[mediaQuery] == nil {
                         mediaQueries[mediaQuery] = []
                     }
@@ -62,7 +62,7 @@ public enum CSSGenerator {
             }
         }
 
-        // Build final CSS with reset
+        // Build final CSS with reset and animations
         let cssReset = """
             * { box-sizing: border-box; }
             html, body { margin: 0; padding: 0; }
@@ -71,7 +71,9 @@ public enum CSSGenerator {
             details.group[open] > summary { transform: rotate(-180deg); }
             """
 
-        var result = cssReset + "\n" + cssRules.joined(separator: "\n")
+        let animationKeyframes = generateAnimationKeyframes()
+
+        var result = cssReset + "\n" + animationKeyframes + "\n" + cssRules.joined(separator: "\n")
 
         // Add media queries
         for (mediaQuery, rules) in mediaQueries.sorted(by: { $0.key < $1.key }) {
@@ -79,6 +81,103 @@ public enum CSSGenerator {
         }
 
         return result
+    }
+
+    /// Generates CSS keyframe definitions for built-in animations.
+    ///
+    /// - Returns: CSS string containing @keyframes definitions
+    private static func generateAnimationKeyframes() -> String {
+        """
+        /* Animation Keyframes */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes slide-down {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes slide-left {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes slide-right {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes scale-up {
+            from { transform: scale(0.8); }
+            to { transform: scale(1); }
+        }
+
+        @keyframes scale-down {
+            from { transform: scale(1.2); }
+            to { transform: scale(1); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+                transform: translate3d(0, 0, 0);
+            }
+            40%, 43% {
+                animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+                transform: translate3d(0, -30px, 0);
+            }
+            70% {
+                animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+                transform: translate3d(0, -15px, 0);
+            }
+            90% {
+                transform: translate3d(0, -4px, 0);
+            }
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Animation utility classes */
+        .animate-fade-in { animation: fade-in 0.3s ease-in-out; }
+        .animate-fade-out { animation: fade-out 0.3s ease-in-out; }
+        .animate-slide-up { animation: slide-up 0.3s ease-in-out; }
+        .animate-slide-down { animation: slide-down 0.3s ease-in-out; }
+        .animate-slide-left { animation: slide-left 0.3s ease-in-out; }
+        .animate-slide-right { animation: slide-right 0.3s ease-in-out; }
+        .animate-scale-up { animation: scale-up 0.3s ease-in-out; }
+        .animate-scale-down { animation: scale-down 0.3s ease-in-out; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-bounce { animation: bounce 1s infinite; }
+        .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        """
     }
 
     /// Parses modifiers from a class name.
@@ -93,7 +192,15 @@ public enum CSSGenerator {
         return (Array(parts.dropLast()), parts.last!)
     }
 
-    /// Checks if a modifier is a responsive breakpoint.
+    /// Checks if a modifier requires a media query (responsive breakpoints or color scheme).
+    ///
+    /// - Parameter modifier: Modifier string (e.g., "md", "lg", "dark")
+    /// - Returns: True if the modifier requires a media query
+    private static func isMediaQueryModifier(_ modifier: String) -> Bool {
+        ["xs", "sm", "md", "lg", "xl", "2xl", "dark"].contains(modifier)
+    }
+
+    /// Checks if a modifier is a responsive breakpoint (not including dark mode).
     ///
     /// - Parameter modifier: Modifier string (e.g., "md", "lg")
     /// - Returns: True if the modifier is a breakpoint
@@ -101,20 +208,29 @@ public enum CSSGenerator {
         ["xs", "sm", "md", "lg", "xl", "2xl"].contains(modifier)
     }
 
-    /// Converts a breakpoint to a media query.
+    /// Converts a modifier to a media query.
     ///
-    /// - Parameter breakpoint: Breakpoint name (e.g., "md")
+    /// - Parameter modifier: Modifier name (e.g., "md", "dark")
     /// - Returns: Media query string
-    private static func breakpointToMediaQuery(_ breakpoint: String) -> String {
-        let breakpoints: [String: String] = [
+    private static func modifierToMediaQuery(_ modifier: String) -> String {
+        let mediaQueries: [String: String] = [
             "xs": "(min-width: 480px)",
             "sm": "(min-width: 640px)",
             "md": "(min-width: 768px)",
             "lg": "(min-width: 1024px)",
             "xl": "(min-width: 1280px)",
             "2xl": "(min-width: 1536px)",
+            "dark": "(prefers-color-scheme: dark)",
         ]
-        return "@media " + (breakpoints[breakpoint] ?? "(min-width: 0px)")
+        return "@media " + (mediaQueries[modifier] ?? "(min-width: 0px)")
+    }
+
+    /// Converts a breakpoint to a media query.
+    ///
+    /// - Parameter breakpoint: Breakpoint name (e.g., "md")
+    /// - Returns: Media query string
+    private static func breakpointToMediaQuery(_ breakpoint: String) -> String {
+        modifierToMediaQuery(breakpoint)
     }
 
     /// Generates a CSS rule for a utility class.
@@ -155,12 +271,12 @@ public enum CSSGenerator {
             .replacingOccurrences(of: ":", with: "\\:")
 
         // Add all modifiers to the selector (including breakpoints)
-        // Breakpoints get media queries, but still need to be in the class name
+        // Breakpoints and dark mode get media queries, but still need to be in the class name
         for modifier in modifiers.reversed() {  // Reversed to maintain order: md:hover:flex
             selector = "\(modifier)\\:\(selector)"
 
-            // Add pseudo-class selectors for state modifiers
-            if !isBreakpoint(modifier) {
+            // Add pseudo-class selectors for state modifiers (not for media query modifiers)
+            if !isMediaQueryModifier(modifier) {
                 switch modifier {
                 case "hover": selector += ":hover"
                 case "focus": selector += ":focus"
@@ -391,7 +507,7 @@ public enum CSSGenerator {
                 return "font-family: \(fontFamily);"
             }
         }
-        
+
         // Casing
         if baseClass == "uppercase" { return "text-transform: uppercase;" }
         if baseClass == "lowerase" { return "text-transform: lowercase;" }

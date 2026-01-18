@@ -30,7 +30,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
 
         /// The text color
         public let color: Color?
-        
+
         /// The text casing
         public let casing: Casing?
 
@@ -112,7 +112,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
         }
         if let wrapping = params.wrapping { classes.append(wrapping.className) }
         if let color = params.color { classes.append("text-\(color.rawValue)") }
-        if let casing = params.casing { classes.append(casing.className)}
+        if let casing = params.casing { classes.append(casing.className) }
         if let family = params.family { classes.append("font-[\(family)]") }
 
         return classes

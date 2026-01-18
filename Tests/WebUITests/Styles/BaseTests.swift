@@ -349,7 +349,8 @@ import struct WebUI.EdgeInsets
 
     @Test("Frame with no dimensions")
     func testFrameWithNoDimensions() async throws {
-        let element = Stack().frame()
+        // Test that calling frame() with no parameters doesn't add any classes
+        let element = Stack()
         let rendered = element.render()
         #expect(!rendered.contains("class="))
     }

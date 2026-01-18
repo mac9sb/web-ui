@@ -317,9 +317,9 @@ import Testing
 
     @Test("Style element")
     func testStyleElement() async throws {
-        let style = Style {
+        let style = Style(css: {
             ".header { color: blue; }"
-        }
+        })
 
         let rendered = style.render()
         #expect(rendered == "<style>.header { color: blue; }</style>")
