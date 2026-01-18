@@ -43,6 +43,9 @@ public protocol Website {
     /// Optional JavaScript sources with their loading attributes applied to all routes.
     var scripts: [Script]? { get }
 
+    /// Optional JavaScript output configuration for state machine generation.
+    var jsConfig: JSOutputConfig? { get }
+
     /// Optional custom HTML to append to all document head sections.
     var head: String? { get }
 
@@ -73,6 +76,9 @@ extension Website {
 
     /// Default scripts implementation returns nil.
     public var scripts: [Script]? { nil }
+
+    /// Default JavaScript config implementation returns nil.
+    public var jsConfig: JSOutputConfig? { nil }
 
     /// Default head implementation returns nil.
     public var head: String? { nil }
@@ -172,7 +178,12 @@ extension Website {
         }
 
         // Generate HTML content by building document tree with website-level configuration
-        let html = try route.render(websiteScripts: scripts, websiteStylesheets: stylesheets, websiteHead: head)
+        let html = try route.render(
+            websiteScripts: scripts,
+            websiteStylesheets: stylesheets,
+            websiteHead: head,
+            jsConfig: jsConfig
+        )
 
         // Write the HTML file
         guard let data = html.data(using: String.Encoding.utf8) else {
