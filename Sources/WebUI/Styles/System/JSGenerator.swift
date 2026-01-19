@@ -205,8 +205,19 @@ public enum JSGenerator {
             var eventEntries: [String] = []
 
             for (event, transition) in eventTransitions {
-                let guardJS = transition.guardCondition != nil ? "data => \(transition.guardCondition!)" : "null"
-                let actionJS = transition.action != nil ? "data => \(transition.action!)" : "null"
+                let guardJS: String
+                if let guardCondition = transition.guardCondition {
+                    guardJS = "data => \(guardCondition)"
+                } else {
+                    guardJS = "null"
+                }
+
+                let actionJS: String
+                if let action = transition.action {
+                    actionJS = "data => \(action)"
+                } else {
+                    actionJS = "null"
+                }
 
                 let entry = """
                         "\(event)": {
