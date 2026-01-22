@@ -5,6 +5,9 @@ Learn how to build your first website with WebUI.
 @Tutorial(time: 15) {
     @Intro(title: "Get Started with WebUI") {
         WebUI makes it easy to build type-safe websites in Swift.
+        
+        **Quick start**: Use the ``CLI`` tutorial to get started with the `web-ui` command-line tool.
+        This tutorial shows how to set up a project manually.
     }
 
     @Section(title: "Add WebUI to Your Project") {

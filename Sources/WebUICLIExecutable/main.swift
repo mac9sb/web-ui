@@ -1,0 +1,3 @@
+import WebUICLI
+
+WebUIRootCommand.main()

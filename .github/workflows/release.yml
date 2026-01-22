@@ -6,73 +6,168 @@ on:
       - 'v*'
 
 jobs:
-  release:
+  build:
+    name: Build for ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos
+            arch: x86_64
+            runner: macos-14
+            binary-name: web-ui-macos-x86_64
+          - os: macos
+            arch: aarch64
+            runner: macos-14
+            binary-name: web-ui-macos-aarch64
+          - os: linux
+            arch: x86_64
+            runner: ubuntu-22.04
+            binary-name: web-ui-linux-x86_64
+          - os: linux
+            arch: aarch64
+            runner: ubuntu-22.04-arm
+            binary-name: web-ui-linux-aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift (macOS)
+        if: matrix.os == 'macos'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Cache Swift toolchain (macOS/Linux)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swift
+            /usr/local/swift
+          key: swift-6.2-${{ matrix.os }}-${{ matrix.arch }}
+          restore-keys: |
+            swift-6.2-${{ matrix.os }}-
+
+      - name: Setup Swift (Linux)
+        if: matrix.os == 'linux'
+        run: |
+          curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
+          tar zxf swiftly-$(uname -m).tar.gz
+          ./swiftly init --quiet-shell-followup
+          . "${SWIFTLY_HOME_DIR:-$HOME/.local/share/swiftly}/env.sh"
+          hash -r
+          swiftly install 6.2
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Cache SPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ hashFiles('Package.resolved') }}-${{ matrix.os }}-${{ matrix.arch }}-6.2
+          restore-keys: |
+            spm-${{ matrix.os }}-${{ matrix.arch }}-6.2-
+            spm-${{ matrix.os }}-${{ matrix.arch }}-
+
+      - name: Build (macOS)
+        if: matrix.os == 'macos'
+        run: |
+          swift build -c release --product web-ui --arch ${{ matrix.arch == 'x86_64' && 'x86_64' || 'arm64' }}
+          mkdir -p release
+          cp .build/release/web-ui release/${{ matrix.binary-name }}
+
+      - name: Build (Linux)
+        if: matrix.os == 'linux'
+        run: |
+          swift build -c release --product web-ui
+          mkdir -p release
+          cp .build/release/web-ui release/${{ matrix.binary-name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary-name }}
+          path: release/${{ matrix.binary-name }}
+          retention-days: 1
+
+  create-release:
     name: Create Release
-    runs-on: ubuntu-22.04
+    needs: build
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-
-      - name: Extract Swift version
-        id: swift-version
-        run: |
-          VERSION=$(grep -m1 'swift-tools-version' Package.swift | sed 's/.*: *//' | tr -d ' ')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Swift version: $VERSION"
-
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: ${{ steps.swift-version.outputs.version }}
-
-      - name: Cache Swift toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.swift
-            /usr/local/swift
-          key: swift-${{ steps.swift-version.outputs.version }}-linux-x86_64
-          restore-keys: |
-            swift-${{ steps.swift-version.outputs.version }}-linux-
-
-      - name: Cache SPM dependencies
-        uses: actions/cache@v4
-        with:
-          path: .build
-          key: spm-${{ hashFiles('**/Package.resolved') }}-linux-x86_64-${{ steps.swift-version.outputs.version }}
-          restore-keys: |
-            spm-linux-x86_64-${{ steps.swift-version.outputs.version }}-
-            spm-linux-x86_64-
-
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          TAG="${{ github.ref_name }}"
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
-          if [ -z "$PREV_TAG" ]; then
-            echo "No previous tag found, generating changelog from all commits"
-            git log --pretty=format:"- %s (%h)" > CHANGELOG.md
-          else
-            echo "Generating changelog from $PREV_TAG to $TAG"
-            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD > CHANGELOG.md
-          fi
-          
-          echo "## Changes in $TAG" > RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          cat CHANGELOG.md >> RELEASE_NOTES.md
+          path: artifacts
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          body_path: RELEASE_NOTES.md
-          generate_release_notes: false
+          files: |
+            artifacts/*/web-ui-*
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-docs:
+    name: Publish Documentation
+    needs: build
+    runs-on: macos-14
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build DocC documentation
+        run: |
+          swift package generate-documentation
+
+      - name: Process DocC archive for static hosting
+        run: |
+          ARCHIVE_PATH=$(find .build -name "*.doccarchive" -type d | head -n 1)
+          if [ -z "$ARCHIVE_PATH" ]; then
+            echo "No doccarchive found"
+            exit 1
+          fi
+          mkdir -p docs
+          $(xcrun --find docc) process-archive transform-for-static-hosting "$ARCHIVE_PATH" \
+            --output-path docs \
+            --hosting-base-path /web-ui
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
