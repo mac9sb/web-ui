@@ -7,7 +7,7 @@
 ///   let mainScript = Script(src: "/js/main.js", attribute: .defer)
 ///   ```
 public struct Script: Element {
-    let src: String?
+    public let src: String?
     let attribute: ScriptAttribute?
     let placement: ScriptPlacement
     let content: () -> String

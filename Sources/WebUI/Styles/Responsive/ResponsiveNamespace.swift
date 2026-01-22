@@ -293,7 +293,7 @@ public enum ResponsiveStyle {
     public static func position(
         _ type: PositionType? = nil,
         at edges: Edge...,
-        offset length: Int? = nil
+        offset length: Double? = nil
     ) -> ResponsiveModification {
         let params = PositionStyleOperation.Parameters(
             type: type,

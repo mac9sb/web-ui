@@ -14,7 +14,7 @@ public struct PositionStyleOperation: StyleOperation, @unchecked Sendable {
         public let edges: [Edge]
 
         /// The offset value for positioning
-        public let offset: Int?
+        public let offset: Double?
 
         /// Creates parameters for position styling
         ///
@@ -25,7 +25,7 @@ public struct PositionStyleOperation: StyleOperation, @unchecked Sendable {
         public init(
             type: PositionType? = nil,
             edges: [Edge] = [.all],
-            offset: Int? = nil
+            offset: Double? = nil
         ) {
             self.type = type
             self.edges = edges.isEmpty ? [.all] : edges
@@ -69,10 +69,11 @@ public struct PositionStyleOperation: StyleOperation, @unchecked Sendable {
                 case .vertical: edgePrefix = "inset-y"
                 }
 
+                let offsetString = String(format: "%g", abs(offset))
                 if offset < 0 {
-                    classes.append("-\(edgePrefix)-\(abs(offset))")
+                    classes.append("-\(edgePrefix)-\(offsetString)")
                 } else {
-                    classes.append("\(edgePrefix)-\(offset)")
+                    classes.append("\(edgePrefix)-\(offsetString)")
                 }
             }
         }
@@ -101,7 +102,7 @@ extension Markup {
     public func position(
         _ type: PositionType? = nil,
         at edges: Edge...,
-        offset length: Int? = nil
+        offset length: Double? = nil
     ) -> some Markup {
         let params = PositionStyleOperation.Parameters(
             type: type,
@@ -129,7 +130,7 @@ extension ResponsiveBuilder {
     public func position(
         _ type: PositionType? = nil,
         at edges: Edge...,
-        offset: Int? = nil
+        offset: Double? = nil
     ) -> ResponsiveBuilder {
         let params = PositionStyleOperation.Parameters(
             type: type,
@@ -153,7 +154,7 @@ extension ResponsiveBuilder {
 public func position(
     _ type: PositionType? = nil,
     at edges: Edge...,
-    offset: Int? = nil
+    offset: Double? = nil
 ) -> ResponsiveModification {
     let params = PositionStyleOperation.Parameters(
         type: type,

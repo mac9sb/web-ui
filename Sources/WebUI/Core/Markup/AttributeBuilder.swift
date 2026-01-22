@@ -30,6 +30,11 @@ public enum AttributeBuilder {
         }
 
         if let classes, !classes.isEmpty {
+            // Register classes with ClassCollector for CSS generation
+            // Split space-separated class strings into individual classes
+            let individualClasses = classes.flatMap { $0.split(separator: " ").map(String.init) }
+            ClassCollector.shared.addClasses(individualClasses)
+
             if let attr = Attribute.string("class", classes.joined(separator: " ")) {
                 attributes.append(attr)
             }

@@ -61,6 +61,11 @@ public struct SSRBuilder {
         for (page, slug) in pages {
             ClassCollector.shared.clear()
 
+            // Add safelist classes if provided
+            if let safelist = page.cssSafelist {
+                ClassCollector.shared.addSafelistClasses(safelist)
+            }
+
             // Render the page body to collect classes (don't need full HTML)
             _ = page.body.render()
 
@@ -74,11 +79,13 @@ public struct SSRBuilder {
         // Phase 3: Generation - Write CSS files
         let writer = CSSWriter(config: config)
 
-        // Generate and write global CSS (if any shared classes exist)
-        if !analysis.globalClasses.isEmpty {
-            let globalCSS = CSSGenerator.generateCSS(for: Array(analysis.globalClasses).sorted())
-            try writer.writeGlobalCSS(globalCSS)
-        }
+        // Generate and write global CSS (always write, even if empty)
+        // This ensures the global.css file exists and can be referenced in HTML
+        let globalCSS =
+            analysis.globalClasses.isEmpty
+            ? ""
+            : CSSGenerator.generateCSS(for: Array(analysis.globalClasses).sorted())
+        try writer.writeGlobalCSS(globalCSS)
 
         // Generate and write page-specific CSS
         for (slug, classes) in analysis.pageSpecificClasses {

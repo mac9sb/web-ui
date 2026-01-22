@@ -1,4 +1,4 @@
-// swift-tools-version: 6.1
+// swift-tools-version: 6.2
 
 import PackageDescription
 
@@ -9,6 +9,7 @@ let package = Package(
     ],
     products: [
         .library(name: "WebUI", targets: ["WebUI"]),
+        .library(name: "WebUITypst", targets: ["WebUITypst"]),
         .library(name: "WebUIMarkdown", targets: ["WebUIMarkdown"]),
     ],
     dependencies: [
@@ -21,6 +22,9 @@ let package = Package(
             name: "WebUI",
         ),
         .target(
+            name: "WebUITypst",
+        ),
+        .target(
             name: "WebUIMarkdown",
             dependencies: [
                 .product(name: "Markdown", package: "swift-markdown")
@@ -30,14 +34,14 @@ let package = Package(
             name: "WebUITests",
             dependencies: [
                 "WebUI",
-                .product(name: "Testing", package: "swift-testing")
+                .product(name: "Testing", package: "swift-testing"),
             ]
         ),
         .testTarget(
             name: "WebUIMarkdownTests",
             dependencies: [
                 "WebUIMarkdown",
-                .product(name: "Testing", package: "swift-testing")
+                .product(name: "Testing", package: "swift-testing"),
             ]
         ),
     ]

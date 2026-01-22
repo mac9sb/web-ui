@@ -117,7 +117,9 @@ public struct MarkupClassContainer<Content: Markup>: Markup {
         self.content = content
         self.classes = classes
         // Collect classes for CSS generation
-        ClassCollector.shared.addClasses(classes)
+        // Split space-separated class strings into individual classes
+        let individualClasses = classes.flatMap { $0.split(separator: " ").map(String.init) }
+        ClassCollector.shared.addClasses(individualClasses)
     }
 
     public var body: MarkupString {

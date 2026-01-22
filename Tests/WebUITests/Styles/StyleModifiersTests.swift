@@ -1,5 +1,5 @@
-import Testing
 
+import Testing
 @testable import WebUI
 
 @Suite("Style Modifiers Tests") struct StyleModifiersTests {

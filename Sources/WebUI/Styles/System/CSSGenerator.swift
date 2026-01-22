@@ -69,6 +69,10 @@ public enum CSSGenerator {
             a { text-decoration: none; color: inherit; }
             summary { transition: transform 0.3s ease-in-out; }
             details.group[open] > summary { transform: rotate(-180deg); }
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1a; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #14b8aa; border-radius: 3px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #0d9488; }
             """
 
         let animationKeyframes = generateAnimationKeyframes()
@@ -300,6 +304,35 @@ public enum CSSGenerator {
     /// - Parameter baseClass: The base class name
     /// - Returns: CSS property-value pairs, or nil if unsupported
     private static func generateProperties(for baseClass: String) -> String? {
+        // Custom utility classes for dashboard styling
+        if baseClass == "antialiased" {
+            return "-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;"
+        }
+        if baseClass == "font-display" {
+            return "font-family: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;"
+        }
+        if baseClass == "bg-paper-bg" {
+            return "background-color: #f6f8f8;"
+        }
+        if baseClass == "text-primary" {
+            return "color: #14b8aa;"
+        }
+        if baseClass == "bg-primary" {
+            return "background-color: #14b8aa;"
+        }
+        if baseClass == "text-propaganda-teal" {
+            return "color: #14b8aa;"
+        }
+        if baseClass == "bg-code-bg" {
+            return "background-color: #000000;"
+        }
+        if baseClass == "text-string-literal" {
+            return "color: #f5f5f0;"
+        }
+        if baseClass == "custom-scrollbar" {
+            return "scrollbar-width: thin; scrollbar-color: #14b8aa #1a1a1a;"
+        }
+
         // Display utilities
         if baseClass == "block" { return "display: block;" }
         if baseClass == "inline-block" { return "display: inline-block;" }
@@ -607,6 +640,11 @@ public enum CSSGenerator {
         if baseClass == "text-nowrap" { return "text-wrap: nowrap;" }
         if baseClass == "text-balance" { return "text-wrap: balance;" }
         if baseClass == "text-pretty" { return "text-wrap: pretty;" }
+
+        // Text overflow
+        if baseClass == "truncate" { return "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" }
+        if baseClass == "text-ellipsis" { return "text-overflow: ellipsis;" }
+        if baseClass == "text-clip" { return "text-overflow: clip;" }
 
         // Vertical alignment
         if baseClass.hasPrefix("align-") {
@@ -1124,12 +1162,25 @@ public enum CSSGenerator {
         let prefix = String(className[..<startIndex])
         let value = String(className[className.index(after: startIndex)..<endIndex])
 
+        // Grid columns with arbitrary template
+        if prefix == "grid-cols-" {
+            let cssValue = value.replacingOccurrences(of: "_", with: " ")
+            return "grid-template-columns: \(cssValue);"
+        }
+        // Grid rows with arbitrary template
+        if prefix == "grid-rows-" {
+            let cssValue = value.replacingOccurrences(of: "_", with: " ")
+            return "grid-template-rows: \(cssValue);"
+        }
         // Background color
         if prefix == "bg-" {
             return "background-color: \(value);"
         }
-        // Text color
+        // Text size or color - check if value looks like a size (ends with px, rem, em, etc.)
         if prefix == "text-" {
+            if value.hasSuffix("px") || value.hasSuffix("rem") || value.hasSuffix("em") || value.hasSuffix("pt") {
+                return "font-size: \(value);"
+            }
             return "color: \(value);"
         }
         // Border color
@@ -1143,6 +1194,10 @@ public enum CSSGenerator {
         // Max width
         if prefix == "max-w-" {
             return "max-width: \(value);"
+        }
+        // Z-index
+        if prefix == "z-" {
+            return "z-index: \(value);"
         }
 
         return nil
@@ -1296,7 +1351,25 @@ public enum CSSGenerator {
     /// Parses z-index utilities
     private static func parseZIndex(from className: String) -> String? {
         let zIndexPart = className.replacingOccurrences(of: "z-", with: "")
-        return zIndexPart
+
+        // Handle arbitrary values like z-[10] or z-[-1]
+        if zIndexPart.hasPrefix("[") && zIndexPart.hasSuffix("]") {
+            let value = String(zIndexPart.dropFirst().dropLast())
+            return value
+        }
+
+        // Preset values
+        let presets: [String: String] = [
+            "auto": "auto",
+            "0": "0",
+            "10": "10",
+            "20": "20",
+            "30": "30",
+            "40": "40",
+            "50": "50",
+        ]
+
+        return presets[zIndexPart] ?? zIndexPart
     }
 
     /// Parses border radius utilities
@@ -1380,6 +1453,14 @@ public enum CSSGenerator {
     /// Parses grid columns utilities
     private static func parseGridCols(from className: String) -> String? {
         let colsPart = className.replacingOccurrences(of: "grid-cols-", with: "")
+
+        // Handle arbitrary values like grid-cols-[40px_70px_1fr]
+        if colsPart.hasPrefix("[") && colsPart.hasSuffix("]") {
+            // Will be handled by arbitrary value parser
+            return nil
+        }
+
+        // Handle numeric values like grid-cols-3
         return colsPart
     }
 
@@ -1472,6 +1553,14 @@ public enum CSSGenerator {
     /// Parses grid rows utilities
     private static func parseGridRows(from className: String) -> String? {
         let rowsPart = className.replacingOccurrences(of: "grid-rows-", with: "")
+
+        // Handle arbitrary values like grid-rows-[100px_1fr_100px]
+        if rowsPart.hasPrefix("[") && rowsPart.hasSuffix("]") {
+            // Will be handled by arbitrary value parser
+            return nil
+        }
+
+        // Handle numeric values like grid-rows-3
         return rowsPart
     }
 

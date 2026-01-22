@@ -41,6 +41,9 @@ public final class ClassCollector: @unchecked Sendable {
     /// Set of all collected CSS class names
     private var collectedClasses: Set<String> = []
 
+    /// Set of safelisted classes that should always be included
+    private var safelistedClasses: Set<String> = []
+
     /// Private initializer to enforce singleton pattern
     private init() {}
 
@@ -64,22 +67,54 @@ public final class ClassCollector: @unchecked Sendable {
         }
     }
 
-    /// Returns all collected CSS class names.
+    /// Adds classes to the safelist that should always be included in CSS generation.
+    ///
+    /// Use this for classes that appear only in JavaScript string literals or dynamic content
+    /// that won't be caught during normal rendering.
+    ///
+    /// - Parameter classNames: Array of CSS class names to safelist
+    public func addSafelistClasses(_ classNames: [String]) {
+        lock.lock()
+        defer { lock.unlock() }
+        for className in classNames {
+            safelistedClasses.insert(className)
+        }
+    }
+
+    /// Returns all collected CSS class names including safelisted classes.
     ///
     /// - Returns: A sorted array of unique CSS class names
     public func getClasses() -> [String] {
         lock.lock()
         defer { lock.unlock() }
-        return Array(collectedClasses).sorted()
+        let allClasses = collectedClasses.union(safelistedClasses)
+        return Array(allClasses).sorted()
     }
 
-    /// Clears all collected classes.
+    /// Clears all collected classes (but preserves safelist).
     ///
     /// Use this when starting a new rendering pass or in testing scenarios.
     public func clear() {
         lock.lock()
         defer { lock.unlock() }
         collectedClasses.removeAll()
+    }
+
+    /// Clears the safelist.
+    ///
+    /// Use this when starting a completely new rendering context.
+    public func clearSafelist() {
+        lock.lock()
+        defer { lock.unlock() }
+        safelistedClasses.removeAll()
+    }
+
+    /// Clears both collected classes and safelist.
+    public func clearAll() {
+        lock.lock()
+        defer { lock.unlock() }
+        collectedClasses.removeAll()
+        safelistedClasses.removeAll()
     }
 
     /// Generates CSS from all collected classes.

@@ -58,6 +58,20 @@ public protocol Document {
     ///
     /// State machines will be compiled to JavaScript and included in the page.
     var stateMachines: [String: StateMachine]? { get }
+
+    /// Optional CSS class safelist for this document.
+    ///
+    /// Classes in this safelist will always be included in generated CSS, even if
+    /// they don't appear in the rendered markup. This is useful for classes that
+    /// appear only in JavaScript string literals or dynamic content.
+    ///
+    /// ## Example
+    /// ```swift
+    /// var cssSafelist: [String]? {
+    ///     ["log-source", "log-message", "log-entry"]
+    /// }
+    /// ```
+    var cssSafelist: [String]? { get }
 }
 
 // MARK: - Default Implementations
@@ -80,6 +94,9 @@ extension Document {
 
     /// Default state machines implementation returns nil.
     public var stateMachines: [String: StateMachine]? { nil }
+
+    /// Default CSS safelist implementation returns nil.
+    public var cssSafelist: [String]? { nil }
 
     /// Creates a concrete Document instance for rendering.
     public func render() throws -> String {
@@ -118,6 +135,12 @@ extension Document {
         case .staticSite:
             // Generate CSS on-the-fly for static site generation
             ClassCollector.shared.clear()
+
+            // Add safelist classes if provided
+            if let safelist = cssSafelist {
+                ClassCollector.shared.addSafelistClasses(safelist)
+            }
+
             _ = body.render()  // Re-render to collect classes
 
             let generatedCSS = ClassCollector.shared.generateCSS()
@@ -165,23 +188,33 @@ extension Document {
         // Add generated JavaScript files to body
         if !jsFiles.isEmpty {
             for jsFile in jsFiles {
-                let scriptTag = "<script src=\"/public\(jsFile)\"></script>"
+                let scriptTag = "<script src=\"\(jsFile)\"></script>"
                 bodyTags.append(scriptTag)
             }
         }
 
         // Combine website stylesheets with document stylesheets + generated CSS
+        // Deduplicate while preserving order (first occurrence wins)
         let allStylesheets = (websiteStylesheets ?? []) + (stylesheets ?? []) + cssFiles
-        if !allStylesheets.isEmpty {
-            for stylesheet in allStylesheets {
+        var seenStylesheets: Set<String> = []
+        var uniqueStylesheets: [String] = []
+        for stylesheet in allStylesheets {
+            if !seenStylesheets.contains(stylesheet) {
+                seenStylesheets.insert(stylesheet)
+                uniqueStylesheets.append(stylesheet)
+            }
+        }
+
+        if !uniqueStylesheets.isEmpty {
+            for stylesheet in uniqueStylesheets {
                 // Don't prefix external URLs (http/https) with /public/
                 let href: String
                 if stylesheet.hasPrefix("http://") || stylesheet.hasPrefix("https://") {
                     href = stylesheet
                 } else if stylesheet.hasPrefix("/") {
-                    href = "/public\(stylesheet)"
+                    href = stylesheet
                 } else {
-                    href = "/public/\(stylesheet)"
+                    href = "/\(stylesheet)"
                 }
                 optionalTags.append(
                     "<link rel=\"stylesheet\" href=\"\(href)\">"
