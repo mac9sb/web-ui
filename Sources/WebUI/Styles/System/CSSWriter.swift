@@ -142,16 +142,24 @@ public struct CSSWriter {
 
     /// Returns the URL path for global CSS (for use in <link> tags).
     ///
-    /// - Returns: URL path (e.g., "/styles/global.css")
+    /// Static sites use `/public/styles/...`; SSR omits `/public` and uses `/styles/...`.
+    /// - Returns: URL path (e.g., "/public/styles/global.css" or "/styles/global.css")
     public func globalCSSPath() -> String {
-        "/styles/global.css"
+        switch config.mode {
+        case .staticSite: return "/public/styles/global.css"
+        case .ssr: return "/styles/global.css"
+        }
     }
 
     /// Returns the URL path for page-specific CSS (for use in <link> tags).
     ///
+    /// Static sites use `/public/styles/...`; SSR omits `/public` and uses `/styles/...`.
     /// - Parameter slug: Page slug
-    /// - Returns: URL path (e.g., "/styles/page-about.css")
+    /// - Returns: URL path (e.g., "/public/styles/page-about.css" or "/styles/page-about.css")
     public func pageCSSPath(slug: String) -> String {
-        "/styles/page-\(slug).css"
+        switch config.mode {
+        case .staticSite: return "/public/styles/page-\(slug).css"
+        case .ssr: return "/styles/page-\(slug).css"
+        }
     }
 }

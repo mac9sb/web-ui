@@ -123,16 +123,24 @@ public struct JSWriter {
 
     /// Returns the URL path for global JavaScript (for use in <script> tags).
     ///
-    /// - Returns: URL path (e.g., "/js/global.js")
+    /// Static sites use `/public/js/...`; SSR omits `/public` and uses `/js/...`.
+    /// - Returns: URL path (e.g., "/public/js/global.js" or "/js/global.js")
     public func globalJSPath() -> String {
-        "/js/global.js"
+        switch config.mode {
+        case .staticSite: return "/public/js/global.js"
+        case .ssr: return "/js/global.js"
+        }
     }
 
     /// Returns the URL path for page-specific JavaScript (for use in <script> tags).
     ///
+    /// Static sites use `/public/js/...`; SSR omits `/public` and uses `/js/...`.
     /// - Parameter slug: Page slug
-    /// - Returns: URL path (e.g., "/js/page-about.js")
+    /// - Returns: URL path (e.g., "/public/js/page-about.js" or "/js/page-about.js")
     public func pageJSPath(slug: String) -> String {
-        "/js/page-\(slug).js"
+        switch config.mode {
+        case .staticSite: return "/public/js/page-\(slug).js"
+        case .ssr: return "/js/page-\(slug).js"
+        }
     }
 }

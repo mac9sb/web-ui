@@ -13,7 +13,7 @@ Get started quickly with the WebUI command-line tool.
 
             Download from the [releases page](https://github.com/mac9sb/web-ui/releases):
 
-            ```bash
+            ```sh
             # macOS ARM (M1/M2/M3)
             curl -L -o web-ui https://github.com/mac9sb/web-ui/releases/latest/download/web-ui-macos-aarch64
             chmod +x web-ui
@@ -32,7 +32,7 @@ Get started quickly with the WebUI command-line tool.
 
             **Option 2: Build from Source**
 
-            ```bash
+            ```sh
             git clone https://github.com/mac9sb/web-ui
             cd web-ui/tooling/web-ui
             swift build -c release
@@ -45,7 +45,7 @@ Get started quickly with the WebUI command-line tool.
         @ContentAndMedia {
             Use `web-ui init` to scaffold a new project:
 
-            ```bash
+            ```sh
             web-ui init --name MyWebsite
             ```
 
@@ -65,7 +65,7 @@ Get started quickly with the WebUI command-line tool.
         @ContentAndMedia {
             Use `web-ui build` to compile your website:
 
-            ```bash
+            ```sh
             web-ui build
             ```
 
@@ -82,7 +82,7 @@ Get started quickly with the WebUI command-line tool.
         @ContentAndMedia {
             Use `web-ui serve` to preview your built website:
 
-            ```bash
+            ```sh
             web-ui serve
             ```
 
@@ -93,7 +93,7 @@ Get started quickly with the WebUI command-line tool.
             - `-p, --port <number>`: Use a different port (default: 8080)
 
             Example:
-            ```bash
+            ```sh
             web-ui serve --path ./dist --port 3000
             ```
         }
@@ -103,7 +103,7 @@ Get started quickly with the WebUI command-line tool.
         @ContentAndMedia {
             Use `web-ui run` to build and serve in one command:
 
-            ```bash
+            ```sh
             web-ui run
             ```
 
@@ -114,7 +114,7 @@ Get started quickly with the WebUI command-line tool.
             - `-p, --port <number>`: Server port (default: 8080)
 
             Example workflow:
-            ```bash
+            ```sh
             # Create a new project
             web-ui init --name MyBlog
 

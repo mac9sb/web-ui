@@ -206,15 +206,18 @@ extension Document {
         }
 
         if !uniqueStylesheets.isEmpty {
+            let usePublicPrefix = (config.mode == .staticSite)
             for stylesheet in uniqueStylesheets {
-                // Don't prefix external URLs (http/https) with /public/
                 let href: String
                 if stylesheet.hasPrefix("http://") || stylesheet.hasPrefix("https://") {
                     href = stylesheet
-                } else if stylesheet.hasPrefix("/") {
-                    href = stylesheet
                 } else {
-                    href = "/\(stylesheet)"
+                    let path = stylesheet.hasPrefix("/") ? stylesheet : "/\(stylesheet)"
+                    if usePublicPrefix, !path.hasPrefix("/public") {
+                        href = "/public" + (path == "/" ? "" : path)
+                    } else {
+                        href = path
+                    }
                 }
                 optionalTags.append(
                     "<link rel=\"stylesheet\" href=\"\(href)\">"
