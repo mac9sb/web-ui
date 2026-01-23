@@ -1,5 +1,5 @@
-
 import Testing
+
 @testable import WebUI
 
 @Suite("Appearance Tests") struct AppearanceTests {

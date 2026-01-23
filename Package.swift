@@ -29,7 +29,7 @@ let package = Package(
         .target(
             name: "WebUITypst",
             dependencies: [
-                "WebUI",
+                "WebUI"
             ]
         ),
         .target(
@@ -51,7 +51,7 @@ let package = Package(
                 .product(name: "Noora", package: "Noora"),
             ],
             resources: [
-                .process("Resources"),
+                .process("Resources")
             ]
         ),
         .testTarget(

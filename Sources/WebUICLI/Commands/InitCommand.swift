@@ -91,7 +91,8 @@ struct InitCommand: ParsableCommand {
     }
 
     private func sanitizeProjectName(_ name: String) -> String {
-        let s = name
+        let s =
+            name
             .replacingOccurrences(of: " ", with: "-")
             .replacingOccurrences(of: "_", with: "-")
             .lowercased()
@@ -126,7 +127,8 @@ struct InitCommand: ParsableCommand {
         if !FileManager.default.fileExists(atPath: resourcesURL.path) {
             let currentFile = #file
             let currentFileURL = URL(fileURLWithPath: currentFile)
-            resourcesURL = currentFileURL
+            resourcesURL =
+                currentFileURL
                 .deletingLastPathComponent()
                 .deletingLastPathComponent()
                 .appendingPathComponent("Resources")

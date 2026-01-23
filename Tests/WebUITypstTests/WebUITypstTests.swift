@@ -1,5 +1,5 @@
-
 import Testing
+
 @testable import WebUITypst
 
 struct WebUITypstTests {
