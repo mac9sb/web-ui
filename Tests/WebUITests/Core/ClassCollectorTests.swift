@@ -3,12 +3,12 @@ import Testing
 
 @testable import WebUI
 
-@Suite("ClassCollector Tests")
+@Suite("ClassCollector Tests", .serialized)
 struct ClassCollectorTests {
     @Test("Classes passed via classes parameter are collected")
     func testClassesParameterCollectsClasses() async throws {
-        // Clear any previous state
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         // Create elements with classes parameter
         let stack = Stack(classes: ["flex", "gap-4", "p-2"])
@@ -49,8 +49,8 @@ struct ClassCollectorTests {
             }
         }
 
-        // Clear previous state
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         // Render the page body (simulating what SSRBuilder does)
         let page = TestPage()
@@ -72,7 +72,8 @@ struct ClassCollectorTests {
 
     @Test("Classes from both parameter and modifiers are collected")
     func testClassesFromParameterAndModifiersCollected() async throws {
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         // Create element with classes parameter AND modifiers
         let element = Stack(classes: ["custom-class"])
@@ -91,7 +92,8 @@ struct ClassCollectorTests {
 
     @Test("Empty classes array does not cause issues")
     func testEmptyClassesArray() async throws {
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         let element = Stack(classes: [])
         _ = element.render()
@@ -102,7 +104,8 @@ struct ClassCollectorTests {
 
     @Test("Nil classes parameter does not cause issues")
     func testNilClassesParameter() async throws {
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         let element = Stack(classes: nil)
         _ = element.render()
@@ -113,7 +116,8 @@ struct ClassCollectorTests {
 
     @Test("Duplicate classes across elements are deduplicated")
     func testDuplicateClassesDeduplicated() async throws {
-        ClassCollector.shared.clear()
+        ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         let element1 = Stack(classes: ["flex", "gap-4"])
         let element2 = Stack(classes: ["flex", "gap-4"])

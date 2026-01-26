@@ -3,7 +3,7 @@ import Testing
 
 @testable import WebUI
 
-@Suite("CSS Generator Enhancements Tests")
+@Suite("CSS Generator Enhancements Tests", .serialized)
 struct CSSGeneratorEnhancementsTests {
 
     @Test("Truncate utility generates correct CSS")
@@ -61,6 +61,7 @@ struct CSSGeneratorEnhancementsTests {
     @Test("ClassCollector safelist functionality")
     func classCollectorSafelist() {
         ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         // Add some normal classes
         ClassCollector.shared.addClasses(["bg-blue-500", "p-4"])
@@ -95,6 +96,7 @@ struct CSSGeneratorEnhancementsTests {
     func safelistGeneratesCSS() {
         // Start with a complete clean slate
         ClassCollector.shared.clearAll()
+        defer { ClassCollector.shared.clearAll() }
 
         // Add only safelist classes
         ClassCollector.shared.addSafelistClasses(["truncate", "log-source"])
