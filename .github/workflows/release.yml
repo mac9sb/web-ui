@@ -6,63 +6,8 @@ on:
       - "v*"
 
 jobs:
-  build:
-    name: Build CLI Binary
-    runs-on: macos-15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.1.2"
-
-      - name: Cache Swift toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.swift
-            /usr/local/swift
-          key: swift-6.1.2-macos-aarch64
-          restore-keys: |
-            swift-6.1.2-macos-
-
-      - name: Resolve dependencies
-        run: swift package resolve
-
-      - name: Cache SPM dependencies
-        uses: actions/cache@v4
-        with:
-          path: .build
-          key: spm-${{ hashFiles('Package.resolved') }}-macos-aarch64-6.1.2
-          restore-keys: |
-            spm-macos-aarch64-6.1.2-
-            spm-macos-aarch64-
-
-      - name: Build CLI
-        run: |
-          swift build -c release --product web-ui --arch arm64
-          mkdir -p release
-          cp .build/release/web-ui release/web-ui
-          tar -czf web-ui-macos-aarch64.tar.gz -C release web-ui
-          shasum -a 256 web-ui-macos-aarch64.tar.gz > web-ui-macos-aarch64.sha256
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-ui-macos-aarch64
-          path: |
-            web-ui-macos-aarch64.tar.gz
-            web-ui-macos-aarch64.sha256
-          retention-days: 1
-
   create-release:
     name: Create Release
-    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -95,20 +40,12 @@ jobs:
           echo "" >> CHANGELOG.md
           echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG}" >> CHANGELOG.md
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body_path: CHANGELOG.md
-          files: |
-            artifacts/*/web-ui-macos-aarch64.tar.gz
-            artifacts/*/web-ui-macos-aarch64.sha256
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
@@ -116,7 +53,6 @@ jobs:
 
   publish-docs:
     name: Publish Documentation
-    needs: build
     runs-on: macos-15
     permissions:
       contents: read
@@ -133,7 +69,7 @@ jobs:
       - name: Setup Swift
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.1.2"
+          swift-version: "6.2"
 
       - name: Resolve dependencies
         run: swift package resolve
