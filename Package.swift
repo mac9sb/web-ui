@@ -9,7 +9,6 @@ let package = Package(
     ],
     products: [
         .library(name: "WebUI", targets: ["WebUI"]),
-        .library(name: "WebUITypst", targets: ["WebUITypst"]),
         .library(name: "WebUIMarkdown", targets: ["WebUIMarkdown"]),
         .executable(name: "web-ui", targets: ["WebUICLIExecutable"]),
     ],
@@ -25,12 +24,6 @@ let package = Package(
     targets: [
         .target(
             name: "WebUI",
-        ),
-        .target(
-            name: "WebUITypst",
-            dependencies: [
-                "WebUI"
-            ]
         ),
         .target(
             name: "WebUIMarkdown",

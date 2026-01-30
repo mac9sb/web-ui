@@ -4,7 +4,20 @@ import Foundation
 ///
 /// The `StructuredData` struct provides a type-safe way to define structured
 /// data following various schema.org schemas like Article, Product, Organization, etc.
-public struct StructuredData {
+/// ## Thread Safety
+///
+/// This type uses `@unchecked Sendable` because it contains `[String: Any]` which
+/// cannot be automatically verified as thread-safe by the compiler. However, thread
+/// safety is guaranteed because:
+///
+/// 1. The `data` dictionary is immutable (`let`) and never modified after initialization
+/// 2. All methods that access `data` only read from it, never mutate it
+/// 3. The dictionary is copied on access, preventing shared mutable state
+///
+/// The `[String: Any]` is used for JSON-LD structured data serialization where the
+/// values are typically strings, numbers, arrays, and dictionaries - all value types
+/// or immutable reference types from Foundation.
+public struct StructuredData: @unchecked Sendable {
     /// The type of schema used for this structured data.
     public let type: SchemaType
 

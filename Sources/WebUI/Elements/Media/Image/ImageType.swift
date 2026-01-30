@@ -14,7 +14,7 @@ import Foundation
 ///   type: .jpeg
 /// )
 /// ```
-public enum ImageType: String {
+public enum ImageType: String, Sendable {
     case gif = "image/gif"
     case icon = "image/x-icon"
     case jpeg = "image/jpeg"

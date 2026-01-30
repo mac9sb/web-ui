@@ -5,7 +5,7 @@ import Foundation
 /// The `Metadata` struct encapsulates all the metadata that can be included in the `<head>` section
 /// of an HTML document, such as title, description, Open Graph tags, and Twitter card information.
 /// It also supports structured data for enhanced SEO and rich snippets in search results.
-public struct Metadata {
+public struct Metadata: Sendable {
     /// The name of the website or application.
     public var site: String?
     /// The title of the current page.

@@ -15,8 +15,7 @@ struct ServeCommand: ParsableCommand {
     var port: Int = 8000
 
     func run() throws {
-        let serveDir = (path as NSString).expandingTildeInPath
-        let absPath = (serveDir as NSString).standardizingPath
+        let absPath = path.expandedStandardizedPath
 
         guard FileManager.default.fileExists(atPath: absPath) else {
             Noora().error("Directory does not exist: \(absPath)")

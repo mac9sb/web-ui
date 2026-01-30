@@ -15,8 +15,7 @@ struct RunCommand: ParsableCommand {
     var port: Int = 8000
 
     func run() throws {
-        let projectDir = (path as NSString).expandingTildeInPath
-        let absPath = (projectDir as NSString).standardizingPath
+        let absPath = path.expandedStandardizedPath
         let outputDir = (absPath as NSString).appendingPathComponent(".output")
 
         guard FileManager.default.fileExists(atPath: absPath) else {

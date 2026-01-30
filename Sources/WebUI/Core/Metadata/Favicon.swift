@@ -3,7 +3,7 @@ import Foundation
 /// Represents favicon configuration with optional dark mode variant.
 ///
 /// Used to specify different favicon images for light and dark mode.
-public struct Favicon {
+public struct Favicon: Sendable {
     /// The path to the favicon for light mode.
     public let light: String
     /// The optional path to the favicon for dark mode.

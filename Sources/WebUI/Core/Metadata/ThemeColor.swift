@@ -3,7 +3,7 @@ import Foundation
 /// Represents a theme color with optional dark mode variant.
 ///
 /// Used to specify the browser theme color for the document, supporting both light and dark mode.
-public struct ThemeColor {
+public struct ThemeColor: Sendable {
     /// The color value for light mode.
     public let light: String
 

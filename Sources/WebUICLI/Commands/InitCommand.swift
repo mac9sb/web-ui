@@ -17,7 +17,7 @@ struct InitCommand: ParsableCommand {
     func run() throws {
         let targetDir: String
         if let directory = directory {
-            targetDir = (directory as NSString).expandingTildeInPath
+            targetDir = directory.expandedStandardizedPath
         } else {
             targetDir = FileManager.default.currentDirectoryPath
         }

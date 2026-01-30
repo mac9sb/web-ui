@@ -12,8 +12,7 @@ struct BuildCommand: ParsableCommand {
     var path: String = "."
 
     func run() throws {
-        let projectDir = (path as NSString).expandingTildeInPath
-        let absPath = (projectDir as NSString).standardizingPath
+        let absPath = path.expandedStandardizedPath
 
         guard FileManager.default.fileExists(atPath: absPath) else {
             Noora().error("Directory does not exist: \(absPath)")

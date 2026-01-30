@@ -111,9 +111,9 @@ public struct WebUIMarkdown: Sendable {
 
         let (frontMatter, markdownContent) = try extractFrontMatter(from: content)
 
-        // Parse the markdown content to HTML using enhanced renderer
+        // Parse the markdown content to HTML using renderer
         let document = Markdown.Document(parsing: markdownContent)
-        var renderer = EnhancedHTMLRenderer(options: options, typography: typography)
+        var renderer = HTMLRenderer(options: options, typography: typography)
         let html = try renderer.render(document)
 
         return ParsedMarkdown(frontMatter: frontMatter, htmlContent: html)
@@ -136,9 +136,9 @@ public struct WebUIMarkdown: Sendable {
 
         let (frontMatter, markdownContent) = try extractFrontMatter(from: content)
 
-        // Parse the markdown content to HTML using enhanced renderer
+        // Parse the markdown content to HTML using renderer
         let document = Markdown.Document(parsing: markdownContent)
-        var renderer = EnhancedHTMLRenderer(options: options, typography: typography)
+        var renderer = HTMLRenderer(options: options, typography: typography)
         let (html, toc) = try renderer.renderWithTableOfContents(document)
 
         let result = ParsedMarkdown(frontMatter: frontMatter, htmlContent: html)
@@ -158,8 +158,8 @@ public struct WebUIMarkdown: Sendable {
         do {
             return try parseMarkdown(content)
         } catch {
-            // Return safe fallback content using enhanced renderer's escape method
-            let renderer = EnhancedHTMLRenderer(options: options, typography: typography)
+            // Return safe fallback content using renderer's escape method
+            let renderer = HTMLRenderer(options: options, typography: typography)
             let escapedContent = renderer.escapeHTML(content)
             return ParsedMarkdown(
                 frontMatter: [:], htmlContent: "<pre class=\"markdown-error\">\(escapedContent)</pre>")
