@@ -31,10 +31,18 @@ struct InitCommand: ParsableCommand {
         Noora().info("Target directory: \(targetDir)")
 
         if FileManager.default.fileExists(atPath: targetDir) {
-            let contents = try? FileManager.default.contentsOfDirectory(atPath: targetDir)
-            if let contents = contents, !contents.isEmpty {
-                Noora().error("Directory is not empty: \(targetDir)")
-                throw WebUIInitError.directoryNotEmpty
+            do {
+                let contents = try FileManager.default.contentsOfDirectory(atPath: targetDir)
+                guard contents.isEmpty else {
+                    Noora().error("Directory is not empty: \(targetDir)")
+                    throw WebUIInitError.directoryNotEmpty(path: targetDir, fileCount: contents.count)
+                }
+            } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+                // Directory doesn't exist yet - ok to proceed
+            } catch let error where error is WebUIInitError {
+                throw error
+            } catch {
+                throw WebUIInitError.cannotAccessDirectory(path: targetDir, underlyingError: error)
             }
         }
 
@@ -138,7 +146,8 @@ struct InitCommand: ParsableCommand {
 }
 
 enum WebUIInitError: Error {
-    case directoryNotEmpty
+    case directoryNotEmpty(path: String, fileCount: Int)
+    case cannotAccessDirectory(path: String, underlyingError: Error)
     case templateNotFound
     case fileWriteFailed
 }
@@ -146,8 +155,10 @@ enum WebUIInitError: Error {
 extension WebUIInitError: LocalizedError {
     var errorDescription: String? {
         switch self {
-        case .directoryNotEmpty:
-            return "Directory is not empty. Use an empty directory or specify a different location."
+        case .directoryNotEmpty(let path, let fileCount):
+            return "Directory '\(path)' is not empty (contains \(fileCount) item(s)). Use an empty directory or specify a different location."
+        case .cannotAccessDirectory(let path, let error):
+            return "Cannot access directory '\(path)': \(error.localizedDescription)"
         case .templateNotFound:
             return "Template file not found."
         case .fileWriteFailed:

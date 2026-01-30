@@ -22,9 +22,9 @@
 /// do {
 ///     let html = try renderer.render(document)
 ///     print("Rendered HTML: \(html)")
-/// } catch HtmlRendererError.invalidLinkDestination {
+/// } catch HTMLRendererError.invalidLinkDestination {
 ///     print("Found a link without a destination")
-/// } catch HtmlRendererError.missingImageSource {
+/// } catch HTMLRendererError.missingImageSource {
 ///     print("Found an image without a source")
 /// } catch {
 ///     print("Rendering failed: \(error)")
@@ -46,7 +46,7 @@ public struct HtmlRenderer {
     ///
     /// - Parameter document: The Markdown document to render.
     /// - Returns: The generated HTML string.
-    /// - Throws: `HtmlRendererError` if rendering encounters invalid content.
+    /// - Throws: `HTMLRendererError` if rendering encounters invalid content.
     public mutating func render(_ document: Markdown.Document) throws -> String {
         html = ""
         try renderMarkup(document)
@@ -73,7 +73,7 @@ public struct HtmlRenderer {
     /// Renders any markup node by dispatching to the appropriate visit method.
     ///
     /// - Parameter markup: The markup node to render.
-    /// - Throws: `HtmlRendererError` if rendering encounters invalid content.
+    /// - Throws: `HTMLRendererError` if rendering encounters invalid content.
     private mutating func renderMarkup(_ markup: Markup) throws {
         switch markup {
         case let heading as Markdown.Heading:
@@ -126,7 +126,7 @@ public struct HtmlRenderer {
     /// Renders all child markup nodes of a container.
     ///
     /// - Parameter markup: The container markup node whose children should be rendered.
-    /// - Throws: `HtmlRendererError` if rendering encounters invalid content.
+    /// - Throws: `HTMLRendererError` if rendering encounters invalid content.
     private mutating func renderChildren(_ markup: Markup) throws {
         for child in markup.children {
             try renderMarkup(child)
@@ -156,7 +156,10 @@ public struct HtmlRenderer {
     /// Visits a link node and generates corresponding HTML.
     public mutating func visitLink(_ link: Markdown.Link) throws {
         guard let destination = link.destination, !destination.isEmpty else {
-            throw HtmlRendererError.invalidLinkDestination
+            throw HTMLRendererError.invalidLinkDestination(
+                destination: link.destination,
+                reason: "Link destination cannot be empty"
+            )
         }
 
         let escapedDestination = escapeHTML(destination)
@@ -187,13 +190,16 @@ public struct HtmlRenderer {
     /// Visits a code block node and generates corresponding HTML with optional syntax highlighting, filename, copy button, and line numbers.
     ///
     /// - Parameter codeBlock: The code block node to render.
-    /// - Throws: `HtmlRendererError.invalidCodeBlock` if the code block content is invalid.
+    /// - Throws: `HTMLRendererError.invalidCodeBlock` if the code block content is invalid.
     public mutating func visitCodeBlock(_ codeBlock: CodeBlock) throws {
         guard
             !codeBlock.code.trimmingCharacters(in: .whitespacesAndNewlines)
                 .isEmpty
         else {
-            throw HtmlRendererError.invalidCodeBlock
+            throw HTMLRendererError.invalidCodeBlock(
+                language: codeBlock.language,
+                contentLength: codeBlock.code.count
+            )
         }
 
         // Simply extract the code content
@@ -252,7 +258,7 @@ public struct HtmlRenderer {
     /// Visits an image node and generates corresponding HTML.
     public mutating func visitImage(_ image: Markdown.Image) throws {
         guard let source = image.source, !source.isEmpty else {
-            throw HtmlRendererError.missingImageSource
+            throw HTMLRendererError.missingImageSource(altText: image.plainText)
         }
 
         let altText = image.plainText
@@ -375,26 +381,30 @@ public enum WebUIMarkdownError: Error, LocalizedError, Equatable {
 }
 
 /// Errors that can occur during HTML rendering operations.
-public enum HtmlRendererError: Error, LocalizedError {
+/// Errors that can occur during HTML rendering from Markdown.
+public enum HTMLRendererError: Error, LocalizedError {
     /// Link destination is missing or invalid.
-    case invalidLinkDestination
+    case invalidLinkDestination(destination: String?, reason: String)
     /// Image source is missing.
-    case missingImageSource
+    case missingImageSource(altText: String?)
     /// Table structure is malformed.
-    case malformedTable
+    case malformedTable(reason: String)
     /// Code block contains invalid content.
-    case invalidCodeBlock
+    case invalidCodeBlock(language: String?, contentLength: Int)
 
     public var errorDescription: String? {
         switch self {
-        case .invalidLinkDestination:
-            return "Link destination is missing or invalid"
-        case .missingImageSource:
-            return "Image source is required but missing"
-        case .malformedTable:
-            return "Table structure is malformed"
-        case .invalidCodeBlock:
-            return "Code block contains invalid content"
+        case .invalidLinkDestination(let dest, let reason):
+            let destStr = dest.map { "'\($0)'" } ?? "empty"
+            return "Link destination is missing or invalid (\(destStr)): \(reason)"
+        case .missingImageSource(let alt):
+            let altStr = alt.map { "alt text: '\($0)'" } ?? "no alt text"
+            return "Image source is required but missing (\(altStr))"
+        case .malformedTable(let reason):
+            return "Table structure is malformed: \(reason)"
+        case .invalidCodeBlock(let lang, let length):
+            let langStr = lang.map { " (language: \($0))" } ?? ""
+            return "Code block contains invalid content\(langStr), content length: \(length)"
         }
     }
 }

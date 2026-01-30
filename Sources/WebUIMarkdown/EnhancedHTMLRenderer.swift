@@ -226,7 +226,10 @@ public struct EnhancedHTMLRenderer {
     /// Visits a link node and generates HTML with typography styling.
     public mutating func visitLink(_ link: Markdown.Link) throws {
         guard let destination = link.destination, !destination.isEmpty else {
-            throw HtmlRendererError.invalidLinkDestination
+            throw HTMLRendererError.invalidLinkDestination(
+                destination: link.destination,
+                reason: "Link destination cannot be empty"
+            )
         }
 
         let escapedDestination = escapeHTML(destination)
@@ -264,7 +267,10 @@ public struct EnhancedHTMLRenderer {
     /// Visits a code block node and generates enhanced HTML with syntax highlighting and interactive features.
     public mutating func visitCodeBlock(_ codeBlock: CodeBlock) throws {
         guard !codeBlock.code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw HtmlRendererError.invalidCodeBlock
+            throw HTMLRendererError.invalidCodeBlock(
+                language: codeBlock.language,
+                contentLength: codeBlock.code.count
+            )
         }
 
         let code = codeBlock.code
@@ -354,7 +360,7 @@ public struct EnhancedHTMLRenderer {
 
     public mutating func visitImage(_ image: Markdown.Image) throws {
         guard let source = image.source, !source.isEmpty else {
-            throw HtmlRendererError.missingImageSource
+            throw HTMLRendererError.missingImageSource(altText: image.plainText)
         }
 
         let altText = image.plainText
