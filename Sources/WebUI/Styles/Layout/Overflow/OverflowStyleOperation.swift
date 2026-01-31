@@ -31,8 +31,11 @@ public struct OverflowStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: OverflowStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                type: params.get("type")!,
+            guard let type: OverflowType = params.get("type") else {
+                return Parameters(type: .auto, axis: params.get("axis", default: .both))
+            }
+            return Parameters(
+                type: type,
                 axis: params.get("axis", default: .both)
             )
         }

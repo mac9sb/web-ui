@@ -99,7 +99,7 @@ public enum AttributeBuilder {
     ///   - content: Optional content to include between opening and closing tags
     ///   - escapeContent: Whether to HTML-escape the content (default: true for security)
     ///   - isSelfClosing: Whether this is a self-closing tag
-    ///   - noClosingTag: Whether this should be rendered without a self-close and without a seperate close
+    ///   - hasNoClosingTag: Whether this should be rendered without a self-close and without a seperate close
     /// - Returns: Complete markup tag as a string
     public static func buildMarkupTag(
         _ tag: String,

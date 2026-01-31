@@ -48,7 +48,7 @@ public struct Input: Element {
     ///   - role: ARIA role of the element for accessibility.
     ///   - label: ARIA label to describe the element for screen readers.
     ///   - data: Dictionary of `data-*` attributes for storing custom data.
-    ///   - eventHandler: JavaScript event handler code, optional.
+    ///   - on: JavaScript event handler code, optional.
     ///
     /// ## Example
     /// ```swift

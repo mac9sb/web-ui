@@ -82,9 +82,10 @@ public struct SizingStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: SizingStyleOperation.SizeParameters
         public static func from(_ params: StyleParameters) -> SizeParameters {
-            SizeParameters(
-                value: params.get("value")!
-            )
+            guard let value: SizingValue = params.get("value") else {
+                return SizeParameters(value: .zero)
+            }
+            return SizeParameters(value: value)
         }
     }
 
@@ -265,8 +266,7 @@ extension Markup {
     ///
     /// This method applies the same sizing value to both width and height dimensions.
     ///
-    /// - Parameters:
-    ///   - size: The size value to apply to both width and height.
+    /// - Parameter size: The size value to apply to both width and height.
     /// - Returns: A new element with updated sizing classes.
     public func size(_ size: SizingValue)
         -> some Markup
@@ -301,7 +301,6 @@ extension Markup {
 
     /// Sets the aspect ratio to square (1:1).
     ///
-    /// - Parameters:
     /// - Returns: A new element with square aspect ratio.
     public func aspectRatio() -> some Markup {
         let params = SizingStyleOperation.AspectRatioParameters(isSquare: true)
@@ -314,7 +313,6 @@ extension Markup {
 
     /// Sets the aspect ratio to video dimensions (16:9).
     ///
-    /// - Parameters:
     /// - Returns: A new element with video aspect ratio.
     public func aspectRatioVideo() -> some Markup {
         let params = SizingStyleOperation.AspectRatioParameters(isVideo: true)

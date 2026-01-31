@@ -31,9 +31,9 @@ public struct Link: Element {
     ///
     /// ## Example
     /// ```swift
-    /// Link("Visit Example Website", destination: "https://example.com")
-    /// Link("Open in New Tab", destination: "https://example.com", newTab: true)
-    /// Link("Contact Us", destination: "/contact", classes: ["nav-link"])
+    /// Link("Visit Example Website", to: "https://example.com")
+    /// Link("Open in New Tab", to: "https://example.com", newTab: true)
+    /// Link("Contact Us", to: "/contact", classes: ["nav-link"])
     /// ```
     public init(
         _ title: String,
@@ -61,7 +61,7 @@ public struct Link: Element {
     /// an icon before or after your link text.
     ///
     /// - Parameters:
-    ///   - to: URL or path the link points to.
+    ///   - destination: URL or path the link points to.
     ///   - newTab: Opens in a new tab if true, optional.
     ///   - id: Unique identifier for the HTML element, useful for JavaScript interaction and styling.
     ///   - classes: An array of stylesheet classnames for styling the link.

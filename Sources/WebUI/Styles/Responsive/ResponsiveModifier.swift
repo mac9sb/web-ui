@@ -115,6 +115,7 @@ public class ResponsiveBuilder {
     /// Applies styles for one or more modifiers (breakpoints or states).
     ///
     /// - Parameters:
+    ///   - modifiers: The modifiers (breakpoints or states) to apply.
     ///   - modifications: A closure containing style modifications.
     /// - Returns: The builder for method chaining.
     @discardableResult
@@ -129,6 +130,7 @@ public class ResponsiveBuilder {
     /// Applies styles for an array of modifiers (breakpoints or states).
     ///
     /// - Parameters:
+    ///   - modifiers: The modifiers (breakpoints or states) to apply.
     ///   - modifications: A closure containing style modifications.
     /// - Returns: The builder for method chaining.
     @discardableResult

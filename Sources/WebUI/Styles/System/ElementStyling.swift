@@ -18,8 +18,7 @@ public enum ElementStyling {
 
     /// Combines base classes
     ///
-    /// - Parameters:
-    ///   - baseClasses: The base stylesheet classes
+    /// - Parameter baseClasses: The base stylesheet classes
     /// - Returns: The stylesheet classes unchanged
     public static func combineClasses(
         _ baseClasses: [String]
@@ -48,8 +47,7 @@ extension Markup {
 
     /// Applies a style to the element
     ///
-    /// - Parameters:
-    ///   - baseClasses: The base stylesheet classes to apply
+    /// - Parameter baseClasses: The base stylesheet classes to apply
     /// - Returns: Markup with the styled classes applied
     public func applyStyle(baseClasses: [String])
         -> some Markup

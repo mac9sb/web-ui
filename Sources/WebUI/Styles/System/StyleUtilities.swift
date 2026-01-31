@@ -17,8 +17,7 @@ public enum StyleUtilities {
     ///
     /// Returns the base class as an array.
     ///
-    /// - Parameters:
-    ///   - baseClass: The base class name
+    /// - Parameter baseClass: The base class name
     /// - Returns: The class name in an array
     public static func combineClass(
         _ baseClass: String
@@ -30,8 +29,7 @@ public enum StyleUtilities {
     ///
     /// Returns the base classes unchanged.
     ///
-    /// - Parameters:
-    ///   - baseClasses: The base class names
+    /// - Parameter baseClasses: The base class names
     /// - Returns: The class names
     public static func combineClasses(
         _ baseClasses: [String]

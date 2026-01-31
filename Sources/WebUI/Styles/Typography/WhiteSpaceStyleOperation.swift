@@ -62,8 +62,7 @@ public enum WhiteSpaceType: String {
 extension Markup {
     /// Applies white-space styling to the element.
     ///
-    /// - Parameters:
-    ///   - type: The white-space type
+    /// - Parameter type: The white-space type
     /// - Returns: A new element with updated white-space classes.
     public func whiteSpace(
         _ type: WhiteSpaceType

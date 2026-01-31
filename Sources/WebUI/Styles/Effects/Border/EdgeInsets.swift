@@ -67,8 +67,7 @@ public struct EdgeInsets: Sendable, Equatable {
 extension Markup {
     /// Applies margin styling to the element using edge insets.
     ///
-    /// - Parameters:
-    ///   - insets: The edge insets to apply as margins.
+    /// - Parameter insets: The edge insets to apply as margins.
     /// - Returns: Markup with updated margin classes.
     ///
     /// ## Example
@@ -85,8 +84,7 @@ extension Markup {
 
     /// Applies padding styling to the element using edge insets.
     ///
-    /// - Parameters:
-    ///   - insets: The edge insets to apply as padding.
+    /// - Parameter insets: The edge insets to apply as padding.
     /// - Returns: Markup with updated padding classes.
     ///
     /// ## Example

@@ -50,8 +50,7 @@ public struct VisibilityStyleOperation: StyleOperation, @unchecked Sendable {
 extension Markup {
     /// Controls the visibility of an element with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - isHidden: Whether the element should be hidden (default: true).
+    /// - Parameter isHidden: Whether the element should be hidden (default: true).
     /// - Returns: Markup with updated visibility classes.
     ///
     /// ## Example

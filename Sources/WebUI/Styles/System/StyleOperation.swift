@@ -82,6 +82,7 @@ extension StyleOperation {
     /// - Parameters:
     ///   - content: The markup content to apply styles to
     ///   - params: The parameters for this style operation
+    ///   - modifiers: The modifiers to apply
     /// - Returns: A new element with the styles applied
     public func applyTo<T: Markup>(
         _ content: T, params: Parameters, modifiers: [Modifier] = []
@@ -98,6 +99,7 @@ extension StyleOperation {
     /// - Parameters:
     ///   - element: The element to apply styles to
     ///   - params: The parameters for this style operation
+    ///   - modifiers: The modifiers to apply
     /// - Returns: A new element with the styles applied
     public func applyToElement<T: Markup>(
         _ element: T, params: Parameters, modifiers: Modifier...
@@ -138,6 +140,7 @@ extension StyleOperation {
     /// - Parameters:
     ///   - content: The markup content to apply styles to
     ///   - configuration: The parameters for this style operation
+    ///   - modifiers: The modifiers to apply
     /// - Returns: A new element with the styles applied
     public func applyTo<T: Markup>(
         _ content: T, using configuration: Parameters, modifiers: [Modifier] = []
@@ -150,6 +153,7 @@ extension StyleOperation {
     /// - Parameters:
     ///   - element: The element to apply styles to
     ///   - configuration: The parameters for this style operation
+    ///   - modifiers: The modifiers to apply
     /// - Returns: A new element with the styles applied
     public func applyToElement<T: Markup>(
         _ element: T, using configuration: Parameters, modifiers: Modifier...

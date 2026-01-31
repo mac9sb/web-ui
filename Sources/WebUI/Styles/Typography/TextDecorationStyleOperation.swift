@@ -56,8 +56,7 @@ public enum TextDecorationType: String {
 extension Markup {
     /// Applies text decoration styling to the element.
     ///
-    /// - Parameters:
-    ///   - type: The text decoration type
+    /// - Parameter type: The text decoration type
     /// - Returns: A new element with updated text decoration classes.
     public func textDecoration(
         _ type: TextDecorationType

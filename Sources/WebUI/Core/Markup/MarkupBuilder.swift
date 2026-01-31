@@ -28,8 +28,7 @@ public struct MarkupBuilder {
     /// This method joins multiple variadic markup component lists into a single flat array,
     /// which is essential for building nested markup structures from multiple blocks of content.
     ///
-    /// - Parameters:
-    ///   - components: Variadic arrays of markup components, each representing a block of content.
+    /// - Parameter components: Variadic arrays of markup components, each representing a block of content.
     /// - Returns: A flattened array of all provided markup components.
     ///
     /// - Example:
@@ -49,8 +48,7 @@ public struct MarkupBuilder {
     /// This method converts an individual markup expression (like a Heading or Text element)
     /// into a component array, which is the standard format for all builder operations.
     ///
-    /// - Parameters:
-    ///   - expression: The markup entity to include in the result.
+    /// - Parameter expression: The markup entity to include in the result.
     /// - Returns: An array containing the single markup entity.
     ///
     /// - Example:
@@ -67,8 +65,7 @@ public struct MarkupBuilder {
     /// This method processes the optional result of an `if` statement that doesn't have an `else` clause,
     /// returning the components if present, or an empty array if nil.
     ///
-    /// - Parameters:
-    ///   - component: An optional array of markup components from the conditional.
+    /// - Parameter component: An optional array of markup components from the conditional.
     /// - Returns: The components or an empty array if nil.
     ///
     /// - Example:
@@ -88,8 +85,7 @@ public struct MarkupBuilder {
     /// This method handles the first (true) branch of an if-else statement in the builder,
     /// returning components that should be included when the condition is true.
     ///
-    /// - Parameters:
-    ///   - component: The markup components from the true branch of the condition.
+    /// - Parameter component: The markup components from the true branch of the condition.
     /// - Returns: The components from the first branch, unchanged.
     ///
     /// - Example:
@@ -110,8 +106,7 @@ public struct MarkupBuilder {
     /// This method handles the second (false) branch of an if-else statement in the builder,
     /// returning components that should be included when the condition is false.
     ///
-    /// - Parameters:
-    ///   - component: The markup components from the false branch of the condition.
+    /// - Parameter component: The markup components from the false branch of the condition.
     /// - Returns: The components from the second branch, unchanged.
     ///
     /// - Example:
@@ -133,8 +128,7 @@ public struct MarkupBuilder {
     /// into a single flat array of components. It's essential for building lists and
     /// other repeating structures in the markup.
     ///
-    /// - Parameters:
-    ///   - components: An array of markup component arrays, each from one iteration of the loop.
+    /// - Parameter components: An array of markup component arrays, each from one iteration of the loop.
     /// - Returns: A flattened array of all markup components from all iterations.
     ///
     /// - Example:

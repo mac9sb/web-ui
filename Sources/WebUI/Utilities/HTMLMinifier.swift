@@ -31,8 +31,7 @@ public struct HTMLMinifier {
     /// - Removes markup comments (except conditional comments for IE)
     /// - Removes whitespace around certain markup tags
     ///
-    /// - Parameters:
-    ///   - html: The markup content to minify.
+    /// - Parameter html: The markup content to minify.
     /// - Returns: Minified markup content as a string.
     ///
     /// ## Example

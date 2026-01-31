@@ -66,8 +66,7 @@ public enum VerticalAlignType: String {
 extension Markup {
     /// Applies vertical-align styling to the element.
     ///
-    /// - Parameters:
-    ///   - type: The vertical-align type
+    /// - Parameter type: The vertical-align type
     /// - Returns: A new element with updated vertical-align classes.
     public func verticalAlign(
         _ type: VerticalAlignType
