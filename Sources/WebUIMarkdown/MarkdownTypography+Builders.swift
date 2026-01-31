@@ -26,9 +26,9 @@ import Foundation
 ///     }
 /// ```
 extension MarkdownTypography {
-    
+
     // MARK: - Heading Builders
-    
+
     /// Configure a specific heading level with a builder closure.
     ///
     /// - Parameters:
@@ -38,108 +38,108 @@ extension MarkdownTypography {
     public func heading(_ level: HeadingLevel, _ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         let styleBuilder = StyleBuilder(baseStyle: headings[level])
         builder(styleBuilder)
-        
+
         var newHeadings = headings
         newHeadings[level] = styleBuilder.build()
-        
+
         return withHeadings(newHeadings)
     }
-    
+
     /// Configure all heading levels with a shared builder closure.
     ///
     /// - Parameter builder: A closure that configures the typography style for all headings
     /// - Returns: A new typography instance with heading styles applied
     public func allHeadings(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         var newHeadings: [HeadingLevel: TypographyStyle] = [:]
-        
+
         for level in HeadingLevel.allCases {
             let styleBuilder = StyleBuilder(baseStyle: headings[level])
             builder(styleBuilder)
             newHeadings[level] = styleBuilder.build()
         }
-        
+
         return withHeadings(newHeadings)
     }
-    
+
     // MARK: - Element Builders
-    
+
     /// Configure paragraph styles.
     public func paragraph(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.paragraph, builder)
     }
-    
+
     /// Configure inline code styles.
     public func inlineCode(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.inlineCode, builder)
     }
-    
+
     /// Configure code block styles.
     public func codeBlock(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.codeBlock, builder)
     }
-    
+
     /// Configure blockquote styles.
     public func blockquote(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.blockquote, builder)
     }
-    
+
     /// Configure link styles.
     public func link(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.link, builder)
     }
-    
+
     /// Configure ordered list styles.
     public func orderedList(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.orderedList, builder)
     }
-    
+
     /// Configure unordered list styles.
     public func unorderedList(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.unorderedList, builder)
     }
-    
+
     /// Configure list item styles.
     public func listItem(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.listItem, builder)
     }
-    
+
     /// Configure table styles.
     public func table(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.table, builder)
     }
-    
+
     /// Configure table header styles.
     public func tableHeader(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.tableHeader, builder)
     }
-    
+
     /// Configure table cell styles.
     public func tableCell(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.tableCell, builder)
     }
-    
+
     /// Configure emphasis (italic) styles.
     public func emphasis(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.emphasis, builder)
     }
-    
+
     /// Configure strong (bold) styles.
     public func strong(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.strong, builder)
     }
-    
+
     /// Configure image styles.
     public func image(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.image, builder)
     }
-    
+
     /// Configure horizontal rule styles.
     public func horizontalRule(_ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         element(.horizontalRule, builder)
     }
-    
+
     // MARK: - Generic Element Builder
-    
+
     /// Configure any element type with a builder closure.
     ///
     /// - Parameters:
@@ -149,15 +149,15 @@ extension MarkdownTypography {
     public func element(_ elementType: ElementType, _ builder: (StyleBuilder) -> Void) -> MarkdownTypography {
         let styleBuilder = StyleBuilder(baseStyle: elements[elementType])
         builder(styleBuilder)
-        
+
         var newElements = elements
         newElements[elementType] = styleBuilder.build()
-        
+
         return withElements(newElements)
     }
-    
+
     // MARK: - Syntax Highlighting Builder
-    
+
     /// Configure syntax highlighting colors for code blocks.
     ///
     /// This creates CSS rules for common syntax highlighting classes with dark mode support.
@@ -180,15 +180,15 @@ extension MarkdownTypography {
 public final class StyleBuilder {
     private var style: MarkdownTypography.TypographyStyle
     private var darkModeOverrides: [String: String] = [:]
-    
+
     init(baseStyle: MarkdownTypography.TypographyStyle? = nil) {
         self.style = baseStyle ?? MarkdownTypography.TypographyStyle()
     }
-    
+
     /// Build the final typography style with dark mode support.
     func build() -> MarkdownTypography.TypographyStyle {
         var finalStyle = style
-        
+
         // Add dark mode overrides to customProperties
         if !darkModeOverrides.isEmpty {
             var darkModeCSS = "@media (prefers-color-scheme: dark) { "
@@ -198,12 +198,12 @@ public final class StyleBuilder {
             darkModeCSS += "}"
             finalStyle.customProperties["__dark_mode__"] = darkModeCSS
         }
-        
+
         return finalStyle
     }
-    
+
     // MARK: - Font Configuration
-    
+
     /// Configure font properties.
     @discardableResult
     public func font(
@@ -226,7 +226,7 @@ public final class StyleBuilder {
         )
         return self
     }
-    
+
     /// Set text color with optional dark mode variant.
     @discardableResult
     public func color(_ color: String) -> ColorBuilder {
@@ -244,18 +244,18 @@ public final class StyleBuilder {
         )
         return ColorBuilder(styleBuilder: self, property: "color", lightValue: color)
     }
-    
+
     // MARK: - Background Configuration
-    
+
     /// Set background color with optional dark mode variant.
     @discardableResult
     public func background(_ color: String) -> ColorBuilder {
         style.background = MarkdownTypography.BackgroundProperties(color: color)
         return ColorBuilder(styleBuilder: self, property: "background-color", lightValue: color)
     }
-    
+
     // MARK: - Spacing Configuration
-    
+
     /// Configure padding.
     @discardableResult
     public func padding(
@@ -267,21 +267,21 @@ public final class StyleBuilder {
         style.padding = MarkdownTypography.PaddingProperties(top: top, right: right, bottom: bottom, left: left)
         return self
     }
-    
+
     /// Configure padding uniformly.
     @discardableResult
     public func padding(all: String) -> StyleBuilder {
         style.padding = MarkdownTypography.PaddingProperties(all: all)
         return self
     }
-    
+
     /// Configure padding vertically and horizontally.
     @discardableResult
     public func padding(vertical: String, horizontal: String) -> StyleBuilder {
         style.padding = MarkdownTypography.PaddingProperties(vertical: vertical, horizontal: horizontal)
         return self
     }
-    
+
     /// Configure margins.
     @discardableResult
     public func margins(
@@ -293,23 +293,23 @@ public final class StyleBuilder {
         style.margins = MarkdownTypography.MarginProperties(top: top, right: right, bottom: bottom, left: left)
         return self
     }
-    
+
     /// Configure margins uniformly.
     @discardableResult
     public func margins(all: String) -> StyleBuilder {
         style.margins = MarkdownTypography.MarginProperties(all: all)
         return self
     }
-    
+
     /// Configure margins vertically and horizontally.
     @discardableResult
     public func margins(vertical: String, horizontal: String) -> StyleBuilder {
         style.margins = MarkdownTypography.MarginProperties(vertical: vertical, horizontal: horizontal)
         return self
     }
-    
+
     // MARK: - Border Configuration
-    
+
     /// Configure border.
     @discardableResult
     public func border(
@@ -321,7 +321,7 @@ public final class StyleBuilder {
         self.style.border = MarkdownTypography.BorderProperties(width: width, style: style, color: color, radius: radius)
         return self
     }
-    
+
     /// Set border color with optional dark mode variant.
     @discardableResult
     public func borderColor(_ color: String) -> ColorBuilder {
@@ -334,18 +334,18 @@ public final class StyleBuilder {
         )
         return ColorBuilder(styleBuilder: self, property: "border-color", lightValue: color)
     }
-    
+
     // MARK: - Custom CSS
-    
+
     /// Add custom CSS property.
     @discardableResult
     public func css(_ property: String, _ value: String) -> StyleBuilder {
         style.customProperties[property] = value
         return self
     }
-    
+
     // MARK: - Internal Dark Mode Support
-    
+
     fileprivate func addDarkModeOverride(property: String, value: String) {
         darkModeOverrides[property] = value
     }
@@ -361,13 +361,13 @@ public final class ColorBuilder {
     private let styleBuilder: StyleBuilder
     private let property: String
     private let lightValue: String
-    
+
     init(styleBuilder: StyleBuilder, property: String, lightValue: String) {
         self.styleBuilder = styleBuilder
         self.property = property
         self.lightValue = lightValue
     }
-    
+
     /// Specify the dark mode variant for this color.
     ///
     /// - Parameter darkColor: The color to use in dark mode
@@ -385,91 +385,91 @@ public final class ColorBuilder {
 public final class SyntaxHighlightingBuilder {
     private var lightColors: [String: String] = [:]
     private var darkColors: [String: String] = [:]
-    
+
     /// Set the color for keywords (if, let, var, func, etc.)
     @discardableResult
     public func keyword(_ color: String) -> SyntaxColorBuilder {
         lightColors["keyword"] = color
         return SyntaxColorBuilder(parent: self, className: "keyword")
     }
-    
+
     /// Set the color for string literals.
     @discardableResult
     public func string(_ color: String) -> SyntaxColorBuilder {
         lightColors["string"] = color
         return SyntaxColorBuilder(parent: self, className: "string")
     }
-    
+
     /// Set the color for comments.
     @discardableResult
     public func comment(_ color: String) -> SyntaxColorBuilder {
         lightColors["comment"] = color
         return SyntaxColorBuilder(parent: self, className: "comment")
     }
-    
+
     /// Set the color for numbers.
     @discardableResult
     public func number(_ color: String) -> SyntaxColorBuilder {
         lightColors["number"] = color
         return SyntaxColorBuilder(parent: self, className: "number")
     }
-    
+
     /// Set the color for function names.
     @discardableResult
     public func function(_ color: String) -> SyntaxColorBuilder {
         lightColors["function"] = color
         return SyntaxColorBuilder(parent: self, className: "function")
     }
-    
+
     /// Set the color for type names.
     @discardableResult
     public func type(_ color: String) -> SyntaxColorBuilder {
         lightColors["type"] = color
         return SyntaxColorBuilder(parent: self, className: "type")
     }
-    
+
     /// Set the color for operators.
     @discardableResult
     public func `operator`(_ color: String) -> SyntaxColorBuilder {
         lightColors["operator"] = color
         return SyntaxColorBuilder(parent: self, className: "operator")
     }
-    
+
     /// Set the color for properties.
     @discardableResult
     public func property(_ color: String) -> SyntaxColorBuilder {
         lightColors["property"] = color
         return SyntaxColorBuilder(parent: self, className: "property")
     }
-    
+
     /// Set the color for variables.
     @discardableResult
     public func variable(_ color: String) -> SyntaxColorBuilder {
         lightColors["variable"] = color
         return SyntaxColorBuilder(parent: self, className: "variable")
     }
-    
+
     /// Set the color for punctuation.
     @discardableResult
     public func punctuation(_ color: String) -> SyntaxColorBuilder {
         lightColors["punctuation"] = color
         return SyntaxColorBuilder(parent: self, className: "punctuation")
     }
-    
+
     fileprivate func setDarkColor(className: String, color: String) {
         darkColors[className] = color
     }
-    
+
     func apply(to typography: MarkdownTypography) -> MarkdownTypography {
         var result = typography
-        
+
         // Apply light mode colors
         for (className, color) in lightColors {
             result = result.element(.code) { style in
                 style.css(".\(className)", "color: \(color)")
             }
         }
-        
+
         // Apply dark mode colors if specified
         if !darkColors.isEmpty {
             var darkModeCSS = "@media (prefers-color-scheme: dark) { "
@@ -477,12 +477,12 @@ public final class SyntaxHighlightingBuilder {
                 darkModeCSS += ".\(className) { color: \(color); } "
             }
             darkModeCSS += "}"
-            
+
             result = result.element(.code) { style in
                 style.css("__syntax_dark__", darkModeCSS)
             }
         }
-        
+
         return result
     }
 }
@@ -491,12 +491,12 @@ public final class SyntaxHighlightingBuilder {
 public final class SyntaxColorBuilder {
     private let parent: SyntaxHighlightingBuilder
     private let className: String
-    
+
     init(parent: SyntaxHighlightingBuilder, className: String) {
         self.parent = parent
         self.className = className
     }
-    
+
     /// Specify the dark mode variant for this syntax color.
     @discardableResult
     public func onDark(_ darkColor: String) -> SyntaxHighlightingBuilder {

@@ -596,7 +596,7 @@ public struct HTMLRenderer {
             keywords: ["func", "var", "let", "class", "struct", "enum", "protocol", "import", "if", "else", "for", "while", "return", "public", "private", "internal"],
             patterns: [
                 ("\"([^\"\\\\]|\\\\.)*\"", "string"),
-                ("//.*$", "comment")
+                ("//.*$", "comment"),
             ]
         ),
         "javascript": SyntaxHighlightConfig(
@@ -615,9 +615,9 @@ public struct HTMLRenderer {
             keywords: [],
             patterns: [
                 ("([a-zA-Z][a-zA-Z0-9-]*|\\.[a-zA-Z][a-zA-Z0-9-]*|#[a-zA-Z][a-zA-Z0-9-]*)\\s*\\{", "selector"),
-                ("([a-zA-Z-]+)\\s*:", "property")
+                ("([a-zA-Z-]+)\\s*:", "property"),
             ]
-        )
+        ),
     ]
 
     /// Generic syntax highlighting using language configuration
@@ -660,22 +660,22 @@ public struct HTMLRenderer {
 
     /// Basic Swift syntax highlighting
     private func highlightSwiftSyntax(_ code: String) -> String {
-        return highlightWithConfig(code, language: "swift")
+        highlightWithConfig(code, language: "swift")
     }
 
     /// Basic JavaScript syntax highlighting
     private func highlightJavaScriptSyntax(_ code: String) -> String {
-        return highlightWithConfig(code, language: "javascript")
+        highlightWithConfig(code, language: "javascript")
     }
 
     /// Basic HTML syntax highlighting
     private func highlightHTMLSyntax(_ code: String) -> String {
-        return highlightWithConfig(code, language: "html")
+        highlightWithConfig(code, language: "html")
     }
 
     /// Basic CSS syntax highlighting
     private func highlightCSSSyntax(_ code: String) -> String {
-        return highlightWithConfig(code, language: "css")
+        highlightWithConfig(code, language: "css")
     }
 
     /// Generates enhanced HTML for code blocks with interactive features
