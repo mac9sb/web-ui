@@ -12,8 +12,7 @@ public struct BackgroundStyleOperation: StyleOperation, @unchecked Sendable {
 
         /// Creates parameters for background styling
         ///
-        /// - Parameters:
-        ///   - color: The background color
+        /// - Parameter color: The background color
         public init(color: Color) {
             self.color = color
         }
@@ -23,9 +22,10 @@ public struct BackgroundStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: BackgroundStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                color: params.get("color")!
-            )
+            guard let color: Color = params.get("color") else {
+                return Parameters(color: .white())
+            }
+            return Parameters(color: color)
         }
     }
 
@@ -51,8 +51,7 @@ extension Markup {
     /// Adds a background color class based on the provided color and optional modifiers.
     /// This method applies Tailwind CSS background color classes to the element.
     ///
-    /// - Parameters:
-    ///   - color: Sets the background color from the color palette or a custom value.
+    /// - Parameter color: Sets the background color from the color palette or a custom value.
     /// - Returns: A new element with updated background color classes.
     ///
     /// ## Example

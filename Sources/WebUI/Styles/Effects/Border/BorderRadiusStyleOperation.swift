@@ -49,7 +49,7 @@ public struct BorderRadiusStyleOperation: StyleOperation, @unchecked Sendable {
 
         for side in sides {
             let sidePrefix = side == .all ? "" : "-\(side.rawValue)"
-            let sizeValue = size != nil ? "-\(size!.rawValue)" : ""
+            let sizeValue = size.map { "-\($0.rawValue)" } ?? ""
 
             classes.append("rounded\(sidePrefix)\(sizeValue)")
         }

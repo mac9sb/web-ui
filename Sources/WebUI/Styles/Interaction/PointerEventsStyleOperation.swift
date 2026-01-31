@@ -21,7 +21,10 @@ public struct PointerEventsStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: PointerEventsStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(value: params.get("value")!)
+            guard let value: PointerEventsValue = params.get("value") else {
+                return Parameters(value: .auto)
+            }
+            return Parameters(value: value)
         }
     }
 
@@ -52,8 +55,7 @@ public enum PointerEventsValue: String {
 extension Markup {
     /// Sets the pointer-events property with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - value: The pointer-events value to apply.
+    /// - Parameter value: The pointer-events value to apply.
     /// - Returns: Markup with updated pointer-events classes.
     ///
     /// ## Example

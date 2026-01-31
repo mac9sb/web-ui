@@ -22,9 +22,10 @@ public struct DisplayStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: DisplayStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                type: params.get("type")!
-            )
+            guard let type: DisplayType = params.get("type") else {
+                return Parameters(type: .block)
+            }
+            return Parameters(type: type)
         }
     }
 
@@ -47,8 +48,7 @@ public struct DisplayStyleOperation: StyleOperation, @unchecked Sendable {
 extension Markup {
     /// Sets the CSS display property with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - type: The display type to apply.
+    /// - Parameter type: The display type to apply.
     /// - Returns: A new element with updated display classes.
     ///
     /// ## Example

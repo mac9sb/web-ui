@@ -21,7 +21,10 @@ public struct InsetStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: InsetStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(value: params.get("value")!)
+            guard let value: InsetValue = params.get("value") else {
+                return Parameters(value: .zero)
+            }
+            return Parameters(value: value)
         }
     }
 
@@ -56,8 +59,7 @@ public enum InsetValue: String {
 extension Markup {
     /// Sets the inset property for positioning with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - value: The inset value to apply.
+    /// - Parameter value: The inset value to apply.
     /// - Returns: Markup with updated inset classes.
     ///
     /// ## Example

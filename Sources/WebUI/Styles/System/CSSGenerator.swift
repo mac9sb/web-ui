@@ -193,7 +193,10 @@ public enum CSSGenerator {
         guard parts.count > 1 else {
             return ([], className)
         }
-        return (Array(parts.dropLast()), parts.last!)
+        guard let last = parts.last else {
+            return ([], className)
+        }
+        return (Array(parts.dropLast()), last)
     }
 
     /// Checks if a modifier requires a media query (responsive breakpoints or color scheme).
@@ -1113,14 +1116,17 @@ public enum CSSGenerator {
 
         // Extract spacing value
         let parts = className.split(separator: "-")
-        guard parts.count >= 2, let value = Int(parts.last!) else {
+        guard parts.count >= 2, let last = parts.last, let value = Int(last) else {
             return nil
         }
 
         let spacing = spacingValue(for: value)
 
         // Determine spacing type
-        let prefix = String(parts.first!)
+        guard let first = parts.first else {
+            return nil
+        }
+        let prefix = String(first)
         switch prefix {
         case "p": return "padding: \(spacing);"
         case "px": return "padding-left: \(spacing); padding-right: \(spacing);"

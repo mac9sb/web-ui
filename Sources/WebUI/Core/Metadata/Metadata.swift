@@ -242,9 +242,11 @@ public struct Metadata: Sendable {
                     baseTags.append(
                         "<link rel=\"icon\" type=\"\(favicon.type.rawValue)\" href=\"\(favicon.light)\"\(sizeAttr) media=\"(prefers-color-scheme: light)\">"
                     )
-                    baseTags.append(
-                        "<link rel=\"icon\" type=\"\(favicon.type.rawValue)\" href=\"\(favicon.dark!)\"\(sizeAttr) media=\"(prefers-color-scheme: dark)\">"
-                    )
+                    if let darkIcon = favicon.dark {
+                        baseTags.append(
+                            "<link rel=\"icon\" type=\"\(favicon.type.rawValue)\" href=\"\(darkIcon)\"\(sizeAttr) media=\"(prefers-color-scheme: dark)\">"
+                        )
+                    }
                 } else {
                     baseTags.append(
                         "<link rel=\"icon\" type=\"\(favicon.type.rawValue)\" href=\"\(favicon.light)\"\(sizeAttr)>"

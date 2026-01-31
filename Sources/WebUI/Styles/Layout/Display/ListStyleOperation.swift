@@ -22,9 +22,10 @@ public struct ListStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: ListStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                type: params.get("type")!
-            )
+            guard let type: ListStyleType = params.get("type") else {
+                return Parameters(type: .disc)
+            }
+            return Parameters(type: type)
         }
     }
 
@@ -49,8 +50,7 @@ extension Markup {
     ///
     /// Commonly used to hide disclosure markers on <summary> elements or customize list bullets.
     ///
-    /// - Parameters:
-    ///   - type: The list style type to apply.
+    /// - Parameter type: The list style type to apply.
     /// - Returns: Markup with updated list-style classes.
     ///
     /// ## Example

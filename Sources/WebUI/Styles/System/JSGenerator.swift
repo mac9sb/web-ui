@@ -22,12 +22,12 @@ import Foundation
 ///
 /// ```swift
 /// let stateMachine = StateMachine {
-///     State("idle") {
-///         Event("start") { Transition(to: "running") }
+///     state("idle") {
+///         event("start") { transition(to: "running") }
 ///     }
-///     State("running") {
-///         Event("pause") { Transition(to: "paused") }
-///         Event("stop") { Transition(to: "idle") }
+///     state("running") {
+///         event("pause") { transition(to: "paused") }
+///         event("stop") { transition(to: "idle") }
 ///     }
 /// }
 /// let js = JSGenerator.generateStateMachine(stateMachine)
@@ -205,8 +205,8 @@ public enum JSGenerator {
             var eventEntries: [String] = []
 
             for (event, transition) in eventTransitions {
-                let guardJS = transition.guardCondition != nil ? "data => \(transition.guardCondition!)" : "null"
-                let actionJS = transition.action != nil ? "data => \(transition.action!)" : "null"
+                let guardJS = transition.guardCondition.map { "data => \($0)" } ?? "null"
+                let actionJS = transition.action.map { "data => \($0)" } ?? "null"
 
                 let entry = """
                         "\(event)": {
@@ -308,17 +308,17 @@ public struct EventBuilder {
 // MARK: - Convenience Functions
 
 /// Creates a state definition.
-public func State(_ name: String, data: String? = nil, @EventBuilder builder: () -> [EventDefinition] = { [] }) -> StateDefinition {
+public func state(_ name: String, data: String? = nil, @EventBuilder builder: () -> [EventDefinition] = { [] }) -> StateDefinition {
     StateDefinition(name: name, data: data, builder: builder)
 }
 
 /// Creates an event definition.
-public func Event(_ name: String, @TransitionBuilder builder: () -> TransitionDefinition) -> EventDefinition {
+public func event(_ name: String, @TransitionBuilder builder: () -> TransitionDefinition) -> EventDefinition {
     EventDefinition(name: name, transition: builder())
 }
 
 /// Creates a transition definition.
-public func Transition(to state: String, guardCondition: String? = nil, action: String? = nil) -> TransitionDefinition {
+public func transition(to state: String, guardCondition: String? = nil, action: String? = nil) -> TransitionDefinition {
     TransitionDefinition(to: state, guardCondition: guardCondition, action: action)
 }
 

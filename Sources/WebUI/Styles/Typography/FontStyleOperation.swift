@@ -48,6 +48,7 @@ public struct FontStyleOperation: StyleOperation, @unchecked Sendable {
         ///   - decoration: The text decoration
         ///   - wrapping: The text wrapping behavior
         ///   - color: The text color
+        ///   - casing: The text casing
         ///   - family: The font family
         public init(
             size: TextSize? = nil,
@@ -143,6 +144,7 @@ extension Markup {
     ///   - decoration: The text decoration style (underline, strikethrough, etc.).
     ///   - wrapping: The text wrapping behavior.
     ///   - color: The text color from the color palette.
+    ///   - casing: The text casing (uppercase, lowercase, etc.).
     ///   - family: The font family name or stack (e.g., "sans-serif").
     /// - Returns: A new element with updated font styling classes.
     ///
@@ -206,6 +208,7 @@ extension Markup {
 ///   - decoration: The text decoration.
 ///   - wrapping: The text wrapping behavior.
 ///   - color: The text color.
+///   - casing: The text casing (uppercase, lowercase, etc.).
 ///   - family: The font family name.
 /// - Returns: A responsive modification for font styling.
 public func font(
@@ -217,6 +220,7 @@ public func font(
     decoration: Decoration? = nil,
     wrapping: Wrapping? = nil,
     color: Color? = nil,
+    casing: Casing? = nil,
     family: String? = nil
 ) -> ResponsiveModification {
     let params = FontStyleOperation.Parameters(
@@ -228,6 +232,7 @@ public func font(
         decoration: decoration,
         wrapping: wrapping,
         color: color,
+        casing: casing,
         family: family
     )
 
@@ -248,6 +253,7 @@ extension ResponsiveBuilder {
     ///   - decoration: The text decoration.
     ///   - wrapping: The text wrapping behavior.
     ///   - color: The text color.
+    ///   - casing: The text casing (uppercase, lowercase, etc.).
     ///   - family: The font family.
     /// - Returns: The builder for method chaining.
     @discardableResult
@@ -260,6 +266,7 @@ extension ResponsiveBuilder {
         decoration: Decoration? = nil,
         wrapping: Wrapping? = nil,
         color: Color? = nil,
+        casing: Casing? = nil,
         family: String? = nil
     ) -> ResponsiveBuilder {
         let params = FontStyleOperation.Parameters(
@@ -271,6 +278,7 @@ extension ResponsiveBuilder {
             decoration: decoration,
             wrapping: wrapping,
             color: color,
+            casing: casing,
             family: family
         )
 

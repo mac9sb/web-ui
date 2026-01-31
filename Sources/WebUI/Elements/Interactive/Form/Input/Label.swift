@@ -27,7 +27,7 @@ public struct Label: Element {
     /// Creates a new HTML label element associated with a form control.
     ///
     /// - Parameters:
-    ///   - for: ID of the associated input element. This creates a programmatic connection between the label and the form control.
+    ///   - forID: ID of the associated input element. This creates a programmatic connection between the label and the form control.
     ///   - id: Unique identifier for the HTML element itself.
     ///   - classes: An array of stylesheet classnames for styling the label.
     ///   - role: ARIA role of the element for accessibility.
@@ -42,7 +42,7 @@ public struct Label: Element {
     /// }
     /// ```
     public init(
-        `for`: String,
+        forID: String,
         id: String? = nil,
         classes: [String]? = nil,
         role: AriaRole? = nil,
@@ -50,7 +50,7 @@ public struct Label: Element {
         data: [String: String]? = nil,
         @MarkupBuilder content: @escaping MarkupContentBuilder = { [] }
     ) {
-        self.forAttribute = `for`
+        self.forAttribute = forID
         self.id = id
         self.classes = classes
         self.role = role

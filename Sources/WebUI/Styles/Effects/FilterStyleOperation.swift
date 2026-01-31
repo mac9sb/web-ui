@@ -67,9 +67,10 @@ public struct FilterStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: FilterStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                effect: params.get("effect")!
-            )
+            guard let effect: FilterEffect = params.get("effect") else {
+                return Parameters(effect: .none)
+            }
+            return Parameters(effect: effect)
         }
     }
 

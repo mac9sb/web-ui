@@ -32,9 +32,10 @@ public struct CursorStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: CursorStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                type: params.get("type")!
-            )
+            guard let type: CursorType = params.get("type") else {
+                return Parameters(type: .auto)
+            }
+            return Parameters(type: type)
         }
     }
 
@@ -57,8 +58,7 @@ public struct CursorStyleOperation: StyleOperation, @unchecked Sendable {
 extension Markup {
     /// Sets the cursor style of the element with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - type: The cursor type.
+    /// - Parameter type: The cursor type.
     /// - Returns: A new element with updated cursor classes.
     ///
     /// ## Example

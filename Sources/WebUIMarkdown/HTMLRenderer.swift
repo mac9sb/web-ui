@@ -237,8 +237,8 @@ public struct HTMLRenderer {
             headingId = generateHeadingId(from: headingText)
 
             // Add to table of contents if within max depth
-            if level <= options.tableOfContents.maxDepth {
-                let entry = TableOfContentsEntry(level: level, text: headingText, id: headingId!)
+            if level <= options.tableOfContents.maxDepth, let resolvedHeadingId = headingId {
+                let entry = TableOfContentsEntry(level: level, text: headingText, id: resolvedHeadingId)
                 tableOfContentsEntries.append(entry)
             }
         } else {
@@ -249,7 +249,7 @@ public struct HTMLRenderer {
         let headingLevel = MarkdownTypography.HeadingLevel(rawValue: level) ?? .h6
         let style = typography.style(for: headingLevel)
         let styleClass = style != nil ? " class=\"\(headingLevel.cssClassName)\"" : ""
-        let idAttr = headingId != nil ? " id=\"\(headingId!)\"" : ""
+        let idAttr = headingId.map { " id=\"\($0)\"" } ?? ""
 
         html += "<h\(level)\(idAttr)\(styleClass)>"
         try renderChildren(heading)

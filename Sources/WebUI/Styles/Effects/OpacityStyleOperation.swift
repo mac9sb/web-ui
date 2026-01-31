@@ -22,9 +22,10 @@ public struct OpacityStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: OpacityStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                value: params.get("value")!
-            )
+            guard let value: Int = params.get("value") else {
+                return Parameters(value: 100)
+            }
+            return Parameters(value: value)
         }
     }
 
@@ -47,8 +48,7 @@ public struct OpacityStyleOperation: StyleOperation, @unchecked Sendable {
 extension Markup {
     /// Sets the opacity of the element with optional modifiers.
     ///
-    /// - Parameters:
-    ///   - value: The opacity value, typically between 0 and 100.
+    /// - Parameter value: The opacity value, typically between 0 and 100.
     /// - Returns: Markup with updated opacity classes including applied modifiers.
     ///
     /// ## Example

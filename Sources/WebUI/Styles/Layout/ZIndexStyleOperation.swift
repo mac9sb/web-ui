@@ -22,9 +22,10 @@ public struct ZIndexStyleOperation: StyleOperation, @unchecked Sendable {
         /// - Parameter params: The style parameters container
         /// - Returns: ZIndexStyleOperation.Parameters
         public static func from(_ params: StyleParameters) -> Parameters {
-            Parameters(
-                value: params.get("value")!
-            )
+            guard let value: Int = params.get("value") else {
+                return Parameters(value: 0)
+            }
+            return Parameters(value: value)
         }
     }
 
@@ -49,8 +50,7 @@ extension Markup {
     ///
     /// Sets the stacking order of the element, optionally scoped to modifiers.
     ///
-    /// - Parameters:
-    ///   - value: Specifies the z-index value as an integer.
+    /// - Parameter value: Specifies the z-index value as an integer.
     /// - Returns: Markup with updated z-index classes.
     ///
     /// ## Example
