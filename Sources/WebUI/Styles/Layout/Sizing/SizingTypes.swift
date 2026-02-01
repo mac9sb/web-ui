@@ -128,6 +128,9 @@ extension Int {
 // MARK: - Static Sizing Constants for SwiftUI-like API
 
 extension SizingValue {
+    /// Width/height set to 0
+    public static let zero: SizingValue = .spacing(0)
+
     /// Width/height set to auto
     public static let auto: SizingValue = .constant(.auto)
 
