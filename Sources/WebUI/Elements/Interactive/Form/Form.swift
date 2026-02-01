@@ -53,7 +53,7 @@ public struct Form: Element {
     ///   Label(for: "message") { "Message:" }
     ///   TextArea(name: "message")
     ///
-    ///   Button(type: .submit) { "Send Message" }
+    ///   Button("Send Message", type: .submit)
     /// }
     /// ```
     public init(

@@ -13,7 +13,7 @@ import Foundation
 ///   var title: String
 ///   var body: some Markup {
 ///     Stack {
-///       Text { title }
+///       Text(title)
 ///     }
 ///   }
 /// }

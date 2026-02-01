@@ -150,7 +150,7 @@ extension Markup {
     ///
     /// ## Example
     /// ```swift
-    /// Text { "Welcome to our site" }
+    /// Text("Welcome to our site")
     ///   .font(
     ///     size: .xl2,
     ///     weight: .bold,
@@ -160,7 +160,7 @@ extension Markup {
     ///   )
     ///
     /// // Responsive typography
-    /// Heading(.one) { "Responsive Title" }
+    /// Heading(.one, "Responsive Title")
     ///   .font(size: .xl3)
     ///   .font(size: .xl5, on: .lg)  // Larger on desktop
     /// ```

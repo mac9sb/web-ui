@@ -6,8 +6,8 @@
 /// ## Example
 /// ```swift
 /// Item {
-///   Text { "This is a list item with " }
-///   Strong { "bold text" }
+///   Text("This is a list item with ")
+///   Strong("bold text")
 /// }
 /// // Renders: <li><span>This is a list item with </span><strong>bold text</strong></li>
 /// ```

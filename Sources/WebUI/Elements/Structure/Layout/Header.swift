@@ -9,7 +9,7 @@ import Foundation
 /// ## Example
 /// ```swift
 /// Header {
-///   Heading(.largeTitle) { "Site Title" }
+///   Heading(.largeTitle, "Site Title")
 ///   Navigation {
 ///       Link(to: "/home") { "Home" }
 ///       Link(to: "/about") { "About" }
@@ -37,7 +37,7 @@ public struct Header: Element {
     /// ## Example
     /// ```swift
     /// Header(id: "main-header", classes: ["site-header", "sticky"]) {
-    ///     Heading(.largeTitle) { "My Website" }
+    ///     Heading(.largeTitle, "My Website")
     ///   }
     ///   ```
     public init(

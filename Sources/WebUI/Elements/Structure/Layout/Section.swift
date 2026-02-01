@@ -7,7 +7,7 @@
 /// ## Example
 /// ```swift
 /// Section(id: "features") {
-///   Heading(.title) { "Key Features" }
+///   Heading(.title, "Key Features")
 ///   List {
 ///     Item { "Simple API" }
 ///     Item { "Type-safe HTML generation" }
@@ -36,8 +36,8 @@ public struct Section: Element {
     /// ## Example
     /// ```swift
     /// Section(id: "about", classes: ["content-section"]) {
-    ///   Heading(.title) { "About Us" }
-    ///   Text { "Our company was founded in 2020..." }
+    ///   Heading(.title, "About Us")
+    ///   Text("Our company was founded in 2020...")
     /// }
     /// ```
     public init(

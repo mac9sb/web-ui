@@ -6,7 +6,7 @@
 /// ```swift
 /// Stack() {
 ///   // Long content that might overflow
-///   Text { "This is a long text that might overflow its container..." }
+///   Text("This is a long text that might overflow its container...")
 /// }
 /// .overflow(.hidden)
 /// ```

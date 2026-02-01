@@ -7,9 +7,7 @@
 ///
 /// ## Example
 /// ```swift
-/// Heading(.largeTitle) {
-///   "Main Page Title"
-/// }
+/// Heading(.largeTitle, "Main Page Title")
 /// ```
 public enum HeadingLevel: String {
     /// Large title, most prominent heading (h1).

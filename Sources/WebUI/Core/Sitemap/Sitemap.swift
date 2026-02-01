@@ -127,24 +127,5 @@ public struct Sitemap {
         return url.scheme != nil && url.host != nil
     }
 
-    /// Backward compatibility method for generating XML sitemap content.
-    ///
-    /// - Deprecated: Use `generateExtensibleMarkupLanguageDocument(baseWebAddress:routes:customEntries:)` instead.
-    /// - Parameters:
-    ///   - baseURL: The base URL of the website.
-    ///   - routes: The document routes in the website.
-    ///   - customEntries: Additional sitemap entries to include.
-    /// - Returns: A string containing the XML content of the sitemap.
-    @available(*, deprecated, message: "Use generateExtensibleMarkupLanguageDocument(baseWebAddress:routes:customEntries:) instead")
-    public static func generateXML(
-        baseURL: String,
-        routes: [any Document],
-        customEntries: [SitemapEntry]? = nil
-    ) -> String {
-        generateExtensibleMarkupLanguageDocument(
-            baseWebAddress: baseURL,
-            routes: routes,
-            customEntries: customEntries
-        )
-    }
+
 }

@@ -45,38 +45,7 @@ public struct Code: Element {
         self.contentBuilder = { [content] }
     }
 
-    /// Creates a new HTML code element using HTMLBuilder closure syntax.
-    ///
-    /// - Parameters:
-    ///   - id: Unique identifier for the HTML element, useful for JavaScript interaction and styling.
-    ///   - classes: An array of stylesheet classnames for styling the code element.
-    ///   - role: ARIA role of the element for accessibility, enhancing screen reader interpretation.
-    ///   - label: ARIA label to describe the element for accessibility when context isn't sufficient.
-    ///   - data: Dictionary of `data-*` attributes for storing custom data relevant to the code element.
-    ///   - content: Closure providing code content.
-    ///
-    /// ## Example
-    /// ```swift
-    /// Code {
-    ///   "let x = 42"
-    /// }
-    /// ```
-    @available(*, deprecated, message: "Use Code(_:) string initializer instead for better SwiftUI compatibility. Example: Code(\"let x = 42\")")
-    public init(
-        id: String? = nil,
-        classes: [String]? = nil,
-        role: AriaRole? = nil,
-        label: String? = nil,
-        data: [String: String]? = nil,
-        @MarkupBuilder content: @escaping MarkupContentBuilder = { [] }
-    ) {
-        self.id = id
-        self.classes = classes
-        self.role = role
-        self.label = label
-        self.data = data
-        self.contentBuilder = content
-    }
+
 
     public var body: some Markup {
         MarkupString(content: buildMarkupTag())

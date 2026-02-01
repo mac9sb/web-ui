@@ -17,8 +17,8 @@ import Foundation
 ///
 ///     var body: some Markup {
 ///         Stack {
-///             Heading(.title) { title }
-///             Text { content }
+///             Heading(.title, title)
+///             Text(content)
 ///         }
 ///         .padding(.medium)
 ///         .backgroundColor(.white)

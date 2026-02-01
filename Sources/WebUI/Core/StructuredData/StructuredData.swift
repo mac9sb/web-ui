@@ -89,23 +89,5 @@ public struct StructuredData: @unchecked Sendable {
         return ""
     }
 
-    // MARK: - Backward Compatibility
 
-    /// Backward compatibility alias for `retrieveStructuredDataDictionary()`.
-    ///
-    /// - Deprecated: Use `retrieveStructuredDataDictionary()` instead.
-    /// - Returns: A dictionary containing the structured data properties.
-    @available(*, deprecated, message: "Use retrieveStructuredDataDictionary() instead")
-    public func getData() -> [String: Any] {
-        retrieveStructuredDataDictionary()
-    }
-
-    /// Backward compatibility alias for `convertToJsonString()`.
-    ///
-    /// - Deprecated: Use `convertToJsonString()` instead.
-    /// - Returns: A JSON string representation of the structured data.
-    @available(*, deprecated, message: "Use convertToJsonString() instead")
-    public func toJSON() -> String {
-        convertToJsonString()
-    }
 }

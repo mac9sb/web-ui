@@ -9,7 +9,7 @@ import Foundation
 /// ## Example
 /// ```swift
 /// Footer {
-///     Text { "© 2023 My Company. All rights reserved." }
+///     Text("© 2023 My Company. All rights reserved.")
 ///     Link(to: "/privacy") { "Privacy Policy" }
 ///     Link(to: "/terms") { "Terms of Service" }
 ///   }
@@ -39,7 +39,7 @@ public struct Footer: Element {
     ///       Link(to: "/about") { "About" }
     ///       Link(to: "/contact") { "Contact" }
     ///     }
-    ///     Text { "© \(Date().formattedYear()) My Company" }
+    ///     Text("© \(Date().formattedYear()) My Company")
     ///   }
     ///   ```
     public init(

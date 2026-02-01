@@ -9,9 +9,9 @@ import Foundation
 /// ## Example
 /// ```swift
 /// Article {
-///   Heading(.largeTitle) { "Blog Post Title" }
-///   Text { "Published on May 15, 2023" }
-///   Text { "This is the content of the blog post..." }
+///   Heading(.largeTitle, "Blog Post Title")
+///   Text("Published on May 15, 2023")
+///   Text("This is the content of the blog post...")
 /// }
 /// ```
 public struct Article: Element {
@@ -35,8 +35,8 @@ public struct Article: Element {
     /// ## Example
     /// ```swift
     /// Article(id: "post-123", classes: ["blog-post", "featured"]) {
-    ///   Heading(.largeTitle) { "Getting Started with WebUI" }
-    ///   Text { "Learn how to build static websites using Swift..." }
+    ///   Heading(.largeTitle, "Getting Started with WebUI")
+    ///   Text("Learn how to build static websites using Swift...")
     /// }
     /// ```
     public init(

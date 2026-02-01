@@ -8,7 +8,7 @@ import Foundation
 ///
 /// ## Example
 /// ```swift
-/// Text { "Responsive Content" }
+/// Text("Responsive Content")
 ///   .font(size: .sm)
 ///   .background(color: .neutral(._500))
 ///   .on {
@@ -35,7 +35,7 @@ extension Element {
     ///
     /// ## Example
     /// ```swift
-    /// Button { "Submit" }
+    /// Button("Submit")
     ///   .background(color: .blue(._500))
     ///   .on {
     ///     $0.sm {

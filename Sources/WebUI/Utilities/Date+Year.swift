@@ -11,7 +11,7 @@ extension Date {
     /// - Example:
     ///   ```swift
     ///   let currentYear = Date().formatAsYear()
-    ///   Text { "© \(currentYear) My Company" }
+    ///   Text("© \(currentYear) My Company")
     ///   // Renders: "© 2023 My Company" (assuming current year is 2023)
     ///   ```
     public func formatAsYear() -> String {

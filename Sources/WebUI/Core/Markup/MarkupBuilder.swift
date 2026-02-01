@@ -12,8 +12,8 @@
 ///   ```swift
 ///   @MarkupBuilder
 ///   func createContent() -> [any Markup] {
-///     Heading(.one) { "Welcome" }
-///     Text { "This is a paragraph" }
+///     Heading(.one, "Welcome")
+///     Text("This is a paragraph")
 ///     if isLoggedIn {
 ///       Link(to: "/dashboard") { "Go to Dashboard" }
 ///     } else {
@@ -53,8 +53,8 @@ public struct MarkupBuilder {
     ///
     /// - Example:
     ///   ```swift
-    ///   // Converts: Text { "Hello" }
-    ///   // Into: [Text { "Hello" }]
+    ///   // Converts: Text("Hello")
+    ///   // Into: [Text("Hello")]
     ///   ```
     public static func buildExpression(_ expression: any Markup) -> [any Markup] {
         [expression]
@@ -72,7 +72,7 @@ public struct MarkupBuilder {
     ///   ```swift
     ///   // For code like:
     ///   if showWelcome {
-    ///     Heading(.one) { "Welcome" }
+    ///     Heading(.one, "Welcome")
     ///   }
     ///   // Returns [Heading] if showWelcome is true, or [] if false
     ///   ```
@@ -92,9 +92,9 @@ public struct MarkupBuilder {
     ///   ```swift
     ///   // For the 'if' part of:
     ///   if isAdmin {
-    ///     Button { "Admin Controls" }
+    ///     Button("Admin Controls")
     ///   } else {
-    ///     Text { "Login required" }
+    ///     Text("Login required")
     ///   }
     ///   ```
     public static func buildEither(first component: [any Markup]) -> [any Markup] {
@@ -113,9 +113,9 @@ public struct MarkupBuilder {
     ///   ```swift
     ///   // For the 'else' part of:
     ///   if isAdmin {
-    ///     Button { "Admin Controls" }
+    ///     Button("Admin Controls")
     ///   } else {
-    ///     Text { "Login required" }
+    ///     Text("Login required")
     ///   }
     ///   ```
     public static func buildEither(second component: [any Markup]) -> [any Markup] {

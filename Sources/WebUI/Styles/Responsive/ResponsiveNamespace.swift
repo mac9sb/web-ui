@@ -18,7 +18,7 @@ import Foundation
 /// // In Document context - works fine without prefix
 /// struct MyDocument: Document {
 ///     var body: some Markup {
-///         Text { "Hello" }
+///         Text("Hello")
 ///             .on {
 ///                 md { font(color: .blue(._500)) }  // Works fine
 ///             }
@@ -28,7 +28,7 @@ import Foundation
 /// // In Element context - use namespace to avoid collision
 /// struct MyElement: Element {
 ///     var body: some Markup {
-///         Text { "Hello" }
+///         Text("Hello")
 ///             .on {
 ///                 md { S.font(color: .blue(._500)) }  // Use S. prefix
 ///                 lg { ResponsiveStyle.font(size: .xl) }  // Or full name

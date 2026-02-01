@@ -6,7 +6,7 @@
 ///
 /// ## Example
 /// ```swift
-/// Button(type: .submit) { "Save" }
+/// Button("Save", type: .submit)
 ///   .background(color: .blue(.500))
 ///   .font(color: .white)
 /// ```

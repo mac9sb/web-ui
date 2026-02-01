@@ -111,49 +111,7 @@ public struct Button: Element {
         }
     }
 
-    /// Creates a new HTML button using HTMLBuilder closure syntax.
-    ///
-    /// - Parameters:
-    ///   - type: Button type (submit or reset), optional.
-    ///   - autofocus: When true, automatically focuses the button when the page loads, optional.
-    ///   - onClick: JavaScript function to execute when the button is clicked, optional.
-    ///   - id: Unique identifier for the HTML element, useful for JavaScript interaction and styling.
-    ///   - classes: An array of stylesheet classnames for styling the button.
-    ///   - role: ARIA role of the element for accessibility, enhancing screen reader interpretation.
-    ///   - label: ARIA label to describe the element for accessibility when button text isn't sufficient.
-    ///   - data: Dictionary of `data-*` attributes for storing custom data relevant to the button.
-    ///   - content: Closure providing button content (text or other HTML elements), defaults to empty.
-    ///
-    /// ## Example
-    /// ```swift
-    /// Button(type: .submit, id: "save-button") {
-    ///   "Save Changes"
-    /// }
-    /// .background(color: .blue(.600))
-    /// .padding(.all, length: 2)
-    /// ```
-    @available(*, deprecated, message: "Use Button(_:) string initializer instead for better SwiftUI compatibility. Example: Button(\"Save Changes\", type: .submit)")
-    public init(
-        type: ButtonType? = nil,
-        autofocus: Bool? = nil,
-        onClick: String? = nil,
-        id: String? = nil,
-        classes: [String]? = nil,
-        role: AriaRole? = nil,
-        label: String? = nil,
-        data: [String: String]? = nil,
-        @MarkupBuilder content: @escaping MarkupContentBuilder = { [] }
-    ) {
-        self.type = type
-        self.autofocus = autofocus
-        self.onClick = onClick
-        self.id = id
-        self.classes = classes
-        self.role = role
-        self.label = label
-        self.data = data
-        self.contentBuilder = content
-    }
+
 
     public var body: some Markup {
         MarkupString(content: buildMarkupTag())

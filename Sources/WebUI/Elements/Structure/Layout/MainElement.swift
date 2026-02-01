@@ -8,8 +8,8 @@
 /// ## Example
 /// ```swift
 /// Main {
-///     Heading(.largeTitle) { "Welcome to Our Website" }
-///     Text { "This is the main content of our heomepage." }
+///     Heading(.largeTitle, "Welcome to Our Website")
+///     Text("This is the main content of our heomepage.")
 ///     Article {
 ///       // Article content
 ///     }
@@ -37,8 +37,8 @@ public struct Main: Element {
     /// ```swift
     /// Main(classes: ["site-main"]) {
     ///     Article {
-    ///         Heading(.title) { "Welcome" }
-    ///         Text { "This is the main content of the page." }
+    ///         Heading(.title, "Welcome")
+    ///         Text("This is the main content of the page.")
     ///     }
     /// }
     /// ```

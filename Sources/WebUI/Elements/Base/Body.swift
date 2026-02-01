@@ -33,8 +33,8 @@ public struct BodyWrapper: Element {
     /// ```swift
     /// Body(classes: ["flex"], data: ["user-id": "123"]) {
     ///   Image(source: "/avatar.jpg", description: "User Avatar")
-    ///   Heading(.headline) { "Jane Doe" }
-    ///   Text { "Software Engineer" }
+    ///   Heading(.headline, "Jane Doe")
+    ///   Text("Software Engineer")
     /// }
     /// ```
     public init(

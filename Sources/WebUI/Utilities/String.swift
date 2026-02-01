@@ -15,7 +15,7 @@ extension String: Markup {
     ///   ```swift
     ///   let content: [any Markup] = [
     ///     "Some text",
-    ///     Heading(.one) { "Title" }
+    ///     Heading(.one, "Title")
     ///   ]
     ///   ```
     public func render() -> String { self }
@@ -66,14 +66,5 @@ extension String: Markup {
             .trimmingCharacters(in: .whitespaces)
     }
 
-    // MARK: - Backward Compatibility
 
-    /// Backward compatibility alias for `sanitizedForStyleSheet()`.
-    ///
-    /// - Deprecated: Use `sanitizedForStyleSheet()` instead.
-    /// - Returns: A sanitized string suitable for use as a stylesheet variable name.
-    @available(*, deprecated, message: "Use sanitizedForStyleSheet() instead")
-    public func sanitizedForCSS() -> String {
-        sanitizedForStyleSheet()
-    }
 }

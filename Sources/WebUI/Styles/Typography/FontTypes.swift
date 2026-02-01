@@ -6,10 +6,10 @@
 ///
 /// ## Example
 /// ```swift
-/// Heading(.one) { "Page Title" }
+/// Heading(.one, "Page Title")
 ///   .font(size: .xl3)
 ///
-/// Text { "Small print" }
+/// Text("Small print")
 ///   .font(size: .xs)
 /// ```
 public enum TextSize: String {
@@ -85,7 +85,7 @@ public enum TextSize: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "Centered Heading" }
+/// Text("Centered Heading")
 ///   .font(alignment: .center)
 /// ```
 public enum Alignment: String {
@@ -107,7 +107,7 @@ public enum Alignment: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "Important note" }
+/// Text("Important note")
 ///   .font(weight: .bold)
 /// ```
 public enum Weight: String {
@@ -141,7 +141,7 @@ public enum Weight: String {
 ///
 /// ## Example
 /// ```swift
-/// Heading(.one) { "Spaced Title" }
+/// Heading(.one, "Spaced Title")
 ///   .font(tracking: .wide)
 /// ```
 public enum Tracking: String {
@@ -169,7 +169,7 @@ public enum Tracking: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "This paragraph has multiple lines of text and needs good spacing for readability" }
+/// Text("This paragraph has multiple lines of text and needs good spacing for readability")
 ///   .font(leading: .relaxed)
 /// ```
 public enum Leading: String {
@@ -197,7 +197,7 @@ public enum Leading: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "This text is important" }
+/// Text("This text is important")
 ///   .font(decoration: .underline)
 /// ```
 public enum Decoration: String {
@@ -229,7 +229,7 @@ public enum Decoration: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "A long paragraph that needs to wrap nicely within its container" }
+/// Text("A long paragraph that needs to wrap nicely within its container")
 ///   .font(wrapping: .balance)
 /// ```
 public enum Wrapping: String {
@@ -252,7 +252,7 @@ public enum Wrapping: String {
 ///
 /// ## Example
 /// ```swift
-/// Text { "section header" }
+/// Text("section header")
 ///   .font(casing: .uppercase)
 /// ```
 public enum Casing: String {

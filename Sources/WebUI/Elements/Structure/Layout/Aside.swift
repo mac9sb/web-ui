@@ -10,7 +10,7 @@ import Foundation
 /// ## Example
 /// ```swift
 /// Aside(classes: ["sidebar"]) {
-///     Heading(.title) { "Related Articles" }
+///     Heading(.title, "Related Articles")
 ///     List {
 ///       Item { Link(to: "/article1") { "Article 1" } }
 ///       Item { Link(to: "/article2") { "Article 2" } }
@@ -38,8 +38,8 @@ public struct Aside: Element {
     /// ## Example
     /// ```swift
     /// Aside(id: "glossary", classes: ["note", "bordered"], label: "Term Definition") {
-    ///     Heading(.headline) { "Definition" }
-    ///     Text { "A detailed explanation of the term..." }
+    ///     Heading(.headline, "Definition")
+    ///     Text("A detailed explanation of the term...")
     ///   }
     ///   ```
     public init(
