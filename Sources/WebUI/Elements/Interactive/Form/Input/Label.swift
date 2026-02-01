@@ -59,6 +59,27 @@ public struct Label: Element {
         self.contentBuilder = content
     }
 
+    /// Backward-compatible initializer using the `for` label.
+    public init(
+        `for`: String,
+        id: String? = nil,
+        classes: [String]? = nil,
+        role: AriaRole? = nil,
+        label: String? = nil,
+        data: [String: String]? = nil,
+        @MarkupBuilder content: @escaping MarkupContentBuilder = { [] }
+    ) {
+        self.init(
+            forID: `for`,
+            id: id,
+            classes: classes,
+            role: role,
+            label: label,
+            data: data,
+            content: content
+        )
+    }
+
     public var body: some Markup {
         MarkupString(content: buildMarkupTag())
     }
