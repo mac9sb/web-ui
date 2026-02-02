@@ -127,7 +127,7 @@ public enum BrowserStatement: Sendable {
 
 enum BrowserScriptString {
     static func literal(_ value: String) throws -> String {
-        let data = try JSONSerialization.data(withJSONObject: value, options: [])
+        let data = try JSONEncoder().encode(value)
         guard let string = String(data: data, encoding: .utf8) else {
             throw BrowserScriptRenderError.invalidStringLiteral
         }

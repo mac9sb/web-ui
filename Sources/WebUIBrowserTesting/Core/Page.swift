@@ -26,6 +26,14 @@ public final class Page {
         Keyboard(page: self)
     }
 
+    public var mouse: Mouse {
+        Mouse(page: self)
+    }
+
+    public var touch: Touch {
+        Touch(page: self)
+    }
+
     init(webView: WKWebView, configuration: BrowserConfiguration) {
         self.webView = webView
         self.configuration = configuration
