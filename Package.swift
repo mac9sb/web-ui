@@ -10,6 +10,7 @@ let package = Package(
     products: [
         .library(name: "WebUI", targets: ["WebUI"]),
         .library(name: "WebUIMarkdown", targets: ["WebUIMarkdown"]),
+        .library(name: "WebUIBrowserTesting", targets: ["WebUIBrowserTesting"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-markdown", from: "0.6.0"),
@@ -26,7 +27,13 @@ let package = Package(
                 .product(name: "Markdown", package: "swift-markdown")
             ]
         ),
-
+        .target(
+            name: "WebUIBrowserTesting",
+            dependencies: [
+                "WebUI",
+                .product(name: "Testing", package: "swift-testing"),
+            ]
+        ),
         .testTarget(
             name: "WebUITests",
             dependencies: [
@@ -38,6 +45,13 @@ let package = Package(
             name: "WebUIMarkdownTests",
             dependencies: [
                 "WebUIMarkdown",
+                .product(name: "Testing", package: "swift-testing"),
+            ]
+        ),
+        .testTarget(
+            name: "WebUIBrowserTestingTests",
+            dependencies: [
+                "WebUIBrowserTesting",
                 .product(name: "Testing", package: "swift-testing"),
             ]
         ),
