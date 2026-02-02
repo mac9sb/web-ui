@@ -39,7 +39,11 @@ public enum CSSGenerator {
     ///
     /// - Parameter classes: Array of utility class names
     /// - Returns: A string containing CSS rules
-    public static func generateCSS(for classes: [String]) -> String {
+    public static func generateCSS(
+        for classes: [String],
+        includeBaseStyles: Bool = true,
+        minify: Bool = true
+    ) -> String {
         var cssRules: [String] = []
         var mediaQueries: [String: [String]] = [:]
 
@@ -62,8 +66,11 @@ public enum CSSGenerator {
             }
         }
 
-        // Build final CSS with reset and animations
-        let cssReset = """
+        var result = cssRules.joined(separator: "\n")
+
+        if includeBaseStyles {
+            // Build final CSS with reset and animations
+            let cssReset = """
             * { box-sizing: border-box; }
             html, body { margin: 0; padding: 0; }
             a { text-decoration: none; color: inherit; }
@@ -75,13 +82,22 @@ public enum CSSGenerator {
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #0d9488; }
             """
 
-        let animationKeyframes = generateAnimationKeyframes()
+            let animationKeyframes = generateAnimationKeyframes()
 
-        var result = cssReset + "\n" + animationKeyframes + "\n" + cssRules.joined(separator: "\n")
+            if result.isEmpty {
+                result = cssReset + "\n" + animationKeyframes
+            } else {
+                result = cssReset + "\n" + animationKeyframes + "\n" + result
+            }
+        }
 
         // Add media queries
         for (mediaQuery, rules) in mediaQueries.sorted(by: { $0.key < $1.key }) {
             result += "\n\(mediaQuery) {\n  " + rules.joined(separator: "\n  ") + "\n}"
+        }
+
+        if minify {
+            return minifyCSS(result)
         }
 
         return result
@@ -183,6 +199,13 @@ public enum CSSGenerator {
         .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
         """
     }
+
+    /// Minifies CSS output for smaller payloads.
+    private static func minifyCSS(_ css: String) -> String {
+        CSSMinifier.minify(css)
+    }
+
+
 
     /// Parses modifiers from a class name.
     ///

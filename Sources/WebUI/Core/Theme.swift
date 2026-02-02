@@ -232,7 +232,7 @@ public struct Theme {
             }
         }
 
-        return css
+        return CSSMinifier.minify(css)
     }
 
     /// Generates a complete CSS file for the theme with default breakpoints
@@ -252,7 +252,7 @@ public struct Theme {
     ///   // Write to a file or serve directly
     ///   ```
     public func generateFile() -> String {
-        """
+        CSSMinifier.minify("""
         @theme {
           --breakpoint-xs: 30rem;
           --breakpoint-3xl: 120rem;
@@ -260,6 +260,6 @@ public struct Theme {
           \(self.generateCSS())
           @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
         }
-        """
+        """)
     }
 }

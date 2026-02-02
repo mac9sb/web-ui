@@ -143,8 +143,16 @@ extension Website {
 
         // Build each route
         let routes = try self.routes  // Fetch routes, propagating errors
+        let cssConfig = CSSOutputConfig(
+            staticOutputDir: outputDirectory.appending(path: "public").path,
+            mode: .staticSite
+        )
+
+        // Generate shared CSS bundles for static builds
+        try SSRBuilder(config: cssConfig).generateCSS(for: routes.map { ($0, $0.path ?? "index") })
+
         for route in routes {
-            try buildRoute(route, in: outputDirectory)
+            try buildRoute(route, in: outputDirectory, cssConfig: cssConfig)
         }
 
         // Generate sitemap if enabled
@@ -158,7 +166,7 @@ extension Website {
         }
     }
 
-    private func buildRoute(_ route: any Document, in directory: URL) throws {
+    private func buildRoute(_ route: any Document, in directory: URL, cssConfig: CSSOutputConfig) throws {
         // Get the route's path, defaulting to index for root
         let path = route.path ?? "index"
 
@@ -182,6 +190,7 @@ extension Website {
             websiteScripts: scripts,
             websiteStylesheets: stylesheets,
             websiteHead: head,
+            cssConfig: cssConfig,
             jsConfig: jsConfig
         )
 

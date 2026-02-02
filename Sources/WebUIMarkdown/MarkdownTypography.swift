@@ -1,4 +1,5 @@
 import Foundation
+import WebUI
 
 // MARK: - Typography Type Definitions
 
@@ -693,7 +694,7 @@ public struct MarkdownTypography: Sendable {
             }
         }
 
-        return cssRules.joined(separator: "\n")
+        return CSSMinifier.minify(cssRules.joined(separator: "\n"))
     }
 
     // MARK: - Selector Helpers
@@ -901,7 +902,7 @@ public struct MarkdownTypography: Sendable {
             }
         }
 
-        return cssRules.joined(separator: "\n")
+        return CSSMinifier.minify(cssRules.joined(separator: "\n"))
     }
 
     /// Generate a CSS rule for a specific selector and style

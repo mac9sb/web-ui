@@ -15,6 +15,7 @@ WebUI provides a declarative, type-safe API for building websites in Swift:
 ## Getting Started
 
 - See the ``GettingStarted`` tutorial to create your first website from scratch
+- See ``WebUIBrowserTesting`` for browser automation and snapshot testing
 
 ## Features
 
@@ -37,3 +38,4 @@ Built-in support for Typst and Markdown content rendering.
 - **WebUI**: Core library for HTML generation and website building
 - **WebUITypst**: Typst content rendering support
 - **WebUIMarkdown**: Markdown content rendering support
+- **WebUIBrowserTesting**: Browser automation and snapshot testing

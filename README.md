@@ -12,6 +12,18 @@ WebUI provides a declarative, type-safe API for building websites in Swift:
 - **Component-Based**: Reusable components for common UI patterns
 - **Markdown & Typst Support**: Write content in Markdown or Typst
 
+## WebUIBrowserTesting
+
+WebUIBrowserTesting is a Swift-native browser testing library built on WKWebView. It provides Playwright-style APIs for navigation, element interaction, JavaScript evaluation, and snapshot testing.
+
+**Highlights:**
+- Browser lifecycle: `Browser().launch()`, `newPage()`, `close()`
+- Navigation: `goto`, `goBack`, `goForward`, `reload`, `waitForURL`
+- Selectors: CSS, XPath, role, text, test IDs
+- Snapshot testing: `snapshot()` and `expectSnapshot(named:threshold:snapshotDirectory:)`
+
+To use it, add `.product(name: "WebUIBrowserTesting", package: "web-ui")` to your target dependencies.
+
 ## Getting Started
 
 ### Installation

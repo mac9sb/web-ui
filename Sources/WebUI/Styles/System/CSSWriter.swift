@@ -104,7 +104,23 @@ public struct CSSWriter {
         try createDirectoryIfNeeded(stylesDir)
 
         let filePath = "\(stylesDir)/global.css"
-        try css.write(toFile: filePath, atomically: true, encoding: .utf8)
+        let minified = CSSMinifier.minify(css)
+        try minified.write(toFile: filePath, atomically: true, encoding: .utf8)
+    }
+
+    /// Writes a shared CSS bundle to disk.
+    ///
+    /// - Parameters:
+    ///   - css: CSS content to write
+    ///   - name: Bundle name (e.g., "shared-1-2", "shared-marketing")
+    /// - Throws: File I/O errors
+    public func writeSharedCSS(_ css: String, name: String) throws {
+        let stylesDir = "\(config.outputDirectory)/styles"
+        try createDirectoryIfNeeded(stylesDir)
+
+        let filePath = "\(stylesDir)/shared-\(name).css"
+        let minified = CSSMinifier.minify(css)
+        try minified.write(toFile: filePath, atomically: true, encoding: .utf8)
     }
 
     /// Writes page-specific CSS to disk.
@@ -122,7 +138,8 @@ public struct CSSWriter {
         let parentDir = fileURL.deletingLastPathComponent().path
         try createDirectoryIfNeeded(parentDir)
 
-        try css.write(toFile: filePath, atomically: true, encoding: .utf8)
+        let minified = CSSMinifier.minify(css)
+        try minified.write(toFile: filePath, atomically: true, encoding: .utf8)
     }
 
     /// Creates a directory if it doesn't exist.
@@ -148,6 +165,18 @@ public struct CSSWriter {
         switch config.mode {
         case .staticSite: return "/public/styles/global.css"
         case .ssr: return "/styles/global.css"
+        }
+    }
+
+    /// Returns the URL path for shared CSS bundles (for use in <link> tags).
+    ///
+    /// Static sites use `/public/styles/...`; SSR omits `/public` and uses `/styles/...`.
+    /// - Parameter name: Bundle name
+    /// - Returns: URL path (e.g., "/public/styles/shared-marketing.css" or "/styles/shared-marketing.css")
+    public func sharedCSSPath(name: String) -> String {
+        switch config.mode {
+        case .staticSite: return "/public/styles/shared-\(name).css"
+        case .ssr: return "/styles/shared-\(name).css"
         }
     }
 

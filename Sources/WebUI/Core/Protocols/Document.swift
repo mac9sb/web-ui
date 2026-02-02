@@ -126,26 +126,51 @@ extension Document {
 
         switch config.mode {
         case .ssr:
-            // Link to pre-generated global + page CSS
-            cssFiles = [
-                writer.globalCSSPath(),
-                writer.pageCSSPath(slug: cssSlug),
-            ]
-
-        case .staticSite:
-            // Generate CSS on-the-fly for static site generation
-            ClassCollector.shared.clear()
-
-            // Add safelist classes if provided
-            if let safelist = cssSafelist {
-                ClassCollector.shared.addSafelistClasses(safelist)
+            // Link to pre-generated CSS bundles when available
+            let stylesDir = "\(config.outputDirectory)/styles"
+            let manifestPath = "\(stylesDir)/manifest.json"
+            if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
+               let manifest = CSSBundleManifest.fromJSON(data) {
+                let files = manifest.cssFiles(for: cssSlug)
+                cssFiles = files.isEmpty ? [writer.globalCSSPath()] : files
+            } else {
+                cssFiles = [
+                    writer.globalCSSPath(),
+                    writer.pageCSSPath(slug: cssSlug),
+                ]
             }
 
-            _ = body.render()  // Re-render to collect classes
+        case .staticSite:
+            // Prefer pre-generated bundles if a manifest is available
+            let stylesDir = "\(config.outputDirectory)/styles"
+            let manifestPath = "\(stylesDir)/manifest.json"
+            let generatePageCSS: () throws -> [String] = {
+                ClassCollector.shared.clear()
 
-            let generatedCSS = ClassCollector.shared.generateCSS()
-            try writer.writePageCSS(generatedCSS, slug: cssSlug)
-            cssFiles = [writer.pageCSSPath(slug: cssSlug)]
+                // Add safelist classes if provided
+                if let safelist = cssSafelist {
+                    ClassCollector.shared.addSafelistClasses(safelist)
+                }
+
+                _ = body.render()  // Re-render to collect classes
+
+                let generatedCSS = ClassCollector.shared.generateCSS()
+                try writer.writePageCSS(generatedCSS, slug: cssSlug)
+                return [writer.pageCSSPath(slug: cssSlug)]
+            }
+
+            if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
+               let manifest = CSSBundleManifest.fromJSON(data) {
+                let files = manifest.cssFiles(for: cssSlug)
+                if files.isEmpty {
+                    cssFiles = try generatePageCSS()
+                } else {
+                    cssFiles = files
+                }
+            } else {
+                // Generate CSS on-the-fly for static site generation
+                cssFiles = try generatePageCSS()
+            }
         }
 
         // Handle JavaScript generation

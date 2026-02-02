@@ -24,6 +24,7 @@ let package = Package(
         .target(
             name: "WebUIMarkdown",
             dependencies: [
+                "WebUI",
                 .product(name: "Markdown", package: "swift-markdown")
             ]
         ),
