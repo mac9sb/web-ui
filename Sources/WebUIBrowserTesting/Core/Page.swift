@@ -43,7 +43,7 @@ public final class Page {
         consoleHandler.onMessage = { [weak self] message in
             guard let self else { return }
             Task { @MainActor in
-                await self.emitConsoleMessage(message)
+                self.emitConsoleMessage(message)
             }
         }
         userContentController.add(consoleHandler, name: "webui_console")
@@ -205,7 +205,7 @@ public final class Page {
         )
 
         try await Timeout.withTimeout(timeoutConfig) { @MainActor in
-            async let navigation = self.navigationDelegate.waitForNavigation()
+            async let navigation: Void = self.navigationDelegate.waitForNavigation()
             try await action()
             try await navigation
         }
@@ -489,11 +489,12 @@ private final class ConsoleMessageHandler: NSObject, WKScriptMessageHandler {
 private final class DialogDelegate: NSObject, WKUIDelegate {
     var onDialog: ((Dialog) async -> Void)?
 
+    @MainActor
     func webView(
         _ webView: WKWebView,
         runJavaScriptAlertPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping () -> Void
+        completionHandler: @escaping @MainActor @Sendable () -> Void
     ) {
         let dialog = Dialog(kind: .alert, message: message, defaultText: nil, completion: .alert(completionHandler))
         if let onDialog {
@@ -505,11 +506,12 @@ private final class DialogDelegate: NSObject, WKUIDelegate {
         }
     }
 
+    @MainActor
     func webView(
         _ webView: WKWebView,
         runJavaScriptConfirmPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (Bool) -> Void
+        completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         let dialog = Dialog(kind: .confirm, message: message, defaultText: nil, completion: .confirm(completionHandler))
         if let onDialog {
@@ -521,12 +523,13 @@ private final class DialogDelegate: NSObject, WKUIDelegate {
         }
     }
 
+    @MainActor
     func webView(
         _ webView: WKWebView,
         runJavaScriptTextInputPanelWithPrompt prompt: String,
         defaultText: String?,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (String?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (String?) -> Void
     ) {
         let dialog = Dialog(kind: .prompt, message: prompt, defaultText: defaultText, completion: .prompt(completionHandler))
         if let onDialog {

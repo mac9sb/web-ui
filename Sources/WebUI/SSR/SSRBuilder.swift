@@ -34,14 +34,20 @@ public struct SSRBuilder {
     /// Default: 2 (appears on at least 2 pages)
     public let globalThreshold: Int
 
+    /// Minimum number of classes required to emit a shared bundle
+    /// Smaller bundles are promoted to global CSS to avoid tiny files.
+    public let minSharedClassCount: Int
+
     /// Creates a new SSR builder.
     ///
     /// - Parameters:
     ///   - config: Output configuration (default: .ssrDefault)
     ///   - globalThreshold: Minimum pages for shared/global CSS (default: 2)
-    public init(config: CSSOutputConfig = .ssrDefault, globalThreshold: Int = 2) {
+    ///   - minSharedClassCount: Minimum class count for a shared bundle (default: 8)
+    public init(config: CSSOutputConfig = .ssrDefault, globalThreshold: Int = 2, minSharedClassCount: Int = 8) {
         self.config = config
         self.globalThreshold = globalThreshold
+        self.minSharedClassCount = minSharedClassCount
     }
 
     /// Generates CSS files for all provided pages, writes a manifest, and returns it.
@@ -74,12 +80,20 @@ public struct SSRBuilder {
         // Phase 2: Analysis - Identify shared/global/page-specific classes
         let analysis = analyzeClasses(pageClasses)
 
+        // Promote tiny shared bundles to global to avoid small files
+        var promotedSharedClasses: Set<String> = []
+        for (_, classes) in analysis.sharedClassesByPageSet {
+            if classes.count < minSharedClassCount {
+                promotedSharedClasses.formUnion(classes)
+            }
+        }
+
         // Phase 3: Generation - Write CSS files and manifest
         let writer = CSSWriter(config: config)
 
-        // Global bundle: classes used by all pages
+        // Global bundle: classes used by all pages + promoted shared classes
         let globalCSS = CSSGenerator.generateCSS(
-            for: Array(analysis.globalClasses).sorted(),
+            for: Array(analysis.globalClasses.union(promotedSharedClasses)).sorted(),
             includeBaseStyles: true
         )
         try writer.writeGlobalCSS(globalCSS)
@@ -91,10 +105,12 @@ public struct SSRBuilder {
 
         for (pageSet, classes) in analysis.sharedClassesByPageSet {
             guard pageSet.count >= effectiveThreshold else { continue }
+            let filteredClasses = classes.subtracting(promotedSharedClasses)
+            guard !filteredClasses.isEmpty else { continue }
             let bundleName = bundleNameForPageSet[pageSet] ?? makeBundleName(from: pageSet)
             bundleNameForPageSet[pageSet] = bundleName
             bundleToPages[bundleName] = pageSet.sorted()
-            bundleToClasses[bundleName] = classes
+            bundleToClasses[bundleName] = filteredClasses
         }
 
         for (bundleName, classes) in bundleToClasses {
@@ -192,8 +208,9 @@ public struct SSRBuilder {
 
     private func makeBundleName(from pages: Set<String>) -> String {
         let sorted = pages.sorted()
-        let raw = sorted.joined(separator: "-")
-        return sanitizeBundleName(raw)
+        let raw = sorted.joined(separator: "|")
+        let hash = stableHash(raw)
+        return sanitizeBundleName("bundle-\(hash)")
     }
 
     private func sanitizeBundleName(_ name: String) -> String {
@@ -208,6 +225,15 @@ public struct SSRBuilder {
             }
             .joined()
         return sanitized.replacingOccurrences(of: "--", with: "-")
+    }
+
+    private func stableHash(_ value: String) -> String {
+        var hash: UInt64 = 1469598103934665603
+        for byte in value.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 1099511628211
+        }
+        return String(format: "%016llx", hash)
     }
 
     private func writeManifest(_ manifest: CSSBundleManifest, writer: CSSWriter) throws {

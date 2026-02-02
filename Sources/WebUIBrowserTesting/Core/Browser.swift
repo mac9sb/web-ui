@@ -48,7 +48,6 @@ public final class Browser {
 
     private func makeWebViewConfiguration() -> WKWebViewConfiguration {
         let webViewConfiguration = WKWebViewConfiguration()
-        webViewConfiguration.preferences.javaScriptEnabled = configuration.enableJavaScript
         if #available(macOS 12.0, iOS 15.0, tvOS 15.0, visionOS 1.0, *) {
             webViewConfiguration.defaultWebpagePreferences.allowsContentJavaScript = configuration.enableJavaScript
         }
