@@ -21,6 +21,7 @@ WebUIBrowserTesting focuses on reliable automation across Apple platforms by lev
 - **Browser lifecycle**: launch, create pages, close
 - **Navigation**: `goto`, `goBack`, `goForward`, `reload`, wait strategies
 - **Selectors and interactions**: CSS, XPath, role/text/test-id selectors
+- **Input devices**: `page.mouse` for coordinate clicks and `page.touch` for taps
 - **JavaScript evaluation**: `evaluate` with argument passing
 - **Snapshots**: capture, compare, and manage baselines
 - **Events**: console and dialog handling
@@ -30,6 +31,7 @@ WebUIBrowserTesting focuses on reliable automation across Apple platforms by lev
 - `Core/`: Browser, Page, configuration
 - `Elements/`: selectors, element handles, locators
 - `JavaScript/`: JS bridge, handles, console messages
+- `Interaction/`: keyboard, mouse, and touch helpers
 - `Snapshot/`: capture, comparison, storage
 - `Testing/`: assertion helpers for swift-testing
 

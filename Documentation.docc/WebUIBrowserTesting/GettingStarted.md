@@ -44,3 +44,14 @@ func testLogin() async throws {
     try await browser.close()
 }
 ```
+
+## Mouse and Touch
+
+```swift
+let page = try await browser.newPage()
+
+try await page.mouse.move(to: CGPoint(x: 120, y: 240))
+try await page.mouse.click(at: CGPoint(x: 120, y: 240))
+
+try await page.touch.tap(at: CGPoint(x: 40, y: 80))
+```
