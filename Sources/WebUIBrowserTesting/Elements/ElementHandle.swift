@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 
 @MainActor
-public actor ElementHandle {
+public final class ElementHandle {
     private let page: Page
     private let selector: Selector
     private let index: Int?

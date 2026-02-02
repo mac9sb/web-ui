@@ -12,7 +12,7 @@ import UIKit
 #endif
 
 @MainActor
-public actor Page {
+public final class Page {
     private let webView: WKWebView
     private let configuration: BrowserConfiguration
     private let navigationDelegate = NavigationDelegate()
@@ -77,11 +77,11 @@ public actor Page {
             operationDescription: "goto(\(url))"
         )
 
-        try await Timeout.withTimeout(timeoutConfig) {
+        try await Timeout.withTimeout(timeoutConfig) { @MainActor in
             let request = URLRequest(url: targetURL)
-            _ = webView.load(request)
-            try await navigationDelegate.waitForNavigation()
-            try await waitForLoadState(options.waitUntil, timeout: timeout)
+            _ = self.webView.load(request)
+            try await self.navigationDelegate.waitForNavigation()
+            try await self.waitForLoadState(options.waitUntil, timeout: timeout)
         }
     }
 
@@ -197,15 +197,15 @@ public actor Page {
 
     public func waitForNavigation(
         timeout: Duration = .seconds(30),
-        action: @Sendable () async throws -> Void
+        action: @escaping @Sendable () async throws -> Void
     ) async throws {
         let timeoutConfig = TimeoutConfiguration(
             duration: timeout,
             operationDescription: "waitForNavigation"
         )
 
-        try await Timeout.withTimeout(timeoutConfig) {
-            async let navigation = navigationDelegate.waitForNavigation()
+        try await Timeout.withTimeout(timeoutConfig) { @MainActor in
+            async let navigation = self.navigationDelegate.waitForNavigation()
             try await action()
             try await navigation
         }
@@ -221,7 +221,7 @@ public actor Page {
             operationDescription: "waitForSelector(\(selector))"
         )
 
-        return try await Timeout.withTimeout(timeoutConfig) {
+        return try await Timeout.withTimeout(timeoutConfig) { @MainActor in
             while true {
                 if let element = await self.querySelector(selector) {
                     return element
@@ -241,9 +241,9 @@ public actor Page {
             operationDescription: "waitForFunction(\(script))"
         )
 
-        _ = try await Timeout.withTimeout(timeoutConfig) {
+        _ = try await Timeout.withTimeout(timeoutConfig) { @MainActor in
             while true {
-                let condition: Bool = try await evaluate(script)
+                let condition: Bool = try await self.evaluate(script)
                 if condition { return true }
                 try await Task.sleep(for: pollingInterval)
             }
@@ -277,7 +277,11 @@ public actor Page {
         if let clip = options.clip {
             configuration.rect = clip
         } else if options.fullPage {
+            #if os(macOS)
+            let size = webView.bounds.size
+            #else
             let size = webView.scrollView.contentSize
+            #endif
             configuration.rect = CGRect(origin: .zero, size: size)
         }
 
@@ -537,7 +541,8 @@ private final class DialogDelegate: NSObject, WKUIDelegate {
 
 #else
 
-public actor Page {
+@MainActor
+public final class Page {
     public func goto(_ url: String, options: NavigationOptions = .default) async throws {
         throw BrowserError.unsupportedFeature("WebKit is not available on this platform.")
     }

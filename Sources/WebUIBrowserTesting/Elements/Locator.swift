@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Locator: Sendable {
+public struct Locator {
     private let page: Page
     private let selector: Selector
 

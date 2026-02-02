@@ -1,7 +1,8 @@
 import Foundation
 
 /// Shared context passed through browser test steps.
-public struct BrowserTestContext: Sendable {
+@MainActor
+public struct BrowserTestContext {
     public let browser: Browser
     public let page: Page
     public var wait: BrowserTestWaitOptions
@@ -63,7 +64,7 @@ public struct BrowserTestContext: Sendable {
             operationDescription: "waitForElement(\(resolved.description))"
         )
 
-        return try await Timeout.withTimeout(timeoutConfig) {
+        return try await Timeout.withTimeout(timeoutConfig) { @MainActor in
             while true {
                 if let element = await page.querySelector(resolved) {
                     return element

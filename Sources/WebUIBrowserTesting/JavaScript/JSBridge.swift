@@ -10,6 +10,7 @@ enum JSBridge {
         let error: String?
     }
 
+    @MainActor
     static func evaluate<Value: Decodable>(
         webView: WKWebView,
         script: String,

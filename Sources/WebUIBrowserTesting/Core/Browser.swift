@@ -5,7 +5,7 @@ import Foundation
 import WebKit
 
 @MainActor
-public actor Browser {
+public final class Browser {
     public let configuration: BrowserConfiguration
     private var pages: [Page] = []
     private var isLaunched = false
@@ -68,7 +68,8 @@ public actor Browser {
 
 #else
 
-public actor Browser {
+@MainActor
+public final class Browser {
     public let configuration: BrowserConfiguration
 
     public init(configuration: BrowserConfiguration = .default) {

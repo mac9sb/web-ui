@@ -29,7 +29,7 @@ public enum FormFieldKind: String, Sendable {
     case secure
 }
 
-public enum Selector: Sendable, CustomStringConvertible {
+public indirect enum Selector: Sendable, CustomStringConvertible {
     case css(String)
     case xpath(String)
     case text(String)
@@ -79,13 +79,13 @@ extension Selector {
         switch self {
         case .css(let selector):
             let literal = try JavaScriptString.literal(selector)
-            if let index {
+            if index != nil {
                 return "(() => { const root = \(root); if (!root) { return null; } return root.querySelectorAll(\(literal))[\(resolvedIndex)] || null; })()"
             }
             return "(() => { const root = \(root); if (!root) { return null; } return root.querySelector(\(literal)); })()"
         case .xpath(let xpath):
             let literal = try JavaScriptString.literal(xpath)
-            if let index {
+            if index != nil {
                 return "(() => { const root = \(root); if (!root) { return null; } const doc = root.ownerDocument || document; const result = doc.evaluate(\(literal), root, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); return result.snapshotItem(\(resolvedIndex)); })()"
             }
             return "(() => { const root = \(root); if (!root) { return null; } const doc = root.ownerDocument || document; const result = doc.evaluate(\(literal), root, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); return result.singleNodeValue; })()"
@@ -94,7 +94,7 @@ extension Selector {
             return "(() => { const root = \(root); if (!root) { return null; } const text = \(literal); const elements = Array.from(root.querySelectorAll('*')).filter(el => (el.textContent || '').trim() === text); return elements[\(resolvedIndex)] || null; })()"
         case .testId(let value):
             let selectorLiteral = try JavaScriptString.literal("[data-testid='\(value)']")
-            if let index {
+            if index != nil {
                 return "(() => { const root = \(root); if (!root) { return null; } return root.querySelectorAll(\(selectorLiteral))[\(resolvedIndex)] || null; })()"
             }
             return "(() => { const root = \(root); if (!root) { return null; } return root.querySelector(\(selectorLiteral)); })()"
