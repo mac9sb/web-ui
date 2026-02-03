@@ -1,9 +1,0 @@
-.DS_Store
-*.swp
-/.build
-/Packages
-xcuserdata/
-DerivedData/
-.swiftpm/
-.output/
-CLAUDE.md
