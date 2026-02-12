@@ -45,6 +45,23 @@ public final class AxiomWebServerRuntime {
         self.routes = routes
     }
 
+    public convenience init(
+        configuration: ServerRuntimeConfiguration = .init(),
+        routesRoot: URL = URL(filePath: "Routes"),
+        apiDirectory: String = "api",
+        overrides: RouteOverrides = .init(),
+        conflictPolicy: RouteConflictPolicy = .preferOverrides
+    ) throws {
+        let resolvedRoutes = try APIRouteResolver.resolve(
+            routesRoot: routesRoot,
+            apiDirectory: apiDirectory,
+            overrides: overrides.apiHandlers,
+            contracts: overrides.apiContracts,
+            conflictPolicy: conflictPolicy
+        )
+        self.init(configuration: configuration, routes: resolvedRoutes)
+    }
+
     // Placeholder runtime scaffold showing dependency integration.
     public func start() throws {
         let logger = Logger(label: "AxiomWeb.ServerRuntime")

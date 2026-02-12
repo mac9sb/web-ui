@@ -13,6 +13,17 @@ public struct ObservabilityConfiguration: Sendable, Equatable {
     }
 }
 
+public enum ApplicationBuildMode: Sendable, Equatable {
+    case auto
+    case staticSite
+    case serverSide
+}
+
+public enum ResolvedApplicationBuildMode: String, Sendable, Equatable, Codable {
+    case staticSite
+    case serverSide
+}
+
 public enum RouteConflictPolicy: Sendable, Equatable {
     case failBuild
     case preferOverrides
@@ -48,10 +59,12 @@ public struct ServerBuildConfiguration {
     public var website: (any Website)?
     public var pageOverrides: [PageRouteOverride]
     public var apiOverrides: [APIRouteOverride]
+    public var apiContractOverrides: [AnyAPIRouteContract]
     public var defaultLocale: LocaleCode
     public var locales: [LocaleCode]
     public var baseURL: String?
     public var observability: ObservabilityConfiguration
+    public var buildMode: ApplicationBuildMode
     public var routeConflictPolicy: RouteConflictPolicy
     public var renderOptions: RenderOptions
 
@@ -65,10 +78,12 @@ public struct ServerBuildConfiguration {
         website: (any Website)? = nil,
         pageOverrides: [PageRouteOverride] = [],
         apiOverrides: [APIRouteOverride] = [],
+        apiContractOverrides: [AnyAPIRouteContract] = [],
         defaultLocale: LocaleCode = .en,
         locales: [LocaleCode] = [.en],
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
+        buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
     ) {
@@ -81,12 +96,52 @@ public struct ServerBuildConfiguration {
         self.website = website
         self.pageOverrides = pageOverrides
         self.apiOverrides = apiOverrides
+        self.apiContractOverrides = apiContractOverrides
         self.defaultLocale = defaultLocale
         self.locales = locales
         self.baseURL = baseURL
         self.observability = observability
+        self.buildMode = buildMode
         self.routeConflictPolicy = routeConflictPolicy
         self.renderOptions = renderOptions
+    }
+
+    public init(
+        routesRoot: URL = URL(filePath: "Routes"),
+        pagesDirectoryName: String = "pages",
+        apiDirectoryName: String = "api",
+        outputDirectory: URL = URL(filePath: ".output"),
+        assetsSourceDirectory: URL = URL(filePath: "Assets"),
+        publicAssetsDirectoryName: String = "public",
+        website: (any Website)? = nil,
+        overrides: RouteOverrides,
+        defaultLocale: LocaleCode = .en,
+        locales: [LocaleCode] = [.en],
+        baseURL: String? = nil,
+        observability: ObservabilityConfiguration = .init(enabled: true),
+        buildMode: ApplicationBuildMode = .auto,
+        routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
+        renderOptions: RenderOptions = .init()
+    ) {
+        self.init(
+            routesRoot: routesRoot,
+            pagesDirectoryName: pagesDirectoryName,
+            apiDirectoryName: apiDirectoryName,
+            outputDirectory: outputDirectory,
+            assetsSourceDirectory: assetsSourceDirectory,
+            publicAssetsDirectoryName: publicAssetsDirectoryName,
+            website: website,
+            pageOverrides: overrides.pageOverrides,
+            apiOverrides: overrides.apiOverrides,
+            apiContractOverrides: overrides.apiContracts,
+            defaultLocale: defaultLocale,
+            locales: locales,
+            baseURL: baseURL,
+            observability: observability,
+            buildMode: buildMode,
+            routeConflictPolicy: routeConflictPolicy,
+            renderOptions: renderOptions
+        )
     }
 }
 
@@ -105,6 +160,7 @@ public struct AssetManifestEntry: Sendable, Equatable, Codable {
 }
 
 public struct ServerBuildReport: Sendable, Equatable {
+    public let buildMode: ResolvedApplicationBuildMode
     public let pageCount: Int
     public let localeCount: Int
     public let apiRouteCount: Int
@@ -113,6 +169,7 @@ public struct ServerBuildReport: Sendable, Equatable {
     public let sitemapPath: String?
 
     public init(
+        buildMode: ResolvedApplicationBuildMode,
         pageCount: Int,
         localeCount: Int,
         apiRouteCount: Int,
@@ -120,6 +177,7 @@ public struct ServerBuildReport: Sendable, Equatable {
         assetManifest: [AssetManifestEntry],
         sitemapPath: String?
     ) {
+        self.buildMode = buildMode
         self.pageCount = pageCount
         self.localeCount = localeCount
         self.apiRouteCount = apiRouteCount
@@ -146,14 +204,8 @@ public struct StaticSiteBuilder {
         let pagesBuilt = Counter(label: "axiomweb.pages.built")
 
         if configuration.observability.enabled {
-            logger.info("Building static site")
+            logger.info("Building site")
         }
-
-        let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: configuration.outputDirectory.path()) {
-            try fileManager.removeItem(at: configuration.outputDirectory)
-        }
-        try fileManager.createDirectory(at: configuration.outputDirectory, withIntermediateDirectories: true)
 
         let discovered = try RouteDiscovery.discover(
             routesRoot: configuration.routesRoot,
@@ -167,6 +219,29 @@ public struct StaticSiteBuilder {
         let pageDocuments = try mergedPageDocuments(discoveredPages: discoveredPages)
         let apiRoutes = try mergedAPIRoutes(discoveredAPIs: discoveredAPIs)
         let locales = resolvedLocales()
+        let resolvedBuildMode = resolveBuildMode(apiRoutes: apiRoutes)
+
+        if configuration.observability.enabled {
+            logger.info("Resolved mode=\(resolvedBuildMode.rawValue) pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
+        }
+
+        guard resolvedBuildMode == .staticSite else {
+            return ServerBuildReport(
+                buildMode: resolvedBuildMode,
+                pageCount: pageDocuments.count,
+                localeCount: locales.count,
+                apiRouteCount: apiRoutes.count,
+                writtenHTMLFiles: [],
+                assetManifest: [],
+                sitemapPath: nil
+            )
+        }
+
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: configuration.outputDirectory.path()) {
+            try fileManager.removeItem(at: configuration.outputDirectory)
+        }
+        try fileManager.createDirectory(at: configuration.outputDirectory, withIntermediateDirectories: true)
 
         var writtenHTMLFiles: [String] = []
         for locale in locales {
@@ -199,10 +274,11 @@ public struct StaticSiteBuilder {
         let sitemapPath = try buildSitemap(pagePaths: pageDocuments.keys.sorted(), locales: locales)
 
         if configuration.observability.enabled {
-            logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(discoveredAPIs.count + configuration.apiOverrides.count)")
+            logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
         }
 
         return ServerBuildReport(
+            buildMode: resolvedBuildMode,
             pageCount: pageDocuments.count,
             localeCount: locales.count,
             apiRouteCount: apiRoutes.count,
@@ -251,6 +327,11 @@ public struct StaticSiteBuilder {
 
         for override in configuration.apiOverrides {
             let route = ResolvedAPIRoute(path: normalizePath(override.path), method: override.method)
+            try registerAPIRoute(route, into: &routes, isOverride: true)
+        }
+
+        for override in configuration.apiContractOverrides {
+            let route = ResolvedAPIRoute(path: normalizePath(override.path), method: override.method.rawValue.uppercased())
             try registerAPIRoute(route, into: &routes, isOverride: true)
         }
 
@@ -412,6 +493,17 @@ public struct StaticSiteBuilder {
             hash &*= 0x100000001b3
         }
         return String(format: "%016llx", hash)
+    }
+
+    private func resolveBuildMode(apiRoutes: Set<ResolvedAPIRoute>) -> ResolvedApplicationBuildMode {
+        switch configuration.buildMode {
+        case .auto:
+            return apiRoutes.isEmpty ? .staticSite : .serverSide
+        case .staticSite:
+            return .staticSite
+        case .serverSide:
+            return .serverSide
+        }
     }
 }
 
