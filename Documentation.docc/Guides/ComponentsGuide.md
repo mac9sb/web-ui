@@ -53,3 +53,16 @@ Theme knobs include:
 - color tokens (surface/foreground/accent/destructive/muted/border)
 - corner radius
 - spacing scale multiplier
+
+## Additional Native-First Components
+
+- `Breadcrumbs`
+- `Pagination`
+- `ProgressBar`
+- `Separator`
+- `Avatar`
+- `Skeleton`
+- `CheckboxField`
+- `SwitchField`
+- `SelectField`
+- `DataTable`

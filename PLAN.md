@@ -16,6 +16,7 @@
   - `Phase 7` Declarative Motion System: complete (typed animation + `@starting-style` + document/app view-transition APIs with render/runtime wiring)
 - Latest completed slice:
   - Expanded native-first component primitives (`Card`, `ActionButton`, `Alert`, `Badge`, `Accordion`, `Popover`, `ModalDialog`, `DropdownMenu`, form-field components).
+  - Expanded component breadth with native-first primitives for navigation/data/forms (`Breadcrumbs`, `Pagination`, `ProgressBar`, `Separator`, `Avatar`, `Skeleton`, `CheckboxField`, `SwitchField`, `SelectField`, `DataTable`).
   - Added `WasmCanvas` with typed payload attributes and runtime wasm bootstrap/invocation plumbing.
   - Upgraded markdown renderer with stylable classes, admonitions, fenced code blocks, lists, blockquotes, and inline code support.
 - Latest in-progress slice (Phase 5):

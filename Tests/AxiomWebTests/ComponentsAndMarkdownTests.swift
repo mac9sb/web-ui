@@ -37,6 +37,43 @@ struct ComponentsAndMarkdownTests {
                         Link("Edit", href: "/edit")
                         Link("Delete", href: "/delete")
                     }
+
+                    Breadcrumbs(items: [
+                        .init("Home", href: "/"),
+                        .init("Settings", href: "/settings"),
+                        .init("Profile", current: true),
+                    ])
+
+                    Pagination(currentPage: 2, totalPages: 4, basePath: "/blog")
+
+                    ProgressBar(value: 64, maximum: 100, label: "Build Progress")
+
+                    Separator()
+
+                    Avatar(imageURL: "/avatar.png", alt: "Profile image", fallbackText: "AW")
+
+                    Skeleton(width: .length(10, .rem), height: .length(1.25, .rem))
+
+                    CheckboxField(id: "release-check", name: "release", label: "Ship release", checked: true)
+                    SwitchField(id: "metrics-switch", name: "metrics", label: "Enable metrics", on: true)
+
+                    SelectField(
+                        label: "Framework",
+                        name: "framework",
+                        options: [
+                            .init(value: "axiom", label: "AxiomWeb", selected: true),
+                            .init(value: "other", label: "Other"),
+                        ]
+                    )
+
+                    DataTable(
+                        columns: ["Name", "Role"],
+                        rows: [
+                            .init(["Morgan", "Developer"]),
+                            .init(["Sam", "Designer"]),
+                        ],
+                        caption: "Team"
+                    )
                 }
             }
         }
@@ -46,6 +83,13 @@ struct ComponentsAndMarkdownTests {
         #expect(rendered.html.contains("popover"))
         #expect(rendered.html.contains("commandfor=\"confirm-dialog\""))
         #expect(rendered.html.contains("<dialog"))
+        #expect(rendered.html.contains("aria-label=\"Breadcrumb\""))
+        #expect(rendered.html.contains("aria-label=\"Pagination\""))
+        #expect(rendered.html.contains("<progress"))
+        #expect(rendered.html.contains("role=\"separator\""))
+        #expect(rendered.html.contains("<table"))
+        #expect(rendered.html.contains("role=\"switch\""))
+        #expect(rendered.html.contains("<select"))
     }
 
     @Test("WasmCanvas emits typed wasm binding attributes and fallback")
