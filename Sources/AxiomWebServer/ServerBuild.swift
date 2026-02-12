@@ -13,6 +13,11 @@ public struct ObservabilityConfiguration: Sendable, Equatable {
     }
 }
 
+public enum RouteConflictPolicy: Sendable, Equatable {
+    case failBuild
+    case preferOverrides
+}
+
 public struct PageRouteOverride {
     public let path: String
     public let document: any Document
@@ -29,7 +34,7 @@ public struct APIRouteOverride: Sendable, Equatable {
 
     public init(path: String, method: String = "GET") {
         self.path = path
-        self.method = method
+        self.method = method.uppercased()
     }
 }
 
@@ -47,6 +52,7 @@ public struct ServerBuildConfiguration {
     public var locales: [LocaleCode]
     public var baseURL: String?
     public var observability: ObservabilityConfiguration
+    public var routeConflictPolicy: RouteConflictPolicy
     public var renderOptions: RenderOptions
 
     public init(
@@ -63,6 +69,7 @@ public struct ServerBuildConfiguration {
         locales: [LocaleCode] = [.en],
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
+        routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
     ) {
         self.routesRoot = routesRoot
@@ -78,6 +85,7 @@ public struct ServerBuildConfiguration {
         self.locales = locales
         self.baseURL = baseURL
         self.observability = observability
+        self.routeConflictPolicy = routeConflictPolicy
         self.renderOptions = renderOptions
     }
 }
@@ -123,6 +131,7 @@ public struct ServerBuildReport: Sendable, Equatable {
 
 public enum ServerBuildError: Error, Equatable {
     case routeConflict(path: String)
+    case apiRouteConflict(path: String, method: String)
 }
 
 public struct StaticSiteBuilder {
@@ -156,6 +165,7 @@ public struct StaticSiteBuilder {
         let discoveredAPIs = discovered.filter { $0.kind == .api }
 
         let pageDocuments = try mergedPageDocuments(discoveredPages: discoveredPages)
+        let apiRoutes = try mergedAPIRoutes(discoveredAPIs: discoveredAPIs)
         let locales = resolvedLocales()
 
         var writtenHTMLFiles: [String] = []
@@ -195,7 +205,7 @@ public struct StaticSiteBuilder {
         return ServerBuildReport(
             pageCount: pageDocuments.count,
             localeCount: locales.count,
-            apiRouteCount: discoveredAPIs.count + configuration.apiOverrides.count,
+            apiRouteCount: apiRoutes.count,
             writtenHTMLFiles: writtenHTMLFiles.sorted(),
             assetManifest: assetManifest,
             sitemapPath: sitemapPath
@@ -213,20 +223,76 @@ public struct StaticSiteBuilder {
         var routes: [String: any Document] = [:]
 
         for discovered in discoveredPages {
-            routes[normalizePath(discovered.path)] = PlaceholderDiscoveredDocument(path: normalizePath(discovered.path), source: discovered.source)
+            let path = normalizePath(discovered.path)
+            let document = PlaceholderDiscoveredDocument(path: path, source: discovered.source)
+            try registerPageRoute(path: path, document: document, into: &routes, isOverride: false)
         }
 
         if let website = configuration.website {
             for document in try website.routes {
-                routes[normalizePath(document.path)] = document
+                try registerPageRoute(path: normalizePath(document.path), document: document, into: &routes, isOverride: true)
             }
         }
 
         for override in configuration.pageOverrides {
-            routes[normalizePath(override.path)] = override.document
+            try registerPageRoute(path: normalizePath(override.path), document: override.document, into: &routes, isOverride: true)
         }
 
         return routes
+    }
+
+    private func mergedAPIRoutes(discoveredAPIs: [DiscoveredRoute]) throws -> Set<ResolvedAPIRoute> {
+        var routes: Set<ResolvedAPIRoute> = []
+
+        for discovered in discoveredAPIs {
+            let route = ResolvedAPIRoute(path: normalizePath(discovered.path), method: "GET")
+            try registerAPIRoute(route, into: &routes, isOverride: false)
+        }
+
+        for override in configuration.apiOverrides {
+            let route = ResolvedAPIRoute(path: normalizePath(override.path), method: override.method)
+            try registerAPIRoute(route, into: &routes, isOverride: true)
+        }
+
+        return routes
+    }
+
+    private func registerPageRoute(
+        path: String,
+        document: any Document,
+        into routes: inout [String: any Document],
+        isOverride: Bool
+    ) throws {
+        if routes[path] != nil {
+            switch configuration.routeConflictPolicy {
+            case .failBuild:
+                throw ServerBuildError.routeConflict(path: path)
+            case .preferOverrides:
+                if !isOverride {
+                    return
+                }
+            }
+        }
+        routes[path] = document
+    }
+
+    private func registerAPIRoute(
+        _ route: ResolvedAPIRoute,
+        into routes: inout Set<ResolvedAPIRoute>,
+        isOverride: Bool
+    ) throws {
+        if routes.contains(route) {
+            switch configuration.routeConflictPolicy {
+            case .failBuild:
+                throw ServerBuildError.apiRouteConflict(path: route.path, method: route.method)
+            case .preferOverrides:
+                if !isOverride {
+                    return
+                }
+                routes.remove(route)
+            }
+        }
+        routes.insert(route)
     }
 
     private func normalizePath(_ path: String) -> String {
@@ -347,6 +413,11 @@ public struct StaticSiteBuilder {
         }
         return String(format: "%016llx", hash)
     }
+}
+
+private struct ResolvedAPIRoute: Hashable {
+    let path: String
+    let method: String
 }
 
 private struct PlaceholderDiscoveredDocument: Document {

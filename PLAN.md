@@ -15,6 +15,7 @@
 6. CSS output strategy is hybrid layers: utility-like atomic output + cascading component/base layers.
 7. WKWebView-first testing with pluggable engine architecture.
 8. Swift API Design Guidelines and readable declarative APIs are required.
+9. Motion/animation authoring must be declarative through style modifiers and variant scopes, not raw CSS/JS strings.
 
 ## Ecosystem Modules
 1. `AxiomWebUI`
@@ -81,6 +82,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 - Implement typed support for full CSS property/value space (backed by generated registries from standards/MDN data).
 - Public authoring remains `.modifier` and `.on {}`; output is hybrid-layer CSS.
 - Support tokens (colors, spacing, typography, radius, motion, breakpoints), variants (`sm`, `md`, `lg`, `dark`, interactive states), and arbitrary generated values where standards allow.
+- Add declarative motion APIs for transitions and keyframes (duration, easing, delay, iteration, fill mode, direction, play state, reduced-motion variants) using the same modifier/variant authoring model.
 - Add property/value conformance tests and output snapshots.
 
 ### Declarative JavaScript Coverage
@@ -179,6 +181,12 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 - Finalize locale-aware build outputs and SEO metadata (`hreflang`, sitemap variants).
 - Complete `Documentation.docc` tutorials, references, explanations, and ADRs.
 
+### Phase 7: Declarative Motion System
+- Add typed animation/keyframe DSL in `AxiomWebStyle` authored via `.modifier` and `.on {}` patterns.
+- Support scoped variants (`hover`, `focus`, breakpoints, `dark`, `prefers-reduced-motion`) for motion behavior.
+- Generate deterministic CSS for transitions/animations with no raw CSS strings required.
+- Add motion snapshots and accessibility checks for reduced-motion compliance.
+
 ## Acceptance Criteria
 1. Full HTML element API breadth generated and tested.
 2. Full CSS property/value coverage strategy implemented and tested.
@@ -188,6 +196,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 6. No required raw HTML/CSS/JS strings for standard framework use-cases.
 7. Tests pass across rendering, routing, metadata, structured data, localization, and accessibility checks.
 8. Documentation is complete and aligned with implemented behavior.
+9. Declarative animation APIs exist and generate deterministic transition/keyframe CSS with reduced-motion coverage.
 
 ## Implementation Guardrails
 - Prefer upstream libraries/collections before writing custom infra where equivalent exists.

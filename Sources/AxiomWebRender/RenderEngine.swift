@@ -45,7 +45,12 @@ public enum RenderEngine {
         let mergedMetadata = merge(site: websiteMetadata, page: metadataOverride ?? document.metadata, locale: locale)
         let bodyNodes = document.body.makeNodes(locale: locale)
         let generatedCSS = options.includeCSS ? HybridCSSGenerator.generate(classes: HybridCSSGenerator.extractClasses(from: bodyNodes)) : GeneratedCSS(content: "", classes: [])
-        let javascript = options.includeJavaScript ? RuntimeJavaScriptGenerator.generate(program: runtime) : ""
+        let documentRuntime = (document as? any RuntimeProgramProviding)?.runtimeProgram ?? .init()
+        let mergedRuntime = documentRuntime.merging(runtime)
+        let usesDOMRuntimeBindings = hasDOMRuntimeBindings(in: bodyNodes)
+        let javascript = options.includeJavaScript
+            ? RuntimeJavaScriptGenerator.generate(program: mergedRuntime, includeDOMBindings: usesDOMRuntimeBindings)
+            : ""
 
         var headTags = metadataTags(for: mergedMetadata)
 
@@ -165,5 +170,21 @@ public enum RenderEngine {
 
     private static func safeJSONForScript(_ value: String) -> String {
         value.replacingOccurrences(of: "</script", with: "<\\/script")
+    }
+
+    private static func hasDOMRuntimeBindings(in nodes: [HTMLNode]) -> Bool {
+        func walk(_ node: HTMLNode) -> Bool {
+            switch node {
+            case .text:
+                return false
+            case .element(let element):
+                if element.attributes.contains(where: { $0.name.hasPrefix("data-ax-on-") || $0.name == RuntimeDOMCodec.statesAttributeName() }) {
+                    return true
+                }
+                return element.children.contains(where: walk)
+            }
+        }
+
+        return nodes.contains(where: walk)
     }
 }

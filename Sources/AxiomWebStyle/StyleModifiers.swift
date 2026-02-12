@@ -147,23 +147,29 @@ public enum PositionType: String, Sendable {
 public struct StyledMarkup<Content: Markup>: Markup {
     let content: Content
     let classes: [String]
+    let attributes: [HTMLAttribute]
 
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         content.makeNodes(locale: locale).map { node in
-            classes.reduce(node) { partial, cssClass in
-                partial.addingAttribute(HTMLAttribute("class", cssClass))
+            var result = node
+            for cssClass in classes {
+                result = result.addingAttribute(HTMLAttribute("class", cssClass))
             }
+            for attribute in attributes {
+                result = result.addingAttribute(attribute)
+            }
+            return result
         }
     }
 }
 
 public extension Markup {
     func modifier(_ className: String) -> some Markup {
-        StyledMarkup(content: self, classes: [className])
+        StyledMarkup(content: self, classes: [className], attributes: [])
     }
 
     func modifiers(_ classNames: [String]) -> some Markup {
-        StyledMarkup(content: self, classes: classNames)
+        StyledMarkup(content: self, classes: classNames, attributes: [])
     }
 
     func padding(of scale: SpaceScale, at edge: Edge = .all) -> some Markup {
@@ -233,76 +239,42 @@ public extension Markup {
     func on(_ content: (VariantBuilder) -> Void) -> some Markup {
         let builder = VariantBuilder()
         content(builder)
-        return modifiers(builder.classes)
+        return StyledMarkup(content: self, classes: builder.classNames, attributes: builder.runtimeAttributes)
     }
 }
 
-public final class VariantBuilder {
-    fileprivate var classes: [String] = []
-
-    public init() {}
-
-    public func dark(_ content: (VariantScope) -> Void) {
-        content(VariantScope(prefixes: ["dark"], builder: self))
-    }
-
-    public func sm(_ content: (VariantScope) -> Void) {
-        content(VariantScope(prefixes: ["sm"], builder: self))
-    }
-
-    public func md(_ content: (VariantScope) -> Void) {
-        content(VariantScope(prefixes: ["md"], builder: self))
-    }
-
-    public func lg(_ content: (VariantScope) -> Void) {
-        content(VariantScope(prefixes: ["lg"], builder: self))
-    }
-}
-
-public struct VariantScope {
-    let prefixes: [String]
-    let builder: VariantBuilder
-
-    init(prefixes: [String], builder: VariantBuilder) {
-        self.prefixes = prefixes
-        self.builder = builder
-    }
-
-    private func push(_ rawClass: String) {
-        builder.classes.append((prefixes + [rawClass]).joined(separator: ":"))
-    }
-
-    public func background(color: ColorToken) {
+public extension VariantScope {
+    func background(color: ColorToken) {
         if case let .custom(name, cssValue) = color {
             ColorRegistry.register(name: name, cssValue: cssValue)
         }
-        push("bg-\(color.classFragment)")
+        addClass("bg-\(color.classFragment)")
     }
 
-    public func border(width: Int, color: ColorToken) {
+    func border(width: Int, color: ColorToken) {
         if case let .custom(name, cssValue) = color {
             ColorRegistry.register(name: name, cssValue: cssValue)
         }
-        push("border-\(width)")
-        push("border-\(color.classFragment)")
+        addClass("border-\(width)")
+        addClass("border-\(color.classFragment)")
     }
 
-    public func font(size: FontSize? = nil, weight: FontWeight? = nil, color: ColorToken? = nil) {
-        if let size { push("text-\(size.rawValue)") }
-        if let weight { push("font-\(weight.rawValue)") }
+    func font(size: FontSize? = nil, weight: FontWeight? = nil, color: ColorToken? = nil) {
+        if let size { addClass("text-\(size.rawValue)") }
+        if let weight { addClass("font-\(weight.rawValue)") }
         if let color {
             if case let .custom(name, cssValue) = color {
                 ColorRegistry.register(name: name, cssValue: cssValue)
             }
-            push("text-\(color.classFragment)")
+            addClass("text-\(color.classFragment)")
         }
     }
 
-    public func padding(of scale: SpaceScale, at edge: Edge = .all) {
-        push(edge == .all ? "p-\(scale.rawValue)" : "p\(edge.rawValue)-\(scale.rawValue)")
+    func padding(of scale: SpaceScale, at edge: Edge = .all) {
+        addClass(edge == .all ? "p-\(scale.rawValue)" : "p\(edge.rawValue)-\(scale.rawValue)")
     }
 
-    public func margins(of scale: SpaceScale, at edge: Edge = .all) {
-        push(edge == .all ? "m-\(scale.rawValue)" : "m\(edge.rawValue)-\(scale.rawValue)")
+    func margins(of scale: SpaceScale, at edge: Edge = .all) {
+        addClass(edge == .all ? "m-\(scale.rawValue)" : "m\(edge.rawValue)-\(scale.rawValue)")
     }
 }

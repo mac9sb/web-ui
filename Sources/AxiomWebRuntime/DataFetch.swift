@@ -70,9 +70,29 @@ public protocol DataFetcher: Sendable {
 }
 
 public actor InMemoryFetchCache {
+    public struct CachedResponseMetadata: Sendable, Equatable {
+        public let cachedAt: Date
+        public let expiresAt: Date?
+        public let staleUntil: Date?
+
+        public init(cachedAt: Date, expiresAt: Date?, staleUntil: Date?) {
+            self.cachedAt = cachedAt
+            self.expiresAt = expiresAt
+            self.staleUntil = staleUntil
+        }
+    }
+
+    public enum CacheLookupResult: Sendable, Equatable {
+        case miss
+        case fresh(FetchResponse)
+        case stale(FetchResponse)
+    }
+
     private struct Entry {
         let response: FetchResponse
+        let cachedAt: Date
         let expiration: Date?
+        let staleUntil: Date?
     }
 
     private var storage: [String: Entry] = [:]
@@ -80,31 +100,113 @@ public actor InMemoryFetchCache {
     public init() {}
 
     public func cachedResponse(for request: FetchRequest, now: Date = Date()) -> FetchResponse? {
-        let key = cacheKey(for: request)
-        guard let entry = storage[key] else { return nil }
-        if let expiration = entry.expiration, expiration <= now {
-            storage.removeValue(forKey: key)
+        switch lookup(request, now: now) {
+        case .fresh(let response):
+            return response
+        case .miss, .stale:
             return nil
         }
-        return entry.response
+    }
+
+    public func lookup(_ request: FetchRequest, now: Date = Date()) -> CacheLookupResult {
+        let key = cacheKey(for: request)
+        guard let entry = storage[key] else {
+            return .miss
+        }
+
+        if let expiration = entry.expiration, expiration <= now {
+            if let staleUntil = entry.staleUntil, staleUntil > now {
+                return .stale(entry.response)
+            }
+            storage.removeValue(forKey: key)
+            return .miss
+        }
+
+        return .fresh(entry.response)
+    }
+
+    public func metadata(for request: FetchRequest) -> CachedResponseMetadata? {
+        let key = cacheKey(for: request)
+        guard let entry = storage[key] else {
+            return nil
+        }
+        return CachedResponseMetadata(cachedAt: entry.cachedAt, expiresAt: entry.expiration, staleUntil: entry.staleUntil)
     }
 
     public func store(_ response: FetchResponse, for request: FetchRequest, now: Date = Date()) {
         let key = cacheKey(for: request)
         let expiration: Date?
+        let staleUntil: Date?
         switch request.policy.cache {
         case .noStore:
             return
         case .immutable:
             expiration = nil
-        case .staleWhileRevalidate(let seconds), .revalidateAfter(let seconds):
-            expiration = now.addingTimeInterval(TimeInterval(seconds))
+            staleUntil = nil
+        case .revalidateAfter(let seconds):
+            let normalized = max(1, seconds)
+            expiration = now.addingTimeInterval(TimeInterval(normalized))
+            staleUntil = nil
+        case .staleWhileRevalidate(let seconds):
+            let normalized = max(1, seconds)
+            expiration = now.addingTimeInterval(TimeInterval(normalized))
+            staleUntil = now.addingTimeInterval(TimeInterval(normalized * 2))
         }
 
-        storage[key] = Entry(response: response, expiration: expiration)
+        storage[key] = Entry(response: response, cachedAt: now, expiration: expiration, staleUntil: staleUntil)
+    }
+
+    public func remove(_ request: FetchRequest) {
+        storage.removeValue(forKey: cacheKey(for: request))
     }
 
     private func cacheKey(for request: FetchRequest) -> String {
         "\(request.method):\(request.url.absoluteString):\(request.headers.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "&"))"
+    }
+}
+
+public actor FetchExecutor {
+    private let fetcher: any DataFetcher
+    private let cache: InMemoryFetchCache
+
+    public init(fetcher: any DataFetcher, cache: InMemoryFetchCache = InMemoryFetchCache()) {
+        self.fetcher = fetcher
+        self.cache = cache
+    }
+
+    public func perform(_ request: FetchRequest, now: Date = Date()) async throws -> FetchResponse {
+        switch request.policy.cache {
+        case .noStore:
+            return try await fetcher.fetch(request)
+        default:
+            break
+        }
+
+        switch await cache.lookup(request, now: now) {
+        case .fresh(let response):
+            return response
+        case .stale(let response):
+            refreshInBackground(request)
+            return response
+        case .miss:
+            let response = try await fetcher.fetch(request)
+            await cache.store(response, for: request, now: now)
+            return response
+        }
+    }
+
+    public func cachedMetadata(for request: FetchRequest) async -> InMemoryFetchCache.CachedResponseMetadata? {
+        await cache.metadata(for: request)
+    }
+
+    private func refreshInBackground(_ request: FetchRequest) {
+        Task {
+            do {
+                let response = try await fetcher.fetch(request)
+                await cache.store(response, for: request)
+            } catch {
+                // Preserve stale response on refresh errors.
+            }
+        }
     }
 }
