@@ -17,6 +17,20 @@ public enum PerformanceReportFormatOption: String, ExpressibleByArgument {
     }
 }
 
+public enum AccessibilityReportFormatOption: String, ExpressibleByArgument {
+    case json
+    case markdown
+
+    var reportFormat: AccessibilityCIReportFormat {
+        switch self {
+        case .json:
+            return .json
+        case .markdown:
+            return .markdown
+        }
+    }
+}
+
 public struct AxiomWebBuildCommand: ParsableCommand {
     public static let configuration = CommandConfiguration(
         commandName: "axiomweb-build",
@@ -56,6 +70,21 @@ public struct AxiomWebBuildCommand: ParsableCommand {
     @Option(help: "Maximum total asset bytes budget")
     public var performanceMaxTotalAssetBytes: Int?
 
+    @Flag(help: "Enable static build accessibility audit and gate enforcement")
+    public var accessibilityAudit: Bool = true
+
+    @Flag(help: "Fail build when accessibility warnings are present")
+    public var accessibilityFailOnWarnings: Bool = false
+
+    @Flag(help: "Emit accessibility report only without failing build on accessibility findings")
+    public var accessibilityReportOnly: Bool = false
+
+    @Option(help: "Accessibility audit report format")
+    public var accessibilityReportFormat: AccessibilityReportFormatOption = .json
+
+    @Option(help: "Custom accessibility report file path relative to output directory")
+    public var accessibilityReportFile: String?
+
     public init() {}
 
     public mutating func run() throws {
@@ -84,6 +113,14 @@ public struct AxiomWebBuildCommand: ParsableCommand {
                 reportFormat: performanceReportFormat.reportFormat,
                 writeReport: true,
                 reportFileName: performanceReportFile
+            ),
+            accessibilityAudit: .init(
+                enabled: accessibilityAudit,
+                enforceGate: !accessibilityReportOnly,
+                gateOptions: .init(failOnWarnings: accessibilityFailOnWarnings),
+                reportFormat: accessibilityReportFormat.reportFormat,
+                writeReport: true,
+                reportFileName: accessibilityReportFile
             )
         )
         let report = try StaticSiteBuilder(configuration: config).build()
@@ -98,6 +135,13 @@ public struct AxiomWebBuildCommand: ParsableCommand {
         }
         if let performanceReportPath = report.performanceReportPath {
             print("Performance report: \(performanceReportPath)")
+        }
+        if let accessibility = report.accessibilityReport {
+            print("Accessibility audit pages: \(accessibility.pages.count)")
+            print("Accessibility has errors: \(accessibility.hasErrors), warnings: \(accessibility.hasWarnings)")
+        }
+        if let accessibilityReportPath = report.accessibilityReportPath {
+            print("Accessibility report: \(accessibilityReportPath)")
         }
     }
 }

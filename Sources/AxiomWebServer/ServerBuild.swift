@@ -46,6 +46,38 @@ public struct BuildPerformanceAuditConfiguration: Sendable, Equatable {
     }
 }
 
+public struct BuildAccessibilityAuditConfiguration: Sendable, Equatable {
+    public var enabled: Bool
+    public var enforceGate: Bool
+    public var options: AccessibilityAuditOptions
+    public var gateOptions: AccessibilityCIGateOptions
+    public var reportFormat: AccessibilityCIReportFormat
+    public var writeReport: Bool
+    public var reportFileName: String
+
+    public init(
+        enabled: Bool = true,
+        enforceGate: Bool = true,
+        options: AccessibilityAuditOptions = .init(),
+        gateOptions: AccessibilityCIGateOptions = .init(),
+        reportFormat: AccessibilityCIReportFormat = .json,
+        writeReport: Bool = true,
+        reportFileName: String? = nil
+    ) {
+        self.enabled = enabled
+        self.enforceGate = enforceGate
+        self.options = options
+        self.gateOptions = gateOptions
+        self.reportFormat = reportFormat
+        self.writeReport = writeReport
+        if let reportFileName, !reportFileName.isEmpty {
+            self.reportFileName = reportFileName
+        } else {
+            self.reportFileName = reportFormat == .json ? "accessibility-audit.json" : "accessibility-audit.md"
+        }
+    }
+}
+
 public enum ApplicationBuildMode: Sendable, Equatable {
     case auto
     case staticSite
@@ -98,6 +130,7 @@ public struct ServerBuildConfiguration {
     public var baseURL: String?
     public var observability: ObservabilityConfiguration
     public var performanceAudit: BuildPerformanceAuditConfiguration
+    public var accessibilityAudit: BuildAccessibilityAuditConfiguration
     public var buildMode: ApplicationBuildMode
     public var routeConflictPolicy: RouteConflictPolicy
     public var renderOptions: RenderOptions
@@ -118,6 +151,7 @@ public struct ServerBuildConfiguration {
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
         performanceAudit: BuildPerformanceAuditConfiguration = .init(),
+        accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
@@ -137,6 +171,7 @@ public struct ServerBuildConfiguration {
         self.baseURL = baseURL
         self.observability = observability
         self.performanceAudit = performanceAudit
+        self.accessibilityAudit = accessibilityAudit
         self.buildMode = buildMode
         self.routeConflictPolicy = routeConflictPolicy
         self.renderOptions = renderOptions
@@ -156,6 +191,7 @@ public struct ServerBuildConfiguration {
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
         performanceAudit: BuildPerformanceAuditConfiguration = .init(),
+        accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
@@ -176,6 +212,7 @@ public struct ServerBuildConfiguration {
             baseURL: baseURL,
             observability: observability,
             performanceAudit: performanceAudit,
+            accessibilityAudit: accessibilityAudit,
             buildMode: buildMode,
             routeConflictPolicy: routeConflictPolicy,
             renderOptions: renderOptions
@@ -225,6 +262,32 @@ public struct BuildPerformanceReport: Sendable, Equatable, Codable {
     }
 }
 
+public struct BuildPageAccessibilityReport: Sendable, Equatable, Codable {
+    public let routePath: String
+    public let report: AccessibilityAuditReport
+
+    public init(routePath: String, report: AccessibilityAuditReport) {
+        self.routePath = routePath
+        self.report = report
+    }
+}
+
+public struct BuildAccessibilityReport: Sendable, Equatable, Codable {
+    public let pages: [BuildPageAccessibilityReport]
+
+    public init(pages: [BuildPageAccessibilityReport]) {
+        self.pages = pages
+    }
+
+    public var hasErrors: Bool {
+        pages.contains { $0.report.hasErrors }
+    }
+
+    public var hasWarnings: Bool {
+        pages.contains { $0.report.hasWarnings }
+    }
+}
+
 public struct ServerBuildReport: Sendable, Equatable {
     public let buildMode: ResolvedApplicationBuildMode
     public let pageCount: Int
@@ -235,6 +298,8 @@ public struct ServerBuildReport: Sendable, Equatable {
     public let sitemapPath: String?
     public let performanceReport: BuildPerformanceReport?
     public let performanceReportPath: String?
+    public let accessibilityReport: BuildAccessibilityReport?
+    public let accessibilityReportPath: String?
 
     public init(
         buildMode: ResolvedApplicationBuildMode,
@@ -245,7 +310,9 @@ public struct ServerBuildReport: Sendable, Equatable {
         assetManifest: [AssetManifestEntry],
         sitemapPath: String?,
         performanceReport: BuildPerformanceReport? = nil,
-        performanceReportPath: String? = nil
+        performanceReportPath: String? = nil,
+        accessibilityReport: BuildAccessibilityReport? = nil,
+        accessibilityReportPath: String? = nil
     ) {
         self.buildMode = buildMode
         self.pageCount = pageCount
@@ -256,6 +323,8 @@ public struct ServerBuildReport: Sendable, Equatable {
         self.sitemapPath = sitemapPath
         self.performanceReport = performanceReport
         self.performanceReportPath = performanceReportPath
+        self.accessibilityReport = accessibilityReport
+        self.accessibilityReportPath = accessibilityReportPath
     }
 }
 
@@ -263,6 +332,7 @@ public enum ServerBuildError: Error, Equatable {
     case routeConflict(path: String)
     case apiRouteConflict(path: String, method: String)
     case performanceBudgetExceeded(path: String, errorCount: Int, warningCount: Int)
+    case accessibilityAuditFailed(path: String, errorCount: Int, warningCount: Int)
 }
 
 public struct StaticSiteBuilder {
@@ -308,7 +378,9 @@ public struct StaticSiteBuilder {
                 assetManifest: [],
                 sitemapPath: nil,
                 performanceReport: nil,
-                performanceReportPath: nil
+                performanceReportPath: nil,
+                accessibilityReport: nil,
+                accessibilityReportPath: nil
             )
         }
 
@@ -353,11 +425,15 @@ public struct StaticSiteBuilder {
             pages: writtenPages,
             assetManifest: assetManifest
         )
+        let accessibility = try buildAccessibilityAudit(pages: writtenPages)
 
         if configuration.observability.enabled {
             logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
             if let performanceReport = performance.report {
                 logger.info("Performance audit complete. pages=\(performanceReport.pages.count) hasErrors=\(performanceReport.hasErrors) hasWarnings=\(performanceReport.hasWarnings)")
+            }
+            if let accessibilityReport = accessibility.report {
+                logger.info("Accessibility audit complete. pages=\(accessibilityReport.pages.count) hasErrors=\(accessibilityReport.hasErrors) hasWarnings=\(accessibilityReport.hasWarnings)")
             }
         }
 
@@ -370,7 +446,9 @@ public struct StaticSiteBuilder {
             assetManifest: assetManifest,
             sitemapPath: sitemapPath,
             performanceReport: performance.report,
-            performanceReportPath: performance.path
+            performanceReportPath: performance.path,
+            accessibilityReport: accessibility.report,
+            accessibilityReportPath: accessibility.path
         )
     }
 
@@ -612,6 +690,79 @@ public struct StaticSiteBuilder {
             lines.append("## \(page.routePath)")
             lines.append("")
             lines.append(PerformanceCIReporter.render(page.report, format: .markdown))
+            lines.append("")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private func buildAccessibilityAudit(
+        pages: [(routePath: String, outputPath: String)]
+    ) throws -> (report: BuildAccessibilityReport?, path: String?) {
+        guard configuration.accessibilityAudit.enabled else {
+            return (nil, nil)
+        }
+
+        var pageReports: [BuildPageAccessibilityReport] = []
+        for page in pages.sorted(by: { $0.routePath < $1.routePath }) {
+            let htmlData = try Data(contentsOf: URL(filePath: page.outputPath))
+            let html = String(decoding: htmlData, as: UTF8.self)
+            let report = AccessibilityAuditRunner.auditReport(
+                html: html,
+                options: configuration.accessibilityAudit.options
+            )
+            pageReports.append(BuildPageAccessibilityReport(routePath: page.routePath, report: report))
+
+            if configuration.accessibilityAudit.enforceGate {
+                do {
+                    try AccessibilityCIGate.validate(report, options: configuration.accessibilityAudit.gateOptions)
+                } catch let AccessibilityCIGateError.failed(errorCount, warningCount) {
+                    throw ServerBuildError.accessibilityAuditFailed(
+                        path: page.routePath,
+                        errorCount: errorCount,
+                        warningCount: warningCount
+                    )
+                }
+            }
+        }
+
+        let aggregate = BuildAccessibilityReport(pages: pageReports)
+        guard configuration.accessibilityAudit.writeReport else {
+            return (aggregate, nil)
+        }
+
+        let outputURL = configuration.outputDirectory.appending(path: configuration.accessibilityAudit.reportFileName)
+        try FileManager.default.createDirectory(at: outputURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        switch configuration.accessibilityAudit.reportFormat {
+        case .json:
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            let payload = try encoder.encode(aggregate)
+            try payload.write(to: outputURL)
+        case .markdown:
+            let payload = renderAccessibilityMarkdown(aggregate)
+            try payload.data(using: .utf8)?.write(to: outputURL)
+        }
+        return (aggregate, outputURL.path())
+    }
+
+    private func renderAccessibilityMarkdown(_ report: BuildAccessibilityReport) -> String {
+        guard !report.pages.isEmpty else {
+            return "## Accessibility Audit\n\nNo pages were audited."
+        }
+
+        var lines: [String] = []
+        lines.append("# Build Accessibility Audit")
+        lines.append("")
+        lines.append("| Route | Findings | Passed |")
+        lines.append("| --- | --- | --- |")
+        for page in report.pages {
+            lines.append("| \(page.routePath) | \(page.report.findings.count) | \(page.report.passed ? "true" : "false") |")
+        }
+        lines.append("")
+        for page in report.pages {
+            lines.append("## \(page.routePath)")
+            lines.append("")
+            lines.append(AccessibilityCIReporter.render(page.report, format: .markdown))
             lines.append("")
         }
         return lines.joined(separator: "\n")

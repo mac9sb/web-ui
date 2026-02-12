@@ -367,4 +367,97 @@ struct StaticBuildTests {
             }
         }
     }
+
+    @Test("Build runs accessibility audit and writes report")
+    func buildRunsAccessibilityAuditAndWritesReport() throws {
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-accessibility-audit-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let pagesRoot = routesRoot.appending(path: "pages")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: pagesRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: pagesRoot.appending(path: "index.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        let report = try StaticSiteBuilder(
+            configuration: .init(
+                routesRoot: routesRoot,
+                outputDirectory: outputRoot,
+                assetsSourceDirectory: assetsRoot,
+                accessibilityAudit: .init(
+                    enabled: true,
+                    enforceGate: true,
+                    options: .init(
+                        checkImageAlt: true,
+                        checkInputLabels: true,
+                        checkMainLandmark: true,
+                        checkButtonNames: true,
+                        checkHTMLLang: true
+                    ),
+                    gateOptions: .init(failOnWarnings: false),
+                    reportFormat: .json
+                )
+            )
+        ).build()
+
+        #expect(report.accessibilityReport != nil)
+        #expect(report.accessibilityReport?.pages.count == 1)
+        #expect(report.accessibilityReportPath != nil)
+        if let accessibilityReportPath = report.accessibilityReportPath {
+            #expect(FileManager.default.fileExists(atPath: accessibilityReportPath))
+        }
+    }
+
+    @Test("Build fails when accessibility audit finds errors")
+    func buildFailsWhenAccessibilityAuditFindsErrors() throws {
+        struct InaccessibleDoc: Document {
+            var metadata: Metadata { Metadata(title: "Inaccessible") }
+            var path: String { "/" }
+
+            var body: some Markup {
+                Main {
+                    Form {
+                        Input(name: "email", type: "email")
+                    }
+                }
+            }
+        }
+
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-accessibility-fail-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        do {
+            _ = try StaticSiteBuilder(
+                configuration: .init(
+                    routesRoot: routesRoot,
+                    outputDirectory: outputRoot,
+                    assetsSourceDirectory: assetsRoot,
+                    pageOverrides: [.init(path: "/", document: InaccessibleDoc())],
+                    accessibilityAudit: .init(
+                        enabled: true,
+                        enforceGate: true,
+                        gateOptions: .init(failOnWarnings: false),
+                        reportFormat: .json
+                    ),
+                    buildMode: .staticSite
+                )
+            ).build()
+            #expect(Bool(false), "Expected accessibility audit failure")
+        } catch let error as ServerBuildError {
+            if case let .accessibilityAuditFailed(path, errorCount, warningCount) = error {
+                #expect(path == "/")
+                #expect(errorCount > 0)
+                #expect(warningCount >= 0)
+            } else {
+                #expect(Bool(false), "Expected .accessibilityAuditFailed")
+            }
+        }
+    }
 }
