@@ -97,6 +97,7 @@ let package = Package(
             dependencies: [
                 "AxiomWebRender",
                 "AxiomWebUI",
+                .product(name: "Metrics", package: "swift-metrics"),
             ]
         ),
         .target(
@@ -104,6 +105,7 @@ let package = Package(
             dependencies: [
                 "AxiomWebUI",
                 "AxiomWebRender",
+                "AxiomWebTesting",
                 "AxiomWebI18n",
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
@@ -119,6 +121,7 @@ let package = Package(
             dependencies: [
                 "AxiomWebServer",
                 "AxiomWebRender",
+                "AxiomWebTesting",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
@@ -136,6 +139,8 @@ let package = Package(
                 "AxiomWebTesting",
                 "AxiomWebMarkdown",
                 "AxiomWebUIComponents",
+                .product(name: "Metrics", package: "swift-metrics"),
+                .product(name: "MetricsTestKit", package: "swift-metrics"),
             ]
         ),
     ]

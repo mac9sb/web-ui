@@ -1,6 +1,34 @@
 import Foundation
+import Metrics
 import AxiomWebRender
 import AxiomWebUI
+
+private enum WebTestingMetrics {
+    private static let namespace = "axiomweb.testing"
+
+    static func start() -> UInt64 {
+        DispatchTime.now().uptimeNanoseconds
+    }
+
+    static func increment(
+        _ name: String,
+        by amount: Int64 = 1,
+        dimensions: [(String, String)] = []
+    ) {
+        Counter(label: "\(namespace).\(name)", dimensions: dimensions).increment(by: amount)
+    }
+
+    static func recordDuration(
+        _ name: String,
+        startedAt: UInt64,
+        dimensions: [(String, String)] = []
+    ) {
+        let now = DispatchTime.now().uptimeNanoseconds
+        let elapsed = now >= startedAt ? now - startedAt : 0
+        let bounded = min(elapsed, UInt64(Int64.max))
+        Metrics.Timer(label: "\(namespace).\(name)", dimensions: dimensions).recordNanoseconds(Int64(bounded))
+    }
+}
 
 #if canImport(WebKit)
 import WebKit
@@ -25,74 +53,94 @@ public final class BrowserPage: NSObject, WKNavigationDelegate {
     }
 
     public func goto(_ url: URL) async throws {
-        try await beginNavigation {
-            webView.load(URLRequest(url: url))
+        try await measured(category: "navigation", operation: "goto") {
+            try await beginNavigation {
+                webView.load(URLRequest(url: url))
+            }
         }
     }
 
     public func setHTML(_ html: String, baseURL: URL? = nil) async throws {
-        try await beginNavigation {
-            webView.loadHTMLString(html, baseURL: baseURL)
+        try await measured(category: "navigation", operation: "setHTML") {
+            try await beginNavigation {
+                webView.loadHTMLString(html, baseURL: baseURL)
+            }
         }
     }
 
     public func content() async throws -> String {
-        let value = try await evaluate("document.documentElement.outerHTML")
-        return value as? String ?? ""
+        try await measured(category: "query", operation: "content") {
+            let value = try await evaluate("document.documentElement.outerHTML")
+            return value as? String ?? ""
+        }
     }
 
     public func evaluate(_ script: String) async throws -> Any {
-        do {
-            return try await webView.evaluateJavaScript(script) as Any
-        } catch {
-            throw BrowserError.evaluationFailed(String(describing: error))
+        try await measured(category: "script", operation: "evaluate") {
+            do {
+                return try await webView.evaluateJavaScript(script) as Any
+            } catch {
+                throw BrowserError.evaluationFailed(String(describing: error))
+            }
         }
     }
 
     public func exists(_ selector: String) async throws -> Bool {
-        let query = javascriptLiteral(selector)
-        let script = "document.querySelector(\(query)) !== null"
-        return (try await evaluate(script) as? Bool) ?? false
+        try await measured(category: "query", operation: "exists") {
+            let query = javascriptLiteral(selector)
+            let script = "document.querySelector(\(query)) !== null"
+            return (try await evaluate(script) as? Bool) ?? false
+        }
     }
 
     public func textContent(of selector: String) async throws -> String? {
-        let query = javascriptLiteral(selector)
-        let script = "(function(){const node=document.querySelector(\(query));return node?node.textContent:null;})()"
-        return try await evaluate(script) as? String
+        try await measured(category: "query", operation: "textContent") {
+            let query = javascriptLiteral(selector)
+            let script = "(function(){const node=document.querySelector(\(query));return node?node.textContent:null;})()"
+            return try await evaluate(script) as? String
+        }
     }
 
     public func click(_ selector: String) async throws {
-        let query = javascriptLiteral(selector)
-        let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}node.click();return true;})()"
-        let didClick = (try await evaluate(script) as? Bool) ?? false
-        if !didClick {
-            throw BrowserError.elementNotFound(selector)
+        try await measured(category: "action", operation: "click") {
+            let query = javascriptLiteral(selector)
+            let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}node.click();return true;})()"
+            let didClick = (try await evaluate(script) as? Bool) ?? false
+            if !didClick {
+                throw BrowserError.elementNotFound(selector)
+            }
         }
     }
 
     public func fill(_ selector: String, with value: String) async throws {
-        let query = javascriptLiteral(selector)
-        let jsValue = javascriptLiteral(value)
-        let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}node.value=\(jsValue);node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()"
-        let didFill = (try await evaluate(script) as? Bool) ?? false
-        if !didFill {
-            throw BrowserError.elementNotFound(selector)
+        try await measured(category: "action", operation: "fill") {
+            let query = javascriptLiteral(selector)
+            let jsValue = javascriptLiteral(value)
+            let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}node.value=\(jsValue);node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()"
+            let didFill = (try await evaluate(script) as? Bool) ?? false
+            if !didFill {
+                throw BrowserError.elementNotFound(selector)
+            }
         }
     }
 
     public func attribute(of selector: String, name: String) async throws -> String? {
-        let query = javascriptLiteral(selector)
-        let attributeName = javascriptLiteral(name)
-        let script = "(function(){const node=document.querySelector(\(query));if(!node){return null;}return node.getAttribute(\(attributeName));})()"
-        return try await evaluate(script) as? String
+        try await measured(category: "query", operation: "attribute") {
+            let query = javascriptLiteral(selector)
+            let attributeName = javascriptLiteral(name)
+            let script = "(function(){const node=document.querySelector(\(query));if(!node){return null;}return node.getAttribute(\(attributeName));})()"
+            return try await evaluate(script) as? String
+        }
     }
 
     public func submit(_ selector: String) async throws {
-        let query = javascriptLiteral(selector)
-        let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}if(typeof node.requestSubmit==='function'){node.requestSubmit();}else if(typeof node.submit==='function'){node.submit();}else{return false;}return true;})()"
-        let didSubmit = (try await evaluate(script) as? Bool) ?? false
-        if !didSubmit {
-            throw BrowserError.elementNotFound(selector)
+        try await measured(category: "action", operation: "submit") {
+            let query = javascriptLiteral(selector)
+            let script = "(function(){const node=document.querySelector(\(query));if(!node){return false;}if(typeof node.requestSubmit==='function'){node.requestSubmit();}else if(typeof node.submit==='function'){node.submit();}else{return false;}return true;})()"
+            let didSubmit = (try await evaluate(script) as? Bool) ?? false
+            if !didSubmit {
+                throw BrowserError.elementNotFound(selector)
+            }
         }
     }
 
@@ -102,45 +150,51 @@ public final class BrowserPage: NSObject, WKNavigationDelegate {
         timeout: Duration = .seconds(2),
         pollEvery: Duration = .milliseconds(50)
     ) async throws {
-        let expected = text
-        let start = ContinuousClock.now
-        while true {
-            let current: String
-            if let selector {
-                current = try await textContent(of: selector) ?? ""
-            } else {
-                current = (try await evaluate("document.body ? document.body.textContent : ''") as? String) ?? ""
-            }
+        try await measured(category: "wait", operation: "waitForText") {
+            let expected = text
+            let start = ContinuousClock.now
+            while true {
+                let current: String
+                if let selector {
+                    current = try await textContent(of: selector) ?? ""
+                } else {
+                    current = (try await evaluate("document.body ? document.body.textContent : ''") as? String) ?? ""
+                }
 
-            if current.contains(expected) {
-                return
-            }
+                if current.contains(expected) {
+                    return
+                }
 
-            if start.duration(to: .now) >= timeout {
-                throw BrowserError.timeout("Timed out waiting for text: \(text)")
-            }
+                if start.duration(to: .now) >= timeout {
+                    throw BrowserError.timeout("Timed out waiting for text: \(text)")
+                }
 
-            try await Task.sleep(for: pollEvery)
+                try await Task.sleep(for: pollEvery)
+            }
         }
     }
 
     public func normalizedSnapshot(options: SnapshotComparisonOptions = .init()) async throws -> String {
-        let html = try await content()
-        return SnapshotTesting.normalize(html, options: options)
+        try await measured(category: "snapshot", operation: "normalizedSnapshot") {
+            let html = try await content()
+            return SnapshotTesting.normalize(html, options: options)
+        }
     }
 
     public func waitFor(selector: String, timeout: Duration = .seconds(2), pollEvery: Duration = .milliseconds(50)) async throws {
-        let start = ContinuousClock.now
-        while true {
-            if try await exists(selector) {
-                return
-            }
+        try await measured(category: "wait", operation: "waitForSelector") {
+            let start = ContinuousClock.now
+            while true {
+                if try await exists(selector) {
+                    return
+                }
 
-            if start.duration(to: .now) >= timeout {
-                throw BrowserError.timeout("Timed out waiting for selector: \(selector)")
-            }
+                if start.duration(to: .now) >= timeout {
+                    throw BrowserError.timeout("Timed out waiting for selector: \(selector)")
+                }
 
-            try await Task.sleep(for: pollEvery)
+                try await Task.sleep(for: pollEvery)
+            }
         }
     }
 
@@ -178,6 +232,34 @@ public final class BrowserPage: NSObject, WKNavigationDelegate {
             .replacingOccurrences(of: "\r", with: "")
         return "\"\(escaped)\""
     }
+
+    private func measured<T>(
+        category: String,
+        operation: String,
+        _ work: () async throws -> T
+    ) async throws -> T {
+        let started = WebTestingMetrics.start()
+        do {
+            let value = try await work()
+            let dimensions = [("category", category), ("operation", operation), ("status", "success")]
+            WebTestingMetrics.increment("browser.operation.total", dimensions: dimensions)
+            WebTestingMetrics.recordDuration(
+                "browser.operation.duration",
+                startedAt: started,
+                dimensions: dimensions
+            )
+            return value
+        } catch {
+            let dimensions = [("category", category), ("operation", operation), ("status", "failure")]
+            WebTestingMetrics.increment("browser.operation.total", dimensions: dimensions)
+            WebTestingMetrics.recordDuration(
+                "browser.operation.duration",
+                startedAt: started,
+                dimensions: dimensions
+            )
+            throw error
+        }
+    }
 }
 #endif
 
@@ -199,12 +281,20 @@ public struct SnapshotResult: Sendable, Equatable {
 
 public enum SnapshotTesting {
     public static func compare(expected: String, actual: String, options: SnapshotComparisonOptions = .init()) -> SnapshotResult {
+        let started = WebTestingMetrics.start()
         let normalizedExpected = normalize(expected, options: options)
         let normalizedActual = normalize(actual, options: options)
-        return SnapshotResult(matched: normalizedExpected == normalizedActual, expected: normalizedExpected, actual: normalizedActual)
+        let matched = normalizedExpected == normalizedActual
+        WebTestingMetrics.increment(
+            "snapshot.compare.total",
+            dimensions: [("matched", matched ? "true" : "false")]
+        )
+        WebTestingMetrics.recordDuration("snapshot.compare.duration", startedAt: started)
+        return SnapshotResult(matched: matched, expected: normalizedExpected, actual: normalizedActual)
     }
 
     public static func normalize(_ value: String, options: SnapshotComparisonOptions = .init()) -> String {
+        let started = WebTestingMetrics.start()
         var output = value
         if options.collapseInterTagWhitespace {
             output = output.replacingOccurrences(of: #">\s+<"#, with: "><", options: .regularExpression)
@@ -212,6 +302,8 @@ public enum SnapshotTesting {
         if options.trimWhitespace {
             output = output.trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        WebTestingMetrics.increment("snapshot.normalize.total")
+        WebTestingMetrics.recordDuration("snapshot.normalize.duration", startedAt: started)
         return output
     }
 }
@@ -254,6 +346,558 @@ public enum ComponentSnapshot {
 
     public static func render(document: any Document, options: RenderOptions = .init()) throws -> String {
         try RenderEngine.render(document: document, locale: .en, options: options).html
+    }
+}
+
+public enum PerformanceIssue: String, Sendable, Equatable, Codable {
+    case htmlBytesExceeded
+    case cssBytesExceeded
+    case jsBytesExceeded
+    case totalAssetBytesExceeded
+    case imageBytesExceeded
+    case fontBytesExceeded
+    case requestCountExceeded
+    case domNodeCountExceeded
+    case inlineStyleBlockBytesExceeded
+    case inlineScriptBlockBytesExceeded
+}
+
+public enum PerformanceSeverity: String, Sendable, Equatable, Codable {
+    case info
+    case warning
+    case error
+}
+
+public struct PerformanceFinding: Sendable, Equatable, Codable {
+    public let issue: PerformanceIssue
+    public let severity: PerformanceSeverity
+    public let actual: Int
+    public let budget: Int
+    public let message: String
+
+    public init(
+        issue: PerformanceIssue,
+        severity: PerformanceSeverity,
+        actual: Int,
+        budget: Int,
+        message: String
+    ) {
+        self.issue = issue
+        self.severity = severity
+        self.actual = max(0, actual)
+        self.budget = max(0, budget)
+        self.message = message
+    }
+}
+
+public enum PerformanceAssetKind: String, Sendable, Equatable, Codable {
+    case stylesheet
+    case script
+    case image
+    case font
+    case media
+    case other
+
+    public static func infer(from path: String) -> PerformanceAssetKind {
+        let ext = URL(fileURLWithPath: path).pathExtension.lowercased()
+        if ["css"].contains(ext) {
+            return .stylesheet
+        }
+        if ["js", "mjs", "cjs"].contains(ext) {
+            return .script
+        }
+        if ["png", "jpg", "jpeg", "gif", "webp", "avif", "svg", "bmp", "ico"].contains(ext) {
+            return .image
+        }
+        if ["woff", "woff2", "ttf", "otf", "eot"].contains(ext) {
+            return .font
+        }
+        if ["mp4", "webm", "mp3", "wav", "ogg", "mov"].contains(ext) {
+            return .media
+        }
+        return .other
+    }
+}
+
+public struct PerformanceAsset: Sendable, Equatable, Codable {
+    public let path: String
+    public let bytes: Int
+    public let kind: PerformanceAssetKind
+
+    public init(path: String, bytes: Int, kind: PerformanceAssetKind? = nil) {
+        self.path = path
+        self.bytes = max(0, bytes)
+        self.kind = kind ?? PerformanceAssetKind.infer(from: path)
+    }
+}
+
+public struct PerformanceBudget: Sendable, Equatable, Codable {
+    public var maxHTMLBytes: Int
+    public var maxCSSBytes: Int
+    public var maxJSBytes: Int
+    public var maxTotalAssetBytes: Int
+    public var maxImageBytes: Int
+    public var maxFontBytes: Int
+    public var maxRequestCount: Int
+    public var maxDOMNodeCount: Int
+    public var maxInlineStyleBlockBytes: Int
+    public var maxInlineScriptBlockBytes: Int
+
+    public init(
+        maxHTMLBytes: Int = 128_000,
+        maxCSSBytes: Int = 96_000,
+        maxJSBytes: Int = 160_000,
+        maxTotalAssetBytes: Int = 900_000,
+        maxImageBytes: Int = 500_000,
+        maxFontBytes: Int = 250_000,
+        maxRequestCount: Int = 50,
+        maxDOMNodeCount: Int = 2_000,
+        maxInlineStyleBlockBytes: Int = 16_000,
+        maxInlineScriptBlockBytes: Int = 48_000
+    ) {
+        self.maxHTMLBytes = max(0, maxHTMLBytes)
+        self.maxCSSBytes = max(0, maxCSSBytes)
+        self.maxJSBytes = max(0, maxJSBytes)
+        self.maxTotalAssetBytes = max(0, maxTotalAssetBytes)
+        self.maxImageBytes = max(0, maxImageBytes)
+        self.maxFontBytes = max(0, maxFontBytes)
+        self.maxRequestCount = max(0, maxRequestCount)
+        self.maxDOMNodeCount = max(0, maxDOMNodeCount)
+        self.maxInlineStyleBlockBytes = max(0, maxInlineStyleBlockBytes)
+        self.maxInlineScriptBlockBytes = max(0, maxInlineScriptBlockBytes)
+    }
+}
+
+public struct PerformanceAuditOptions: Sendable, Equatable, Codable {
+    public var budget: PerformanceBudget
+    public var warningRatio: Double
+
+    public init(
+        budget: PerformanceBudget = .init(),
+        warningRatio: Double = 0.9
+    ) {
+        self.budget = budget
+        self.warningRatio = min(max(warningRatio, 0), 1)
+    }
+}
+
+public struct PerformanceSnapshot: Sendable, Equatable, Codable {
+    public let htmlBytes: Int
+    public let inlineCSSBytes: Int
+    public let inlineJSBytes: Int
+    public let totalCSSBytes: Int
+    public let totalJSBytes: Int
+    public let totalAssetBytes: Int
+    public let imageBytes: Int
+    public let fontBytes: Int
+    public let requestCount: Int
+    public let domNodeCount: Int
+    public let maxInlineStyleBlockBytes: Int
+    public let maxInlineScriptBlockBytes: Int
+
+    public init(
+        htmlBytes: Int,
+        inlineCSSBytes: Int,
+        inlineJSBytes: Int,
+        totalCSSBytes: Int,
+        totalJSBytes: Int,
+        totalAssetBytes: Int,
+        imageBytes: Int,
+        fontBytes: Int,
+        requestCount: Int,
+        domNodeCount: Int,
+        maxInlineStyleBlockBytes: Int,
+        maxInlineScriptBlockBytes: Int
+    ) {
+        self.htmlBytes = max(0, htmlBytes)
+        self.inlineCSSBytes = max(0, inlineCSSBytes)
+        self.inlineJSBytes = max(0, inlineJSBytes)
+        self.totalCSSBytes = max(0, totalCSSBytes)
+        self.totalJSBytes = max(0, totalJSBytes)
+        self.totalAssetBytes = max(0, totalAssetBytes)
+        self.imageBytes = max(0, imageBytes)
+        self.fontBytes = max(0, fontBytes)
+        self.requestCount = max(0, requestCount)
+        self.domNodeCount = max(0, domNodeCount)
+        self.maxInlineStyleBlockBytes = max(0, maxInlineStyleBlockBytes)
+        self.maxInlineScriptBlockBytes = max(0, maxInlineScriptBlockBytes)
+    }
+}
+
+public struct PerformanceAuditReport: Sendable, Equatable, Codable {
+    public let snapshot: PerformanceSnapshot
+    public let findings: [PerformanceFinding]
+
+    public init(snapshot: PerformanceSnapshot, findings: [PerformanceFinding]) {
+        self.snapshot = snapshot
+        self.findings = findings
+    }
+
+    public var issues: [PerformanceIssue] {
+        var seen = Set<PerformanceIssue>()
+        return findings.compactMap { finding in
+            if seen.insert(finding.issue).inserted {
+                return finding.issue
+            }
+            return nil
+        }
+    }
+
+    public var hasErrors: Bool {
+        findings.contains { $0.severity == .error }
+    }
+
+    public var hasWarnings: Bool {
+        findings.contains { $0.severity == .warning }
+    }
+
+    public var passed: Bool {
+        !hasErrors
+    }
+}
+
+public enum PerformanceCIReportFormat: Sendable {
+    case markdown
+    case json
+}
+
+public enum PerformanceCIGateError: Error, Equatable {
+    case failed(errorCount: Int, warningCount: Int)
+}
+
+public struct PerformanceCIGateOptions: Sendable, Equatable {
+    public var failOnWarnings: Bool
+
+    public init(failOnWarnings: Bool = false) {
+        self.failOnWarnings = failOnWarnings
+    }
+}
+
+public enum PerformanceCIReporter {
+    public static func render(
+        _ report: PerformanceAuditReport,
+        format: PerformanceCIReportFormat = .markdown
+    ) -> String {
+        switch format {
+        case .markdown:
+            return markdown(report)
+        case .json:
+            return json(report)
+        }
+    }
+
+    private static func markdown(_ report: PerformanceAuditReport) -> String {
+        guard !report.findings.isEmpty else {
+            return "## Performance Audit\n\nNo issues found."
+        }
+
+        var lines: [String] = []
+        lines.append("## Performance Audit")
+        lines.append("")
+        lines.append("| Severity | Issue | Actual | Budget | Message |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for finding in report.findings {
+            lines.append(
+                "| \(finding.severity.rawValue) | \(finding.issue.rawValue) | \(finding.actual) | \(finding.budget) | \(finding.message) |"
+            )
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func json(_ report: PerformanceAuditReport) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(report),
+              let value = String(data: data, encoding: .utf8) else {
+            return "{\"findings\":[]}"
+        }
+        return value
+    }
+}
+
+public enum PerformanceCIGate {
+    public static func validate(
+        _ report: PerformanceAuditReport,
+        options: PerformanceCIGateOptions = .init()
+    ) throws {
+        let started = WebTestingMetrics.start()
+        let errorCount = report.findings.filter { $0.severity == .error }.count
+        let warningCount = report.findings.filter { $0.severity == .warning }.count
+
+        if errorCount > 0 || (options.failOnWarnings && warningCount > 0) {
+            WebTestingMetrics.increment(
+                "performance.ci.gate.total",
+                dimensions: [("status", "failure"), ("fail_on_warnings", options.failOnWarnings ? "true" : "false")]
+            )
+            WebTestingMetrics.recordDuration("performance.ci.gate.duration", startedAt: started)
+            throw PerformanceCIGateError.failed(errorCount: errorCount, warningCount: warningCount)
+        }
+        WebTestingMetrics.increment(
+            "performance.ci.gate.total",
+            dimensions: [("status", "success"), ("fail_on_warnings", options.failOnWarnings ? "true" : "false")]
+        )
+        WebTestingMetrics.recordDuration("performance.ci.gate.duration", startedAt: started)
+    }
+}
+
+public enum PerformanceAuditRunner {
+    public static func audit(
+        html: String,
+        assets: [PerformanceAsset] = [],
+        options: PerformanceAuditOptions = .init()
+    ) -> [PerformanceIssue] {
+        auditReport(html: html, assets: assets, options: options).issues
+    }
+
+    public static func auditReport(
+        html: String,
+        assets: [PerformanceAsset] = [],
+        options: PerformanceAuditOptions = .init()
+    ) -> PerformanceAuditReport {
+        let started = WebTestingMetrics.start()
+        let snapshot = snapshot(from: html, assets: assets)
+        var findings: [PerformanceFinding] = []
+
+        func severity(actual: Int, budget: Int) -> PerformanceSeverity? {
+            if actual > budget {
+                return .error
+            }
+            guard budget > 0 else {
+                return nil
+            }
+            let usage = Double(actual) / Double(budget)
+            if usage >= options.warningRatio {
+                return .warning
+            }
+            return nil
+        }
+
+        func addFinding(
+            issue: PerformanceIssue,
+            actual: Int,
+            budget: Int,
+            metricName: String
+        ) {
+            guard let resolvedSeverity = severity(actual: actual, budget: budget) else {
+                return
+            }
+            let status = resolvedSeverity == .error ? "exceeds" : "approaches"
+            findings.append(
+                PerformanceFinding(
+                    issue: issue,
+                    severity: resolvedSeverity,
+                    actual: actual,
+                    budget: budget,
+                    message: "\(metricName) \(status) budget."
+                )
+            )
+        }
+
+        addFinding(
+            issue: .htmlBytesExceeded,
+            actual: snapshot.htmlBytes,
+            budget: options.budget.maxHTMLBytes,
+            metricName: "HTML bytes"
+        )
+        addFinding(
+            issue: .cssBytesExceeded,
+            actual: snapshot.totalCSSBytes,
+            budget: options.budget.maxCSSBytes,
+            metricName: "CSS bytes"
+        )
+        addFinding(
+            issue: .jsBytesExceeded,
+            actual: snapshot.totalJSBytes,
+            budget: options.budget.maxJSBytes,
+            metricName: "JS bytes"
+        )
+        addFinding(
+            issue: .totalAssetBytesExceeded,
+            actual: snapshot.totalAssetBytes,
+            budget: options.budget.maxTotalAssetBytes,
+            metricName: "Asset bytes"
+        )
+        addFinding(
+            issue: .imageBytesExceeded,
+            actual: snapshot.imageBytes,
+            budget: options.budget.maxImageBytes,
+            metricName: "Image bytes"
+        )
+        addFinding(
+            issue: .fontBytesExceeded,
+            actual: snapshot.fontBytes,
+            budget: options.budget.maxFontBytes,
+            metricName: "Font bytes"
+        )
+        addFinding(
+            issue: .requestCountExceeded,
+            actual: snapshot.requestCount,
+            budget: options.budget.maxRequestCount,
+            metricName: "Request count"
+        )
+        addFinding(
+            issue: .domNodeCountExceeded,
+            actual: snapshot.domNodeCount,
+            budget: options.budget.maxDOMNodeCount,
+            metricName: "DOM node count"
+        )
+        addFinding(
+            issue: .inlineStyleBlockBytesExceeded,
+            actual: snapshot.maxInlineStyleBlockBytes,
+            budget: options.budget.maxInlineStyleBlockBytes,
+            metricName: "Inline style block bytes"
+        )
+        addFinding(
+            issue: .inlineScriptBlockBytesExceeded,
+            actual: snapshot.maxInlineScriptBlockBytes,
+            budget: options.budget.maxInlineScriptBlockBytes,
+            metricName: "Inline script block bytes"
+        )
+
+        let report = PerformanceAuditReport(snapshot: snapshot, findings: findings)
+        WebTestingMetrics.increment(
+            "performance.audit.total",
+            dimensions: [("passed", report.passed ? "true" : "false")]
+        )
+        WebTestingMetrics.increment("performance.audit.findings.total", by: Int64(report.findings.count))
+        for resolvedSeverity in [PerformanceSeverity.info, .warning, .error] {
+            let count = report.findings.filter { $0.severity == resolvedSeverity }.count
+            if count > 0 {
+                WebTestingMetrics.increment(
+                    "performance.audit.findings.by_severity",
+                    by: Int64(count),
+                    dimensions: [("severity", resolvedSeverity.rawValue)]
+                )
+            }
+        }
+        WebTestingMetrics.increment("performance.audit.bytes.html.total", by: clampedInt64(snapshot.htmlBytes))
+        WebTestingMetrics.increment("performance.audit.bytes.css.total", by: clampedInt64(snapshot.totalCSSBytes))
+        WebTestingMetrics.increment("performance.audit.bytes.js.total", by: clampedInt64(snapshot.totalJSBytes))
+        WebTestingMetrics.increment("performance.audit.bytes.assets.total", by: clampedInt64(snapshot.totalAssetBytes))
+        WebTestingMetrics.increment("performance.audit.requests.total", by: clampedInt64(snapshot.requestCount))
+        WebTestingMetrics.increment("performance.audit.dom_nodes.total", by: clampedInt64(snapshot.domNodeCount))
+        WebTestingMetrics.recordDuration("performance.audit.duration", startedAt: started)
+        return report
+    }
+
+    private static func snapshot(from html: String, assets: [PerformanceAsset]) -> PerformanceSnapshot {
+        let styles = tagMatches(
+            pattern: #"<style\b[^>]*>(.*?)</style>"#,
+            in: html,
+            options: [.caseInsensitive, .dotMatchesLineSeparators]
+        ).compactMap { $0.captures.first }
+
+        let scriptMatches = tagMatches(
+            pattern: #"<script\b([^>]*)>(.*?)</script>"#,
+            in: html,
+            options: [.caseInsensitive, .dotMatchesLineSeparators]
+        )
+
+        let inlineCSSBytes = styles.reduce(0) { $0 + byteCount($1) }
+        let maxInlineStyleBytes = styles.map(byteCount).max() ?? 0
+
+        var inlineJSBytes = 0
+        var maxInlineScriptBytes = 0
+        for script in scriptMatches {
+            let attributeFragment = script.captures.first ?? ""
+            let attributes = parseAttributes(fromTag: "<script \(attributeFragment)>")
+            guard isInlineJavaScript(attributes: attributes) else {
+                continue
+            }
+            let payload = script.captures.count > 1 ? script.captures[1] : ""
+            let bytes = byteCount(payload)
+            inlineJSBytes += bytes
+            maxInlineScriptBytes = max(maxInlineScriptBytes, bytes)
+        }
+
+        let cssAssetBytes = assets
+            .filter { $0.kind == .stylesheet }
+            .reduce(0) { $0 + $1.bytes }
+        let jsAssetBytes = assets
+            .filter { $0.kind == .script }
+            .reduce(0) { $0 + $1.bytes }
+        let imageBytes = assets
+            .filter { $0.kind == .image }
+            .reduce(0) { $0 + $1.bytes }
+        let fontBytes = assets
+            .filter { $0.kind == .font }
+            .reduce(0) { $0 + $1.bytes }
+        let totalAssetBytes = assets.reduce(0) { $0 + $1.bytes }
+
+        let externalRequestCount = resourceReferenceCount(in: html)
+        let requestCount = max(externalRequestCount, assets.count)
+        let domNodeCount = domNodeCount(in: html)
+
+        return PerformanceSnapshot(
+            htmlBytes: byteCount(html),
+            inlineCSSBytes: inlineCSSBytes,
+            inlineJSBytes: inlineJSBytes,
+            totalCSSBytes: inlineCSSBytes + cssAssetBytes,
+            totalJSBytes: inlineJSBytes + jsAssetBytes,
+            totalAssetBytes: totalAssetBytes,
+            imageBytes: imageBytes,
+            fontBytes: fontBytes,
+            requestCount: requestCount,
+            domNodeCount: domNodeCount,
+            maxInlineStyleBlockBytes: maxInlineStyleBytes,
+            maxInlineScriptBlockBytes: maxInlineScriptBytes
+        )
+    }
+
+    private static func isInlineJavaScript(attributes: [String: String]) -> Bool {
+        if attributes["src"] != nil {
+            return false
+        }
+        guard let rawType = attributes["type"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !rawType.isEmpty else {
+            return true
+        }
+        let lowered = rawType.lowercased()
+        if ["text/javascript", "application/javascript", "module", "text/ecmascript", "application/ecmascript"].contains(lowered) {
+            return true
+        }
+        return false
+    }
+
+    private static func resourceReferenceCount(in html: String) -> Int {
+        let references = tagMatches(
+            pattern: #"<(link|script|img|source|video|audio|track|embed|iframe)\b[^>]*>"#,
+            in: html,
+            options: [.caseInsensitive]
+        )
+
+        var values = Set<String>()
+        for reference in references {
+            let tag = extractTagName(from: reference.value)?.lowercased() ?? ""
+            let attributes = parseAttributes(fromTag: reference.value)
+
+            if let src = attributes["src"], !src.isEmpty {
+                values.insert(src)
+                continue
+            }
+            if tag == "link", let href = attributes["href"], !href.isEmpty {
+                values.insert(href)
+            }
+        }
+        return values.count
+    }
+
+    private static func domNodeCount(in html: String) -> Int {
+        tagMatches(
+            pattern: #"<(?!/|!|\?)[a-zA-Z][a-zA-Z0-9:-]*(\s[^>]*)?>"#,
+            in: html,
+            options: [.caseInsensitive]
+        ).count
+    }
+
+    private static func byteCount(_ value: String) -> Int {
+        value.utf8.count
+    }
+
+    private static func clampedInt64(_ value: Int) -> Int64 {
+        let nonNegative = max(0, value)
+        let limit = Int(Int64.max)
+        return Int64(min(nonNegative, limit))
     }
 }
 
@@ -428,12 +1072,23 @@ public enum AccessibilityCIGate {
         _ report: AccessibilityAuditReport,
         options: AccessibilityCIGateOptions = .init()
     ) throws {
+        let started = WebTestingMetrics.start()
         let errorCount = report.findings.filter { $0.severity == .error }.count
         let warningCount = report.findings.filter { $0.severity == .warning }.count
 
         if errorCount > 0 || (options.failOnWarnings && warningCount > 0) {
+            WebTestingMetrics.increment(
+                "accessibility.ci.gate.total",
+                dimensions: [("status", "failure"), ("fail_on_warnings", options.failOnWarnings ? "true" : "false")]
+            )
+            WebTestingMetrics.recordDuration("accessibility.ci.gate.duration", startedAt: started)
             throw AccessibilityCIGateError.failed(errorCount: errorCount, warningCount: warningCount)
         }
+        WebTestingMetrics.increment(
+            "accessibility.ci.gate.total",
+            dimensions: [("status", "success"), ("fail_on_warnings", options.failOnWarnings ? "true" : "false")]
+        )
+        WebTestingMetrics.recordDuration("accessibility.ci.gate.duration", startedAt: started)
     }
 }
 
@@ -446,6 +1101,7 @@ public enum AccessibilityAuditRunner {
         html: String,
         options: AccessibilityAuditOptions = .init()
     ) -> AccessibilityAuditReport {
+        let started = WebTestingMetrics.start()
         let lower = html.lowercased()
         var findings: [AccessibilityFinding] = []
 
@@ -616,7 +1272,24 @@ public enum AccessibilityAuditRunner {
             }
         }
 
-        return AccessibilityAuditReport(findings: findings)
+        let report = AccessibilityAuditReport(findings: findings)
+        WebTestingMetrics.increment(
+            "accessibility.audit.total",
+            dimensions: [("passed", report.passed ? "true" : "false")]
+        )
+        WebTestingMetrics.increment("accessibility.audit.findings.total", by: Int64(report.findings.count))
+        for severity in [AccessibilitySeverity.info, .warning, .error] {
+            let count = report.findings.filter { $0.severity == severity }.count
+            if count > 0 {
+                WebTestingMetrics.increment(
+                    "accessibility.audit.findings.by_severity",
+                    by: Int64(count),
+                    dimensions: [("severity", severity.rawValue)]
+                )
+            }
+        }
+        WebTestingMetrics.recordDuration("accessibility.audit.duration", startedAt: started)
+        return report
     }
 }
 

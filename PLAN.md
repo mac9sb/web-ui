@@ -11,7 +11,7 @@
   - `Phase 2` Runtime Interactivity: complete (state/events/timers + declarative motion + wasm runtime hooks)
   - `Phase 3` Server + Routing + Data: complete
   - `Phase 4` Components + Markdown: in progress
-  - `Phase 5` Testing + Accessibility + Performance: in progress (WKWebView + snapshots baseline present; audit expansion pending)
+  - `Phase 5` Testing + Accessibility + Performance: in progress (WKWebView + snapshots + accessibility CI + metrics live; performance budgets are enforced in static builds and CLI)
   - `Phase 6` Localization + Docs Completion: in progress (routing/hreflang/sitemap implemented; docs completion pending)
   - `Phase 7` Declarative Motion System: in progress (animation + `@starting-style` complete; view-transition API pending)
 - Latest completed slice:
@@ -21,6 +21,9 @@
 - Latest in-progress slice (Phase 5):
   - Expanded `AxiomWebTesting` browser flow API surface (`attribute`, `submit`, `waitForText`, normalized snapshots).
   - Added richer accessibility auditing with structured findings/severity, role/focus/contrast checks, and CI-friendly markdown/JSON reporting.
+  - Added `swift-metrics` instrumentation in `AxiomWebTesting` for browser operation timings, snapshot comparisons, accessibility audits, and CI gate outcomes.
+  - Added typed performance auditing (`PerformanceBudget`, `PerformanceAuditRunner`, `PerformanceCIGate`, `PerformanceCIReporter`) with metrics-backed audit/gate telemetry.
+  - Integrated performance audits into `StaticSiteBuilder` and `AxiomWebBuildCommand` so generated static output can emit reports and fail CI via budget gates.
 - Product note:
   - Add a WebUI playground example powered by WASM and publish it via GitHub Pages as a canonical ecosystem demo.
 

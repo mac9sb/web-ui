@@ -3,6 +3,7 @@ import Logging
 import Metrics
 import AxiomWebI18n
 import AxiomWebRender
+import AxiomWebTesting
 import AxiomWebUI
 
 public struct ObservabilityConfiguration: Sendable, Equatable {
@@ -10,6 +11,38 @@ public struct ObservabilityConfiguration: Sendable, Equatable {
 
     public init(enabled: Bool = true) {
         self.enabled = enabled
+    }
+}
+
+public struct BuildPerformanceAuditConfiguration: Sendable, Equatable {
+    public var enabled: Bool
+    public var enforceGate: Bool
+    public var options: PerformanceAuditOptions
+    public var gateOptions: PerformanceCIGateOptions
+    public var reportFormat: PerformanceCIReportFormat
+    public var writeReport: Bool
+    public var reportFileName: String
+
+    public init(
+        enabled: Bool = true,
+        enforceGate: Bool = true,
+        options: PerformanceAuditOptions = .init(),
+        gateOptions: PerformanceCIGateOptions = .init(),
+        reportFormat: PerformanceCIReportFormat = .json,
+        writeReport: Bool = true,
+        reportFileName: String? = nil
+    ) {
+        self.enabled = enabled
+        self.enforceGate = enforceGate
+        self.options = options
+        self.gateOptions = gateOptions
+        self.reportFormat = reportFormat
+        self.writeReport = writeReport
+        if let reportFileName, !reportFileName.isEmpty {
+            self.reportFileName = reportFileName
+        } else {
+            self.reportFileName = reportFormat == .json ? "performance-audit.json" : "performance-audit.md"
+        }
     }
 }
 
@@ -64,6 +97,7 @@ public struct ServerBuildConfiguration {
     public var locales: [LocaleCode]
     public var baseURL: String?
     public var observability: ObservabilityConfiguration
+    public var performanceAudit: BuildPerformanceAuditConfiguration
     public var buildMode: ApplicationBuildMode
     public var routeConflictPolicy: RouteConflictPolicy
     public var renderOptions: RenderOptions
@@ -83,6 +117,7 @@ public struct ServerBuildConfiguration {
         locales: [LocaleCode] = [.en],
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
+        performanceAudit: BuildPerformanceAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
@@ -101,6 +136,7 @@ public struct ServerBuildConfiguration {
         self.locales = locales
         self.baseURL = baseURL
         self.observability = observability
+        self.performanceAudit = performanceAudit
         self.buildMode = buildMode
         self.routeConflictPolicy = routeConflictPolicy
         self.renderOptions = renderOptions
@@ -119,6 +155,7 @@ public struct ServerBuildConfiguration {
         locales: [LocaleCode] = [.en],
         baseURL: String? = nil,
         observability: ObservabilityConfiguration = .init(enabled: true),
+        performanceAudit: BuildPerformanceAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
         renderOptions: RenderOptions = .init()
@@ -138,6 +175,7 @@ public struct ServerBuildConfiguration {
             locales: locales,
             baseURL: baseURL,
             observability: observability,
+            performanceAudit: performanceAudit,
             buildMode: buildMode,
             routeConflictPolicy: routeConflictPolicy,
             renderOptions: renderOptions
@@ -149,13 +187,41 @@ public struct AssetManifestEntry: Sendable, Equatable, Codable {
     public let sourcePath: String
     public let outputPath: String
     public let fingerprint: String
+    public let bytes: Int
     public let cacheControl: String
 
-    public init(sourcePath: String, outputPath: String, fingerprint: String, cacheControl: String) {
+    public init(sourcePath: String, outputPath: String, fingerprint: String, bytes: Int, cacheControl: String) {
         self.sourcePath = sourcePath
         self.outputPath = outputPath
         self.fingerprint = fingerprint
+        self.bytes = max(0, bytes)
         self.cacheControl = cacheControl
+    }
+}
+
+public struct BuildPagePerformanceReport: Sendable, Equatable, Codable {
+    public let routePath: String
+    public let report: PerformanceAuditReport
+
+    public init(routePath: String, report: PerformanceAuditReport) {
+        self.routePath = routePath
+        self.report = report
+    }
+}
+
+public struct BuildPerformanceReport: Sendable, Equatable, Codable {
+    public let pages: [BuildPagePerformanceReport]
+
+    public init(pages: [BuildPagePerformanceReport]) {
+        self.pages = pages
+    }
+
+    public var hasErrors: Bool {
+        pages.contains { $0.report.hasErrors }
+    }
+
+    public var hasWarnings: Bool {
+        pages.contains { $0.report.hasWarnings }
     }
 }
 
@@ -167,6 +233,8 @@ public struct ServerBuildReport: Sendable, Equatable {
     public let writtenHTMLFiles: [String]
     public let assetManifest: [AssetManifestEntry]
     public let sitemapPath: String?
+    public let performanceReport: BuildPerformanceReport?
+    public let performanceReportPath: String?
 
     public init(
         buildMode: ResolvedApplicationBuildMode,
@@ -175,7 +243,9 @@ public struct ServerBuildReport: Sendable, Equatable {
         apiRouteCount: Int,
         writtenHTMLFiles: [String],
         assetManifest: [AssetManifestEntry],
-        sitemapPath: String?
+        sitemapPath: String?,
+        performanceReport: BuildPerformanceReport? = nil,
+        performanceReportPath: String? = nil
     ) {
         self.buildMode = buildMode
         self.pageCount = pageCount
@@ -184,12 +254,15 @@ public struct ServerBuildReport: Sendable, Equatable {
         self.writtenHTMLFiles = writtenHTMLFiles
         self.assetManifest = assetManifest
         self.sitemapPath = sitemapPath
+        self.performanceReport = performanceReport
+        self.performanceReportPath = performanceReportPath
     }
 }
 
 public enum ServerBuildError: Error, Equatable {
     case routeConflict(path: String)
     case apiRouteConflict(path: String, method: String)
+    case performanceBudgetExceeded(path: String, errorCount: Int, warningCount: Int)
 }
 
 public struct StaticSiteBuilder {
@@ -233,7 +306,9 @@ public struct StaticSiteBuilder {
                 apiRouteCount: apiRoutes.count,
                 writtenHTMLFiles: [],
                 assetManifest: [],
-                sitemapPath: nil
+                sitemapPath: nil,
+                performanceReport: nil,
+                performanceReportPath: nil
             )
         }
 
@@ -244,6 +319,7 @@ public struct StaticSiteBuilder {
         try fileManager.createDirectory(at: configuration.outputDirectory, withIntermediateDirectories: true)
 
         var writtenHTMLFiles: [String] = []
+        var writtenPages: [(routePath: String, outputPath: String)] = []
         for locale in locales {
             for entry in pageDocuments.sorted(by: { $0.key < $1.key }) {
                 let localizedPath = LocaleRouting.localizedPath(entry.key, locale: locale, defaultLocale: configuration.defaultLocale)
@@ -264,6 +340,7 @@ public struct StaticSiteBuilder {
                 )
                 let output = try writeHTML(rendered.html, forRoutePath: localizedPath)
                 writtenHTMLFiles.append(output.path())
+                writtenPages.append((routePath: localizedPath, outputPath: output.path()))
                 if configuration.observability.enabled {
                     pagesBuilt.increment()
                 }
@@ -272,9 +349,16 @@ public struct StaticSiteBuilder {
 
         let assetManifest = try buildAssets()
         let sitemapPath = try buildSitemap(pagePaths: pageDocuments.keys.sorted(), locales: locales)
+        let performance = try buildPerformanceAudit(
+            pages: writtenPages,
+            assetManifest: assetManifest
+        )
 
         if configuration.observability.enabled {
             logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
+            if let performanceReport = performance.report {
+                logger.info("Performance audit complete. pages=\(performanceReport.pages.count) hasErrors=\(performanceReport.hasErrors) hasWarnings=\(performanceReport.hasWarnings)")
+            }
         }
 
         return ServerBuildReport(
@@ -284,7 +368,9 @@ public struct StaticSiteBuilder {
             apiRouteCount: apiRoutes.count,
             writtenHTMLFiles: writtenHTMLFiles.sorted(),
             assetManifest: assetManifest,
-            sitemapPath: sitemapPath
+            sitemapPath: sitemapPath,
+            performanceReport: performance.report,
+            performanceReportPath: performance.path
         )
     }
 
@@ -434,6 +520,7 @@ public struct StaticSiteBuilder {
                     sourcePath: relative,
                     outputPath: destination.path().replacingOccurrences(of: configuration.outputDirectory.path() + "/", with: ""),
                     fingerprint: fingerprint,
+                    bytes: data.count,
                     cacheControl: "public, max-age=31536000, immutable"
                 )
             )
@@ -446,6 +533,95 @@ public struct StaticSiteBuilder {
         try payload.write(to: manifestURL)
 
         return manifest.sorted { $0.sourcePath < $1.sourcePath }
+    }
+
+    private func buildPerformanceAudit(
+        pages: [(routePath: String, outputPath: String)],
+        assetManifest: [AssetManifestEntry]
+    ) throws -> (report: BuildPerformanceReport?, path: String?) {
+        guard configuration.performanceAudit.enabled else {
+            return (nil, nil)
+        }
+
+        let assets = assetManifest.map { entry in
+            PerformanceAsset(
+                path: normalizedPublicAssetPath(entry.outputPath),
+                bytes: entry.bytes
+            )
+        }
+
+        var pageReports: [BuildPagePerformanceReport] = []
+        for page in pages.sorted(by: { $0.routePath < $1.routePath }) {
+            let htmlData = try Data(contentsOf: URL(filePath: page.outputPath))
+            let html = String(decoding: htmlData, as: UTF8.self)
+            let report = PerformanceAuditRunner.auditReport(
+                html: html,
+                assets: assets,
+                options: configuration.performanceAudit.options
+            )
+            pageReports.append(BuildPagePerformanceReport(routePath: page.routePath, report: report))
+
+            if configuration.performanceAudit.enforceGate {
+                do {
+                    try PerformanceCIGate.validate(report, options: configuration.performanceAudit.gateOptions)
+                } catch let PerformanceCIGateError.failed(errorCount, warningCount) {
+                    throw ServerBuildError.performanceBudgetExceeded(
+                        path: page.routePath,
+                        errorCount: errorCount,
+                        warningCount: warningCount
+                    )
+                }
+            }
+        }
+
+        let aggregate = BuildPerformanceReport(pages: pageReports)
+        guard configuration.performanceAudit.writeReport else {
+            return (aggregate, nil)
+        }
+
+        let outputURL = configuration.outputDirectory.appending(path: configuration.performanceAudit.reportFileName)
+        try FileManager.default.createDirectory(at: outputURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        switch configuration.performanceAudit.reportFormat {
+        case .json:
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            let payload = try encoder.encode(aggregate)
+            try payload.write(to: outputURL)
+        case .markdown:
+            let payload = renderPerformanceMarkdown(aggregate)
+            try payload.data(using: .utf8)?.write(to: outputURL)
+        }
+        return (aggregate, outputURL.path())
+    }
+
+    private func renderPerformanceMarkdown(_ report: BuildPerformanceReport) -> String {
+        guard !report.pages.isEmpty else {
+            return "## Performance Audit\n\nNo pages were audited."
+        }
+
+        var lines: [String] = []
+        lines.append("# Build Performance Audit")
+        lines.append("")
+        lines.append("| Route | Findings | Passed |")
+        lines.append("| --- | --- | --- |")
+        for page in report.pages {
+            lines.append("| \(page.routePath) | \(page.report.findings.count) | \(page.report.passed ? "true" : "false") |")
+        }
+        lines.append("")
+        for page in report.pages {
+            lines.append("## \(page.routePath)")
+            lines.append("")
+            lines.append(PerformanceCIReporter.render(page.report, format: .markdown))
+            lines.append("")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private func normalizedPublicAssetPath(_ path: String) -> String {
+        if path.hasPrefix("/") {
+            return path
+        }
+        return "/\(path)"
     }
 
     private func buildSitemap(pagePaths: [String], locales: [LocaleCode]) throws -> String? {

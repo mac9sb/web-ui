@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import HTTPTypes
 @testable import AxiomWebServer
+@testable import AxiomWebTesting
 @testable import AxiomWebUI
 
 @Suite("Static Build")
@@ -274,5 +275,96 @@ struct StaticBuildTests {
         #expect(report.pageCount == 2)
         #expect(FileManager.default.fileExists(atPath: outputRoot.appending(path: "contact/index.html").path()))
         #expect(FileManager.default.fileExists(atPath: outputRoot.appending(path: "support/index.html").path()))
+    }
+
+    @Test("Build runs performance audit and writes report")
+    func buildRunsPerformanceAuditAndWritesReport() throws {
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-performance-audit-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let pagesRoot = routesRoot.appending(path: "pages")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: pagesRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: pagesRoot.appending(path: "index.swift").path(), contents: Data())
+        FileManager.default.createFile(atPath: assetsRoot.appending(path: "site.css").path(), contents: Data("body{margin:0}".utf8))
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        let report = try StaticSiteBuilder(
+            configuration: .init(
+                routesRoot: routesRoot,
+                outputDirectory: outputRoot,
+                assetsSourceDirectory: assetsRoot,
+                performanceAudit: .init(
+                    enabled: true,
+                    enforceGate: true,
+                    options: .init(
+                        budget: .init(
+                            maxHTMLBytes: 10_000,
+                            maxCSSBytes: 10_000,
+                            maxJSBytes: 10_000,
+                            maxTotalAssetBytes: 10_000
+                        )
+                    ),
+                    gateOptions: .init(failOnWarnings: false),
+                    reportFormat: .json
+                )
+            )
+        ).build()
+
+        #expect(report.performanceReport != nil)
+        #expect(report.performanceReport?.pages.count == 1)
+        #expect(report.performanceReportPath != nil)
+        if let performanceReportPath = report.performanceReportPath {
+            #expect(FileManager.default.fileExists(atPath: performanceReportPath))
+        }
+    }
+
+    @Test("Build fails when performance budget is exceeded")
+    func buildFailsWhenPerformanceBudgetExceeded() throws {
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-performance-budget-fail-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let pagesRoot = routesRoot.appending(path: "pages")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: pagesRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: pagesRoot.appending(path: "index.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        do {
+            _ = try StaticSiteBuilder(
+                configuration: .init(
+                    routesRoot: routesRoot,
+                    outputDirectory: outputRoot,
+                    assetsSourceDirectory: assetsRoot,
+                    performanceAudit: .init(
+                        enabled: true,
+                        enforceGate: true,
+                        options: .init(
+                            budget: .init(
+                                maxHTMLBytes: 1,
+                                maxCSSBytes: 10_000,
+                                maxJSBytes: 10_000,
+                                maxTotalAssetBytes: 10_000
+                            )
+                        ),
+                        gateOptions: .init(failOnWarnings: false),
+                        reportFormat: .json
+                    )
+                )
+            ).build()
+            #expect(Bool(false), "Expected performance budget failure")
+        } catch let error as ServerBuildError {
+            if case let .performanceBudgetExceeded(path, errorCount, warningCount) = error {
+                #expect(path == "/")
+                #expect(errorCount > 0)
+                #expect(warningCount >= 0)
+            } else {
+                #expect(Bool(false), "Expected .performanceBudgetExceeded")
+            }
+        }
     }
 }
