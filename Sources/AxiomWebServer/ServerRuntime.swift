@@ -2,8 +2,6 @@ import Foundation
 import NIOCore
 import NIOPosix
 import HTTPTypes
-import AsyncHTTPClient
-import ServiceLifecycle
 import Tracing
 import Logging
 import Metrics
@@ -76,12 +74,6 @@ public final class AxiomWebServerRuntime {
         defer {
             try? group.syncShutdownGracefully()
         }
-
-        let client = HTTPClient(eventLoopGroupProvider: .shared(group))
-        defer {
-            try? client.syncShutdown()
-        }
-        _ = client
         _ = group
     }
 }

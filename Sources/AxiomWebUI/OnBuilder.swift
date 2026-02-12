@@ -31,6 +31,18 @@ public final class VariantBuilder {
         content(VariantScope(prefixes: ["lg"], builder: self))
     }
 
+    public func hover(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: ["hover"], builder: self))
+    }
+
+    public func focus(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: ["focus"], builder: self))
+    }
+
+    public func active(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: ["active"], builder: self))
+    }
+
     public var classNames: [String] {
         classes
     }
@@ -76,5 +88,33 @@ public struct VariantScope {
 
     public func addClass(_ rawClass: String) {
         builder.classes.append((prefixes + [rawClass]).joined(separator: ":"))
+    }
+
+    public func dark(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["dark"], builder: builder))
+    }
+
+    public func sm(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["sm"], builder: builder))
+    }
+
+    public func md(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["md"], builder: builder))
+    }
+
+    public func lg(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["lg"], builder: builder))
+    }
+
+    public func hover(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["hover"], builder: builder))
+    }
+
+    public func focus(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["focus"], builder: builder))
+    }
+
+    public func active(_ content: (VariantScope) -> Void) {
+        content(VariantScope(prefixes: prefixes + ["active"], builder: builder))
     }
 }

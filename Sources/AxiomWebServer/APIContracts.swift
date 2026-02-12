@@ -140,4 +140,15 @@ public struct RouteOverrides {
         apiOverrides.append(APIRouteOverride(path: path, method: method.rawValue))
         apiHandlers.append(APIRouteHandler(path: path, method: method, handle: handle))
     }
+
+    public mutating func api(
+        _ path: String,
+        methods: [HTTPRequest.Method],
+        handle: @escaping @Sendable (HTTPRequest, Data?) async throws -> (HTTPResponse, Data)
+    ) {
+        let orderedMethods = Set(methods).sorted { $0.rawValue < $1.rawValue }
+        for method in orderedMethods {
+            api(path, method: method, handle: handle)
+        }
+    }
 }

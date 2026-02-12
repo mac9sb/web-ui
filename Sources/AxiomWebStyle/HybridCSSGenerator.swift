@@ -41,6 +41,8 @@ public enum HybridCSSGenerator {
         var baseRules: [String] = []
         var utilityRules: [String] = []
         var mediaRules: [String: [String]] = [:]
+        var startingRules: [String] = []
+        var mediaStartingRules: [String: [String]] = [:]
 
         baseRules.append("*{box-sizing:border-box}")
         baseRules.append("html,body{margin:0;padding:0}")
@@ -50,17 +52,24 @@ public enum HybridCSSGenerator {
             let baseClass = parts.last ?? className
             let modifiers = Array(parts.dropLast())
 
-            guard let declarations = declarations(for: baseClass) else {
-                continue
+            let selector = ".\(escapeSelector(className))\(pseudoSelector(modifiers: modifiers))"
+            if let declarations = declarations(for: baseClass) {
+                let rule = "\(selector){\(declarations)}"
+
+                if let media = mediaQuery(for: modifiers) {
+                    mediaRules[media, default: []].append(rule)
+                } else {
+                    utilityRules.append(rule)
+                }
             }
 
-            let selector = ".\(escapeSelector(className))\(pseudoSelector(modifiers: modifiers))"
-            let rule = "\(selector){\(declarations)}"
-
-            if let media = mediaQuery(for: modifiers) {
-                mediaRules[media, default: []].append(rule)
-            } else {
-                utilityRules.append(rule)
+            if let startingDeclaration = StartingStyleRegistry.declaration(for: baseClass) {
+                let startingRule = "@starting-style{\(selector){\(startingDeclaration)}}"
+                if let media = mediaQuery(for: modifiers) {
+                    mediaStartingRules[media, default: []].append(startingRule)
+                } else {
+                    startingRules.append(startingRule)
+                }
             }
         }
 
@@ -73,6 +82,17 @@ public enum HybridCSSGenerator {
             let rules = mediaRules[key, default: []].joined(separator: "")
             css += "\(key){@layer states{\(rules)}}"
         }
+
+        if !startingRules.isEmpty {
+            css += startingRules.sorted().joined()
+        }
+
+        for key in mediaStartingRules.keys.sorted() {
+            let rules = mediaStartingRules[key, default: []].sorted().joined()
+            css += "\(key){\(rules)}"
+        }
+
+        css += AnimationRegistry.keyframeCSS()
 
         return GeneratedCSS(content: css, classes: classes.sorted())
     }
@@ -134,6 +154,10 @@ public enum HybridCSSGenerator {
             if let value = colorValue(token) {
                 return "border-color:\(value)"
             }
+        }
+
+        if let arbitrary = ArbitraryStyleRegistry.declaration(for: baseClass) {
+            return arbitrary
         }
 
         return nil
@@ -252,25 +276,33 @@ public enum HybridCSSGenerator {
     }
 
     private static func pseudoSelector(modifiers: [String]) -> String {
-        if modifiers.contains("hover") {
-            return ":hover"
-        }
-        return ""
+        let pseudoMap: [String: String] = [
+            "hover": ":hover",
+            "focus": ":focus",
+            "active": ":active",
+        ]
+        return modifiers.compactMap { pseudoMap[$0] }.joined()
     }
 
     private static func mediaQuery(for modifiers: [String]) -> String? {
+        var conditions: [String] = []
+
         if modifiers.contains("dark") {
-            return "@media (prefers-color-scheme: dark)"
+            conditions.append("(prefers-color-scheme: dark)")
         }
-        if modifiers.contains("sm") {
-            return "@media (min-width: 640px)"
-        }
-        if modifiers.contains("md") {
-            return "@media (min-width: 768px)"
-        }
+
         if modifiers.contains("lg") {
-            return "@media (min-width: 1024px)"
+            conditions.append("(min-width: 1024px)")
+        } else if modifiers.contains("md") {
+            conditions.append("(min-width: 768px)")
+        } else if modifiers.contains("sm") {
+            conditions.append("(min-width: 640px)")
         }
-        return nil
+
+        guard !conditions.isEmpty else {
+            return nil
+        }
+
+        return "@media \(conditions.joined(separator: " and "))"
     }
 }

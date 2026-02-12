@@ -99,4 +99,72 @@ struct APIRouteContractsTests {
             )
         }
     }
+
+    @Test("Supports multiple methods for the same API path via contracts")
+    func supportsMultipleMethodsForSamePathViaContracts() async throws {
+        struct MultiGetContract: APIRouteContract {
+            static var method: HTTPRequest.Method { .get }
+            static var path: String { "/api/hello" }
+
+            func handle(request: EmptyAPIRequest, context: APIRequestContext) async throws -> APIResponse<String> {
+                APIResponse(body: "get")
+            }
+        }
+
+        struct MultiPostContract: APIRouteContract {
+            static var method: HTTPRequest.Method { .post }
+            static var path: String { "/api/hello" }
+
+            func handle(request: EmptyAPIRequest, context: APIRequestContext) async throws -> APIResponse<String> {
+                APIResponse(body: "post")
+            }
+        }
+
+        let root = FileManager.default.temporaryDirectory.appending(path: "axiomweb-api-method-contracts-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let resolved = try APIRouteResolver.resolve(
+            routesRoot: root,
+            apiDirectory: "api",
+            contracts: [AnyAPIRouteContract(MultiGetContract()), AnyAPIRouteContract(MultiPostContract())],
+            conflictPolicy: .failBuild
+        )
+
+        #expect(resolved.contains { $0.path == "/api/hello" && $0.method == .get })
+        #expect(resolved.contains { $0.path == "/api/hello" && $0.method == .post })
+
+        guard let getHandler = resolved.first(where: { $0.path == "/api/hello" && $0.method == .get }) else {
+            #expect(Bool(false), "Missing GET /api/hello route")
+            return
+        }
+        guard let postHandler = resolved.first(where: { $0.path == "/api/hello" && $0.method == .post }) else {
+            #expect(Bool(false), "Missing POST /api/hello route")
+            return
+        }
+
+        let getRequest = HTTPRequest(method: .get, scheme: nil, authority: nil, path: "/api/hello")
+        let postRequest = HTTPRequest(method: .post, scheme: nil, authority: nil, path: "/api/hello")
+
+        let (_, getBody) = try await getHandler.handle(getRequest, nil)
+        let (_, postBody) = try await postHandler.handle(postRequest, nil)
+
+        #expect(String(decoding: getBody, as: UTF8.self).contains("\"get\""))
+        #expect(String(decoding: postBody, as: UTF8.self).contains("\"post\""))
+    }
+
+    @Test("RouteOverrides can register multiple methods for one path")
+    func routeOverridesCanRegisterMultipleMethods() throws {
+        var overrides = RouteOverrides()
+        overrides.api("/api/hello", methods: [.post, .get, .get]) { request, _ in
+            var fields = HTTPFields()
+            fields[.contentType] = "application/json; charset=utf-8"
+            let body = Data("{\"method\":\"\(request.method.rawValue)\"}".utf8)
+            return (HTTPResponse(status: .ok, headerFields: fields), body)
+        }
+
+        let methods = Set(overrides.apiOverrides.map(\.method))
+        #expect(methods == ["GET", "POST"])
+        #expect(overrides.apiHandlers.count == 2)
+    }
 }

@@ -67,19 +67,25 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
   - `Routes/pages/path/goodbye.swift` -> `/path/goodbye`
   - `Routes/api/hello.swift` -> `/api/hello`
   - `Routes/api/path/goodbye.swift` -> `/api/path/goodbye`
+- Page document path behavior:
+  - default route path is inferred from the route file location/name.
+  - `var path: String` on a page document is an explicit override and takes precedence over inferred path.
 - Dynamic routes:
   - `[slug].swift` -> `:slug`
   - `[...path].swift` -> catch-all
+- HTTP methods are defined in route code/contracts, not filename conventions.
+- A single API route file/path may register one or multiple methods (`GET`, `POST`, `PUT`, `PATCH`, etc.) for the same route path.
 
 ## Full-Breadth Coverage Requirements
 
 ### HTML Coverage
 - Implement typed coverage for full modern HTML element set (matching MDN/WHATWG references for document, metadata, sectioning, text, inline semantics, forms, interactive, media, table, scripting, web components-related primitives).
-- Coverage mechanism: generated APIs from spec snapshot data in `AxiomWebCodegen`.
+- Coverage mechanism: explicit category-based DSL APIs in source (`Elements/*`) with spec snapshot parity tests from `AxiomWebCodegen`.
 - Add per-element compile tests and rendering snapshots.
 
 ### CSS Coverage
 - Implement typed support for full CSS property/value space (backed by generated registries from standards/MDN data).
+- Implement typed support for full CSS property/value space via explicit category-based modifier APIs in source (`Modifiers/*`) with spec snapshot parity tests.
 - Public authoring remains `.modifier` and `.on {}`; output is hybrid-layer CSS.
 - Support tokens (colors, spacing, typography, radius, motion, breakpoints), variants (`sm`, `md`, `lg`, `dark`, interactive states), and arbitrary generated values where standards allow.
 - Add declarative motion APIs for transitions and keyframes (duration, easing, delay, iteration, fill mode, direction, play state, reduced-motion variants) using the same modifier/variant authoring model.
@@ -95,6 +101,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
   - fetch/data actions with cache/revalidation integration
 - No user-authored JS strings required for supported behavior patterns.
 - Runtime generation must be deterministic and minifiable.
+- Include typed bridge primitives for WebAssembly module calls (request/response payload contracts, async invocation lifecycle, and error propagation).
 
 ## Metadata and Structured Data (v4)
 
@@ -143,6 +150,12 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
    - enforce typed registration/indexing checks
 8. ADRs in `Documentation.docc/ADRs/`.
 9. Full `Documentation.docc` completion after feature completion.
+10. View Transitions support (document-level and application-level) for page and stateful route transitions.
+11. Motion API support for CSS `@starting-style` patterns (typed authoring integrated with existing modifier/variant model).
+12. WebAssembly interop:
+   - `WasmCanvas` component for WASM-driven rendering surfaces
+   - typed APIs to call into WASM and return data/results to DSL/runtime code
+   - fallback behavior when WASM is unavailable
 
 ## Out of Scope (Explicitly Deferred)
 - Plugin extension system for render/server/components/tooling.
@@ -162,6 +175,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 ### Phase 2: Runtime Interactivity
 - Implement typed runtime IR and JS generation for state/events/timers.
 - Integrate runtime emission into renderer.
+- Add typed WASM call bridge primitives (module loading, function invocation, typed payload encode/decode, error paths).
 
 ### Phase 3: Server + Routing + Data
 - Implement route discovery from `Routes/pages` and `Routes/api`.
@@ -171,6 +185,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 ### Phase 4: Components + Markdown
 - Build native-first UI component library.
 - Build stylable markdown renderer with admonitions and code blocks.
+- Add `WasmCanvas` component and first-class component-level WASM integration patterns.
 
 ### Phase 5: Testing + Accessibility + Performance
 - Implement WKWebView-first test APIs.
@@ -186,9 +201,11 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 - Support scoped variants (`hover`, `focus`, breakpoints, `dark`, `prefers-reduced-motion`) for motion behavior.
 - Generate deterministic CSS for transitions/animations with no raw CSS strings required.
 - Add motion snapshots and accessibility checks for reduced-motion compliance.
+- Add typed document/application view-transition APIs and generated transition CSS/JS wiring.
+- Add typed `startingStyle` motion primitives that emit valid `@starting-style` rules with variant support.
 
 ## Acceptance Criteria
-1. Full HTML element API breadth generated and tested.
+1. Full HTML element API breadth is explicitly implemented and tested against spec parity snapshots.
 2. Full CSS property/value coverage strategy implemented and tested.
 3. Structured data metadata is typed, validated, deduped, and deterministic.
 4. Route discovery exactly follows filesystem conventions above.
@@ -197,6 +214,8 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 7. Tests pass across rendering, routing, metadata, structured data, localization, and accessibility checks.
 8. Documentation is complete and aligned with implemented behavior.
 9. Declarative animation APIs exist and generate deterministic transition/keyframe CSS with reduced-motion coverage.
+10. View transitions are declarative, testable, and work for both page-level and app-level transitions.
+11. WASM interop is first-class via typed APIs and `WasmCanvas`, with deterministic fallback behavior.
 
 ## Implementation Guardrails
 - Prefer upstream libraries/collections before writing custom infra where equivalent exists.

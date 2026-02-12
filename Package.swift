@@ -27,9 +27,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-http-types", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics", from: "2.0.0"),
-        .package(url: "https://github.com/swift-server/swift-service-lifecycle", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
     ],
     targets: [
@@ -110,8 +108,6 @@ let package = Package(
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
                 .product(name: "Tracing", package: "swift-distributed-tracing"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
@@ -135,6 +131,7 @@ let package = Package(
                 "AxiomWebRuntime",
                 "AxiomWebRender",
                 "AxiomWebServer",
+                "AxiomWebCodegen",
                 "AxiomWebI18n",
                 "AxiomWebTesting",
             ]

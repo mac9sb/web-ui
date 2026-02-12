@@ -59,8 +59,8 @@ struct CSSCoverageTests {
         #expect(rendered.css.contains("@media (prefers-color-scheme: dark)"))
     }
 
-    @Test("Generated property members are usable in DSL")
-    func generatedPropertyMembersAreUsableInDSL() throws {
+    @Test("Property members are usable in DSL")
+    func propertyMembersAreUsableInDSL() throws {
         struct Doc: Document {
             var metadata: Metadata { Metadata(title: "Member CSS") }
             var path: String { "/" }
@@ -87,5 +87,76 @@ struct CSSCoverageTests {
         #expect(rendered.css.contains("scrollbar-color:auto"))
         #expect(rendered.css.contains("grid-template-columns:1fr 2fr"))
         #expect(rendered.css.contains("text-decoration-style:wavy"))
+    }
+
+    @Test("Fluent animation emits declarations with trigger variants and keyframes")
+    func fluentAnimationEmitsTriggeredDeclarationsAndKeyframes() throws {
+        struct Doc: Document {
+            var metadata: Metadata { Metadata(title: "Animation") }
+            var path: String { "/" }
+
+            var body: some Markup {
+                Stack { Text("Animated") }
+                    .animate(.fadeIn, duration: 0.4, timing: .easeInOut)
+                    .on {
+                        $0.hover {
+                            $0.animate(
+                                .custom(
+                                    name: "lift-in",
+                                    frames: [
+                                        AnimationFrame(
+                                            selector: .from,
+                                            declarations: [
+                                                .init(property: .opacity, value: .number(0)),
+                                                .init(property: .transform, value: .raw("translateY(0.75rem)")),
+                                            ]
+                                        ),
+                                        AnimationFrame(
+                                            selector: .to,
+                                            declarations: [
+                                                .init(property: .opacity, value: .number(1)),
+                                                .init(property: .transform, value: .raw("translateY(0)")),
+                                            ]
+                                        ),
+                                    ]
+                                ),
+                                duration: 0.6,
+                                timing: .easeOut
+                            )
+                        }
+                    }
+            }
+        }
+
+        let rendered = try RenderEngine.render(document: Doc(), locale: .en)
+        #expect(rendered.css.contains("animation:ax-fade-in 0.4s ease-in-out 0s 1 normal both running"))
+        #expect(rendered.css.contains("@keyframes ax-fade-in"))
+        #expect(rendered.css.contains(":hover{animation:ax-lift-in 0.6s ease-out 0s 1 normal both running"))
+        #expect(rendered.css.contains("animation:ax-lift-in 0.6s ease-out 0s 1 normal both running"))
+        #expect(rendered.css.contains("@keyframes ax-lift-in"))
+    }
+
+    @Test("Starting style is inferred automatically when animation is applied")
+    func startingStyleDeclarationsAreInferredAutomatically() throws {
+        struct Doc: Document {
+            var metadata: Metadata { Metadata(title: "Starting Style") }
+            var path: String { "/" }
+
+            var body: some Markup {
+                Stack { Text("Start") }
+                    .animate(.slideUp, duration: 0.35)
+                    .on {
+                        $0.md {
+                            $0.animate(.fadeIn, duration: 0.2)
+                        }
+                    }
+            }
+        }
+
+        let rendered = try RenderEngine.render(document: Doc(), locale: .en)
+        #expect(rendered.css.contains("@starting-style{.axs-"))
+        #expect(rendered.css.contains("opacity:0"))
+        #expect(rendered.css.contains("transform:translateY(0.5rem)"))
+        #expect(rendered.css.contains("@media (min-width: 768px){@starting-style"))
     }
 }
