@@ -40,8 +40,12 @@ public enum RenderEngine {
         metadataOverride: Metadata? = nil,
         locale: LocaleCode,
         runtime: RuntimeProgram = .init(),
-        options: RenderOptions = .init()
+        options: RenderOptions = .init(),
+        viewTransition: ViewTransitionConfiguration? = nil
     ) throws -> RenderedDocument {
+        let documentViewTransition = (document as? any ViewTransitionProviding)?.viewTransition
+        let resolvedViewTransition = documentViewTransition ?? viewTransition
+
         let mergedMetadata = merge(site: websiteMetadata, page: metadataOverride ?? document.metadata, locale: locale)
         let bodyNodes = document.body.makeNodes(locale: locale)
         let generatedCSS = options.includeCSS ? HybridCSSGenerator.generate(classes: HybridCSSGenerator.extractClasses(from: bodyNodes)) : GeneratedCSS(content: "", classes: [])
@@ -53,7 +57,8 @@ public enum RenderEngine {
         if options.includeJavaScript {
             let runtimeJavaScript = RuntimeJavaScriptGenerator.generate(
                 program: mergedRuntime,
-                includeDOMBindings: usesDOMRuntimeBindings
+                includeDOMBindings: usesDOMRuntimeBindings,
+                viewTransition: resolvedViewTransition
             )
             let wasmJavaScript = usesWasmBindings ? WasmJavaScriptGenerator.generateDOMBindings() : ""
             javascript = [runtimeJavaScript, wasmJavaScript]
@@ -64,6 +69,9 @@ public enum RenderEngine {
         }
 
         var headTags = metadataTags(for: mergedMetadata)
+        if let viewTransitionCSS = viewTransitionCSS(for: resolvedViewTransition) {
+            headTags.append("<style>\(viewTransitionCSS)</style>")
+        }
 
         if !mergedMetadata.structuredData.isEmpty {
             var graph = StructuredDataGraph(mergedMetadata.structuredData).deduplicated()
@@ -181,6 +189,42 @@ public enum RenderEngine {
 
     private static func safeJSONForScript(_ value: String) -> String {
         value.replacingOccurrences(of: "</script", with: "<\\/script")
+    }
+
+    private static func viewTransitionCSS(for configuration: ViewTransitionConfiguration?) -> String? {
+        guard let configuration, configuration.enabled else {
+            return nil
+        }
+
+        var cssParts: [String] = []
+        cssParts.append("@view-transition{navigation:\(configuration.navigation.rawValue)}")
+
+        if configuration.applyRootAnimation {
+            let duration = formatSeconds(configuration.durationSeconds)
+            let delay = formatSeconds(configuration.delaySeconds)
+            cssParts.append(
+                "::view-transition-old(root),::view-transition-new(root){animation-duration:\(duration);animation-delay:\(delay);animation-timing-function:\(configuration.timing.rawValue);animation-fill-mode:\(configuration.fillMode.rawValue)}"
+            )
+        }
+
+        if configuration.applyRootAnimation && configuration.respectReducedMotion {
+            cssParts.append(
+                "@media (prefers-reduced-motion: reduce){::view-transition-old(root),::view-transition-new(root){animation-duration:0s !important;animation-delay:0s !important}}"
+            )
+        }
+
+        return cssParts.joined()
+    }
+
+    private static func formatSeconds(_ value: Double) -> String {
+        let clamped = max(0, value)
+        if clamped.rounded() == clamped {
+            return String(format: "%.0fs", clamped)
+        }
+        let normalized = String(format: "%.3f", clamped)
+            .replacingOccurrences(of: #"0+$"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"\.$"#, with: "", options: .regularExpression)
+        return "\(normalized)s"
     }
 
     private static func hasDOMRuntimeBindings(in nodes: [HTMLNode]) -> Bool {

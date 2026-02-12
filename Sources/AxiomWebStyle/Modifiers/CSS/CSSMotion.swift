@@ -16,6 +16,7 @@ public extension CSSProperty {
     static let transitionDuration: CSSProperty = "transition-duration"
     static let transitionProperty: CSSProperty = "transition-property"
     static let transitionTimingFunction: CSSProperty = "transition-timing-function"
+    static let viewTransitionName: CSSProperty = "view-transition-name"
     static let willChange: CSSProperty = "will-change"
 }
 
@@ -74,6 +75,14 @@ public extension Markup {
 
     func transitionTimingFunction(_ value: CSSValue) -> some Markup {
         css(.transitionTimingFunction, value)
+    }
+
+    func viewTransitionName(_ value: CSSValue) -> some Markup {
+        css(.viewTransitionName, value)
+    }
+
+    func viewTransitionName(_ value: String) -> some Markup {
+        css(.viewTransitionName, .raw(value))
     }
 
     func willChange(_ value: CSSValue) -> some Markup {
@@ -137,6 +146,14 @@ public extension VariantScope {
 
     func transitionTimingFunction(_ value: CSSValue) {
         css(.transitionTimingFunction, value)
+    }
+
+    func viewTransitionName(_ value: CSSValue) {
+        css(.viewTransitionName, value)
+    }
+
+    func viewTransitionName(_ value: String) {
+        css(.viewTransitionName, .raw(value))
     }
 
     func willChange(_ value: CSSValue) {

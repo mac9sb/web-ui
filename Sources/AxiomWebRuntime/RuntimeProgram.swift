@@ -328,22 +328,28 @@ public enum RuntimeDOMCodec {
 }
 
 public enum RuntimeJavaScriptGenerator {
-    public static func generate(program: RuntimeProgram, includeDOMBindings: Bool = false) -> String {
+    public static func generate(
+        program: RuntimeProgram,
+        includeDOMBindings: Bool = false,
+        viewTransition: ViewTransitionConfiguration? = nil
+    ) -> String {
         if program.isEmpty && !includeDOMBindings {
             return ""
         }
+
+        let runtimeViewTransitionsEnabled = (viewTransition?.enabled ?? false) && (viewTransition?.runtimeNavigation ?? false)
 
         let initialState = program.states
             .map { "\($0.key): \($0.initialValue.js)" }
             .joined(separator: ",")
 
         let eventBindings = program.events.map { binding in
-            let action = actionScript(binding.action)
+            let action = actionScript(binding.action, runtimeViewTransitionsEnabled: runtimeViewTransitionsEnabled)
             return "document.getElementById(\"\(binding.elementID)\")?.addEventListener(\"\(binding.event.rawValue)\", function(event){\(action)});"
         }.joined(separator: "")
 
         let timerBindings = program.timers.map { timer -> String in
-            let action = actionScript(timer.action)
+            let action = actionScript(timer.action, runtimeViewTransitionsEnabled: runtimeViewTransitionsEnabled)
             switch timer.kind {
             case .timeout(let seconds):
                 return "setTimeout(function(){\(action)}, \(seconds * 1000));"
@@ -352,11 +358,14 @@ public enum RuntimeJavaScriptGenerator {
             }
         }.joined(separator: "")
 
-        let domBindings = includeDOMBindings ? domBindingScript : ""
+        let domBindings = includeDOMBindings ? domBindingScript(runtimeViewTransitionsEnabled: runtimeViewTransitionsEnabled) : ""
         return "(function(){const state={\(initialState)};window.__ax_state=state;\(eventBindings)\(timerBindings)\(domBindings)})();"
     }
 
-    private static func actionScript(_ action: RuntimeAction) -> String {
+    private static func actionScript(
+        _ action: RuntimeAction,
+        runtimeViewTransitionsEnabled: Bool
+    ) -> String {
         switch action {
         case .set(let key, let value):
             return "state[\"\(key)\"]=\(value.js);"
@@ -367,7 +376,11 @@ public enum RuntimeJavaScriptGenerator {
         case .toggle(let key):
             return "state[\"\(key)\"]=!state[\"\(key)\"];"
         case .navigate(let path):
-            return "window.location.href=\"\(path.replacingOccurrences(of: "\"", with: "\\\""))\";"
+            let escapedPath = path.replacingOccurrences(of: "\"", with: "\\\"")
+            if runtimeViewTransitionsEnabled {
+                return "if(document.startViewTransition){document.startViewTransition(function(){window.location.href=\"\(escapedPath)\";});}else{window.location.href=\"\(escapedPath)\";}"
+            }
+            return "window.location.href=\"\(escapedPath)\";"
         case .invokeWasm(let canvasID, let export, let payload):
             let encodedCanvasID = canvasID.replacingOccurrences(of: "\"", with: "\\\"")
             let encodedExport = export.replacingOccurrences(of: "\"", with: "\\\"")
@@ -376,7 +389,17 @@ public enum RuntimeJavaScriptGenerator {
         }
     }
 
-    private static let domBindingScript = """
-const __axB64=function(v){try{const b=atob(v);let r=\"\";for(let i=0;i<b.length;i++){r+=\"%\"+(\"00\"+b.charCodeAt(i).toString(16)).slice(-2);}return decodeURIComponent(r);}catch(e){return\"\";}};const __axPrim=function(t,v){if(t===\"i\"){return parseInt(v,10)||0;}if(t===\"b\"){return v===\"1\";}return __axB64(v);};const __axEnsureState=function(raw){if(!raw){return;}raw.split(\",\").forEach(function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length<3){return;}const key=__axB64(parts[0]);if(key in state){return;}state[key]=__axPrim(parts[1],parts[2]);});};const __axInvokeWasm=function(canvasID,exportName,payloadRaw){if(!(window.AxiomWasm&&typeof window.AxiomWasm.invoke==='function')){return;}let payload=null;try{payload=JSON.parse(__axB64(payloadRaw||\"\"));}catch(_){payload=null;}window.AxiomWasm.invoke(canvasID,exportName,payload).then(function(result){window.__ax_wasm_last=result;}).catch(function(error){window.__ax_wasm_error=String(error);});};const __axApply=function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length===0){return;}const type=parts[0];if(type===\"nav\"){window.location.href=__axB64(parts[1]||\"\");return;}if(type===\"wasm\"){__axInvokeWasm(__axB64(parts[1]||\"\"),__axB64(parts[2]||\"\"),parts[3]||\"\");return;}const key=__axB64(parts[1]||\"\");if(!(key in state)){state[key]=0;}if(type===\"set\"){state[key]=__axPrim(parts[2],parts[3]||\"\");return;}if(type===\"inc\"){state[key]=(state[key]||0)+(parseInt(parts[2],10)||0);return;}if(type===\"dec\"){state[key]=(state[key]||0)-(parseInt(parts[2],10)||0);return;}if(type===\"tog\"){state[key]=!state[key];}};const __axEvents=[\"click\",\"input\",\"change\",\"submit\"];const __axSelector=\"[data-ax-states],[data-ax-on-click],[data-ax-on-input],[data-ax-on-change],[data-ax-on-submit]\";document.querySelectorAll(__axSelector).forEach(function(element){__axEnsureState(element.getAttribute(\"data-ax-states\"));__axEvents.forEach(function(eventName){const raw=element.getAttribute(\"data-ax-on-\"+eventName);if(!raw){return;}element.addEventListener(eventName,function(event){if(eventName===\"submit\"){event.preventDefault();}raw.split(\",\").forEach(__axApply);});});});
+    private static func domBindingScript(runtimeViewTransitionsEnabled: Bool) -> String {
+        let navigationScript: String
+        if runtimeViewTransitionsEnabled {
+            navigationScript = "if(document.startViewTransition){document.startViewTransition(function(){window.location.href=url;});}else{window.location.href=url;}"
+        } else {
+            navigationScript = "window.location.href=url;"
+        }
+
+        let template = """
+const __axB64=function(v){try{const b=atob(v);let r=\"\";for(let i=0;i<b.length;i++){r+=\"%\"+(\"00\"+b.charCodeAt(i).toString(16)).slice(-2);}return decodeURIComponent(r);}catch(e){return\"\";}};const __axPrim=function(t,v){if(t===\"i\"){return parseInt(v,10)||0;}if(t===\"b\"){return v===\"1\";}return __axB64(v);};const __axEnsureState=function(raw){if(!raw){return;}raw.split(\",\").forEach(function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length<3){return;}const key=__axB64(parts[0]);if(key in state){return;}state[key]=__axPrim(parts[1],parts[2]);});};const __axInvokeWasm=function(canvasID,exportName,payloadRaw){if(!(window.AxiomWasm&&typeof window.AxiomWasm.invoke==='function')){return;}let payload=null;try{payload=JSON.parse(__axB64(payloadRaw||\"\"));}catch(_){payload=null;}window.AxiomWasm.invoke(canvasID,exportName,payload).then(function(result){window.__ax_wasm_last=result;}).catch(function(error){window.__ax_wasm_error=String(error);});};const __axNavigate=function(url){__AX_NAVIGATION__};const __axApply=function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length===0){return;}const type=parts[0];if(type===\"nav\"){__axNavigate(__axB64(parts[1]||\"\"));return;}if(type===\"wasm\"){__axInvokeWasm(__axB64(parts[1]||\"\"),__axB64(parts[2]||\"\"),parts[3]||\"\");return;}const key=__axB64(parts[1]||\"\");if(!(key in state)){state[key]=0;}if(type===\"set\"){state[key]=__axPrim(parts[2],parts[3]||\"\");return;}if(type===\"inc\"){state[key]=(state[key]||0)+(parseInt(parts[2],10)||0);return;}if(type===\"dec\"){state[key]=(state[key]||0)-(parseInt(parts[2],10)||0);return;}if(type===\"tog\"){state[key]=!state[key];}};const __axEvents=[\"click\",\"input\",\"change\",\"submit\"];const __axSelector=\"[data-ax-states],[data-ax-on-click],[data-ax-on-input],[data-ax-on-change],[data-ax-on-submit]\";document.querySelectorAll(__axSelector).forEach(function(element){__axEnsureState(element.getAttribute(\"data-ax-states\"));__axEvents.forEach(function(eventName){const raw=element.getAttribute(\"data-ax-on-\"+eventName);if(!raw){return;}element.addEventListener(eventName,function(event){if(eventName===\"submit\"){event.preventDefault();}raw.split(\",\").forEach(__axApply);});});});
 """
+        return template.replacingOccurrences(of: "__AX_NAVIGATION__", with: navigationScript)
+    }
 }

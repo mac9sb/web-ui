@@ -13,7 +13,7 @@
   - `Phase 4` Components + Markdown: in progress
   - `Phase 5` Testing + Accessibility + Performance: in progress (WKWebView + snapshots + accessibility CI + metrics live; performance and accessibility gates enforced in static builds/CLI)
   - `Phase 6` Localization + Docs Completion: in progress (routing/hreflang/sitemap implemented; localization docs/ADR and URL helper added)
-  - `Phase 7` Declarative Motion System: in progress (animation + `@starting-style` complete; view-transition API pending)
+  - `Phase 7` Declarative Motion System: complete (typed animation + `@starting-style` + document/app view-transition APIs with render/runtime wiring)
 - Latest completed slice:
   - Expanded native-first component primitives (`Card`, `ActionButton`, `Alert`, `Badge`, `Accordion`, `Popover`, `ModalDialog`, `DropdownMenu`, form-field components).
   - Added `WasmCanvas` with typed payload attributes and runtime wasm bootstrap/invocation plumbing.
@@ -30,6 +30,11 @@
   - Added public locale-aware URL generation helper (`LocaleRouting.localizedURL`) and aligned static sitemap/alternate URL emission to use it.
   - Added localized build verification test coverage (localized routes, `hreflang`, canonical links, localized structured data output).
   - Expanded `Documentation.docc` with `LocalizationGuide`, `RoutingGuide`, Getting Started locale/audit examples, and ADR-0003 for localization/routing policy.
+- Latest completed slice (Phase 7):
+  - Added typed view-transition declarations (`ViewTransitionConfiguration`, `ViewTransitionProviding`) for document/app-level transition control.
+  - Wired render/runtime generation to emit typed `@view-transition`/root transition CSS and runtime navigation wrapping via `document.startViewTransition(...)` with fallback.
+  - Added transition targeting modifier support (`viewTransitionName`) and end-to-end tests across render + static build override behavior.
+  - Added `Documentation.docc` coverage with `ViewTransitionsGuide`.
 - Product note:
   - Add a WebUI playground example powered by WASM and publish it via GitHub Pages as a canonical ecosystem demo.
 
@@ -233,7 +238,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 - Complete `Documentation.docc` tutorials, references, explanations, and ADRs.
 
 ### Phase 7: Declarative Motion System
-- Status: in progress
+- Status: complete
 - Add typed animation/keyframe DSL in `AxiomWebStyle` authored via `.modifier` and `.on {}` patterns.
 - Support scoped variants (`hover`, `focus`, breakpoints, `dark`, `prefers-reduced-motion`) for motion behavior.
 - Generate deterministic CSS for transitions/animations with no raw CSS strings required.

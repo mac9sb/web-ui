@@ -134,6 +134,7 @@ public struct ServerBuildConfiguration {
     public var buildMode: ApplicationBuildMode
     public var routeConflictPolicy: RouteConflictPolicy
     public var renderOptions: RenderOptions
+    public var viewTransition: ViewTransitionConfiguration?
 
     public init(
         routesRoot: URL = URL(filePath: "Routes"),
@@ -154,7 +155,8 @@ public struct ServerBuildConfiguration {
         accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
-        renderOptions: RenderOptions = .init()
+        renderOptions: RenderOptions = .init(),
+        viewTransition: ViewTransitionConfiguration? = nil
     ) {
         self.routesRoot = routesRoot
         self.pagesDirectoryName = pagesDirectoryName
@@ -175,6 +177,7 @@ public struct ServerBuildConfiguration {
         self.buildMode = buildMode
         self.routeConflictPolicy = routeConflictPolicy
         self.renderOptions = renderOptions
+        self.viewTransition = viewTransition
     }
 
     public init(
@@ -194,7 +197,8 @@ public struct ServerBuildConfiguration {
         accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
-        renderOptions: RenderOptions = .init()
+        renderOptions: RenderOptions = .init(),
+        viewTransition: ViewTransitionConfiguration? = nil
     ) {
         self.init(
             routesRoot: routesRoot,
@@ -215,7 +219,8 @@ public struct ServerBuildConfiguration {
             accessibilityAudit: accessibilityAudit,
             buildMode: buildMode,
             routeConflictPolicy: routeConflictPolicy,
-            renderOptions: renderOptions
+            renderOptions: renderOptions,
+            viewTransition: viewTransition
         )
     }
 }
@@ -390,6 +395,7 @@ public struct StaticSiteBuilder {
         }
         try fileManager.createDirectory(at: configuration.outputDirectory, withIntermediateDirectories: true)
 
+        let siteViewTransition = resolvedSiteViewTransition()
         var writtenHTMLFiles: [String] = []
         var writtenPages: [(routePath: String, outputPath: String)] = []
         for locale in locales {
@@ -408,7 +414,8 @@ public struct StaticSiteBuilder {
                     websiteMetadata: configuration.website?.metadata,
                     metadataOverride: pageMetadata,
                     locale: locale,
-                    options: configuration.renderOptions
+                    options: configuration.renderOptions,
+                    viewTransition: resolvedViewTransition(for: entry.value, siteViewTransition: siteViewTransition)
                 )
                 let output = try writeHTML(rendered.html, forRoutePath: localizedPath)
                 writtenHTMLFiles.append(output.path())
@@ -457,6 +464,23 @@ public struct StaticSiteBuilder {
             return Array(Set(website.locales + [website.defaultLocale])).sorted()
         }
         return Array(Set(configuration.locales + [configuration.defaultLocale])).sorted()
+    }
+
+    private func resolvedSiteViewTransition() -> ViewTransitionConfiguration? {
+        if let configured = configuration.viewTransition {
+            return configured
+        }
+        return (configuration.website as? any ViewTransitionProviding)?.viewTransition
+    }
+
+    private func resolvedViewTransition(
+        for document: any Document,
+        siteViewTransition: ViewTransitionConfiguration?
+    ) -> ViewTransitionConfiguration? {
+        if let documentViewTransition = (document as? any ViewTransitionProviding)?.viewTransition {
+            return documentViewTransition
+        }
+        return siteViewTransition
     }
 
     private func mergedPageDocuments(discoveredPages: [DiscoveredRoute]) throws -> [String: any Document] {
