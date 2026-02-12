@@ -18,6 +18,9 @@
   - Expanded native-first component primitives (`Card`, `ActionButton`, `Alert`, `Badge`, `Accordion`, `Popover`, `ModalDialog`, `DropdownMenu`, form-field components).
   - Added `WasmCanvas` with typed payload attributes and runtime wasm bootstrap/invocation plumbing.
   - Upgraded markdown renderer with stylable classes, admonitions, fenced code blocks, lists, blockquotes, and inline code support.
+- Latest in-progress slice (Phase 5):
+  - Expanded `AxiomWebTesting` browser flow API surface (`attribute`, `submit`, `waitForText`, normalized snapshots).
+  - Added richer accessibility auditing with structured findings/severity, role/focus/contrast checks, and CI-friendly markdown/JSON reporting.
 - Product note:
   - Add a WebUI playground example powered by WASM and publish it via GitHub Pages as a canonical ecosystem demo.
 
