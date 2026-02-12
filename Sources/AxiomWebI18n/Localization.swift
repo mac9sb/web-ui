@@ -96,4 +96,15 @@ public enum LocaleRouting {
         }
         return "/\(locale.rawValue)\(normalized)"
     }
+
+    public static func localizedURL(
+        baseURL: String,
+        path: String,
+        locale: LocaleCode,
+        defaultLocale: LocaleCode = .en
+    ) -> String {
+        let root = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        let localized = localizedPath(path, locale: locale, defaultLocale: defaultLocale)
+        return root + localized
+    }
 }

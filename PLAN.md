@@ -12,7 +12,7 @@
   - `Phase 3` Server + Routing + Data: complete
   - `Phase 4` Components + Markdown: in progress
   - `Phase 5` Testing + Accessibility + Performance: in progress (WKWebView + snapshots + accessibility CI + metrics live; performance and accessibility gates enforced in static builds/CLI)
-  - `Phase 6` Localization + Docs Completion: in progress (routing/hreflang/sitemap implemented; docs completion pending)
+  - `Phase 6` Localization + Docs Completion: in progress (routing/hreflang/sitemap implemented; localization docs/ADR and URL helper added)
   - `Phase 7` Declarative Motion System: in progress (animation + `@starting-style` complete; view-transition API pending)
 - Latest completed slice:
   - Expanded native-first component primitives (`Card`, `ActionButton`, `Alert`, `Badge`, `Accordion`, `Popover`, `ModalDialog`, `DropdownMenu`, form-field components).
@@ -26,6 +26,10 @@
   - Integrated performance audits into `StaticSiteBuilder` and `AxiomWebBuildCommand` so generated static output can emit reports and fail CI via budget gates.
   - Integrated accessibility audits into `StaticSiteBuilder` and `AxiomWebBuildCommand` so generated static output can emit reports and fail CI via accessibility gates.
   - Added `Documentation.docc` guide coverage for build-time audits (`BuildAuditsGuide`) and CLI/build configuration usage.
+- Latest in-progress slice (Phase 6):
+  - Added public locale-aware URL generation helper (`LocaleRouting.localizedURL`) and aligned static sitemap/alternate URL emission to use it.
+  - Added localized build verification test coverage (localized routes, `hreflang`, canonical links, localized structured data output).
+  - Expanded `Documentation.docc` with `LocalizationGuide`, `RoutingGuide`, Getting Started locale/audit examples, and ADR-0003 for localization/routing policy.
 - Product note:
   - Add a WebUI playground example powered by WASM and publish it via GitHub Pages as a canonical ecosystem demo.
 

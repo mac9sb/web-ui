@@ -783,8 +783,12 @@ public struct StaticSiteBuilder {
         var entries: [String] = []
         for path in pagePaths {
             for locale in locales {
-                let localized = LocaleRouting.localizedPath(path, locale: locale, defaultLocale: configuration.defaultLocale)
-                let fullURL = normalizedURL(baseURL: baseURL, routePath: localized)
+                let fullURL = LocaleRouting.localizedURL(
+                    baseURL: baseURL,
+                    path: path,
+                    locale: locale,
+                    defaultLocale: configuration.defaultLocale
+                )
                 entries.append("<url><loc>\(fullURL)</loc><changefreq>weekly</changefreq></url>")
             }
         }
@@ -801,16 +805,14 @@ public struct StaticSiteBuilder {
             return result
         }
         for locale in locales {
-            let localized = LocaleRouting.localizedPath(pagePath, locale: locale, defaultLocale: configuration.defaultLocale)
-            result[locale] = normalizedURL(baseURL: baseURL, routePath: localized)
+            result[locale] = LocaleRouting.localizedURL(
+                baseURL: baseURL,
+                path: pagePath,
+                locale: locale,
+                defaultLocale: configuration.defaultLocale
+            )
         }
         return result
-    }
-
-    private func normalizedURL(baseURL: String, routePath: String) -> String {
-        let root = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
-        let path = routePath.hasPrefix("/") ? routePath : "/\(routePath)"
-        return root + path
     }
 
     private func fnv1aHex(_ data: Data) -> String {

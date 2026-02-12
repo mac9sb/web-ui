@@ -9,6 +9,14 @@ struct LocalizationAndA11yTests {
         #expect(LocaleRouting.localizedPath("/", locale: .en, defaultLocale: .en) == "/")
         #expect(LocaleRouting.localizedPath("/contact", locale: .en, defaultLocale: .en) == "/contact")
         #expect(LocaleRouting.localizedPath("/contact", locale: "fr", defaultLocale: .en) == "/fr/contact")
+        #expect(
+            LocaleRouting.localizedURL(
+                baseURL: "https://example.com/",
+                path: "/contact",
+                locale: "fr",
+                defaultLocale: .en
+            ) == "https://example.com/fr/contact"
+        )
     }
 
     @Test("Accessibility audit flags common violations")

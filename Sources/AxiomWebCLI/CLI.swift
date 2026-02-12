@@ -1,5 +1,6 @@
 import Foundation
 import ArgumentParser
+import AxiomWebI18n
 import AxiomWebServer
 import AxiomWebTesting
 
@@ -42,6 +43,12 @@ public struct AxiomWebBuildCommand: ParsableCommand {
 
     @Option(help: "Base URL for sitemap generation")
     public var baseURL: String?
+
+    @Option(help: "Default locale code used for non-prefixed routes")
+    public var defaultLocale: String = LocaleCode.en.rawValue
+
+    @Option(parsing: .upToNextOption, help: "Locales to generate (example: --locales en fr)")
+    public var locales: [String] = []
 
     @Flag(help: "Enable static build performance audit and budget enforcement")
     public var performanceAudit: Bool = true
@@ -102,8 +109,14 @@ public struct AxiomWebBuildCommand: ParsableCommand {
             budget.maxTotalAssetBytes = max(0, performanceMaxTotalAssetBytes)
         }
 
+        let defaultLocaleCode = LocaleCode(defaultLocale)
+        let localeCodes = locales.map { LocaleCode($0) }
+        let resolvedLocales = localeCodes.isEmpty ? [defaultLocaleCode] : localeCodes
+
         let config = ServerBuildConfiguration(
             outputDirectory: URL(filePath: output),
+            defaultLocale: defaultLocaleCode,
+            locales: resolvedLocales,
             baseURL: baseURL,
             performanceAudit: .init(
                 enabled: performanceAudit,

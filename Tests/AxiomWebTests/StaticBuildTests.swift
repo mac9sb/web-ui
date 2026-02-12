@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import HTTPTypes
+@testable import AxiomWebI18n
 @testable import AxiomWebServer
 @testable import AxiomWebTesting
 @testable import AxiomWebUI
@@ -459,5 +460,87 @@ struct StaticBuildTests {
                 #expect(Bool(false), "Expected .accessibilityAuditFailed")
             }
         }
+    }
+
+    @Test("Build emits localized pages with hreflang and localized structured data")
+    func buildEmitsLocalizedPagesAndMetadata() throws {
+        struct LocalizedHomeDoc: Document {
+            let table: LocalizedStringTable
+
+            var metadata: Metadata {
+                Metadata(
+                    title: "Home",
+                    structuredData: [
+                        .webPage(
+                            .init(
+                                id: "urn:axiomweb:test:home",
+                                name: .init([
+                                    .en: "Home Graph",
+                                    "fr": "Accueil Graph",
+                                ]),
+                                url: "/"
+                            )
+                        )
+                    ]
+                )
+            }
+
+            var path: String { "/" }
+
+            var body: some Markup {
+                Main {
+                    Paragraph {
+                        LocalizedText("home.greeting", from: table)
+                    }
+                }
+            }
+        }
+
+        let table = LocalizedStringTable([
+            "home.greeting": .init([
+                .en: "Welcome",
+                "fr": "Bonjour",
+            ])
+        ])
+
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-localized-build-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        let report = try StaticSiteBuilder(
+            configuration: .init(
+                routesRoot: routesRoot,
+                outputDirectory: outputRoot,
+                assetsSourceDirectory: assetsRoot,
+                pageOverrides: [.init(path: "/", document: LocalizedHomeDoc(table: table))],
+                defaultLocale: .en,
+                locales: ["fr"],
+                baseURL: "https://example.com",
+                buildMode: .staticSite
+            )
+        ).build()
+
+        #expect(report.localeCount == 2)
+
+        let enPath = outputRoot.appending(path: "index.html").path()
+        let frPath = outputRoot.appending(path: "fr/index.html").path()
+        #expect(FileManager.default.fileExists(atPath: enPath))
+        #expect(FileManager.default.fileExists(atPath: frPath))
+
+        let enHTML = try String(contentsOfFile: enPath, encoding: .utf8)
+        let frHTML = try String(contentsOfFile: frPath, encoding: .utf8)
+
+        #expect(enHTML.contains("Welcome"))
+        #expect(frHTML.contains("Bonjour"))
+        #expect(enHTML.contains("Home Graph"))
+        #expect(frHTML.contains("Accueil Graph"))
+        #expect(enHTML.contains("hreflang=\"fr\""))
+        #expect(frHTML.contains("hreflang=\"en\""))
+        #expect(enHTML.contains("rel=\"canonical\" href=\"https://example.com/\""))
+        #expect(frHTML.contains("rel=\"canonical\" href=\"https://example.com/fr\""))
+        #expect(frHTML.contains("<html lang=\"fr\">"))
     }
 }

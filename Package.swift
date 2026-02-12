@@ -122,6 +122,7 @@ let package = Package(
                 "AxiomWebServer",
                 "AxiomWebRender",
                 "AxiomWebTesting",
+                "AxiomWebI18n",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
