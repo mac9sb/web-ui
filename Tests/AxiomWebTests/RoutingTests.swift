@@ -30,4 +30,17 @@ struct RoutingTests {
         #expect(paths.contains("/api/hello"))
         #expect(paths.contains("/api/path/goodbye"))
     }
+
+    @Test("Infers page and API paths from source-relative route files")
+    func infersPathFromSourceFile() {
+        #expect(RoutePathInference.pagePath(fromSource: "index.swift") == "/")
+        #expect(RoutePathInference.pagePath(fromSource: "contact.swift") == "/contact")
+        #expect(RoutePathInference.pagePath(fromSource: "path/goodbye.swift") == "/path/goodbye")
+        #expect(RoutePathInference.pagePath(fromSource: "[slug].swift") == "/:slug")
+        #expect(RoutePathInference.pagePath(fromSource: "[...path].swift") == "/*path")
+
+        #expect(RoutePathInference.apiPath(fromSource: "hello.swift") == "/api/hello")
+        #expect(RoutePathInference.apiPath(fromSource: "path/goodbye.swift") == "/api/path/goodbye")
+        #expect(RoutePathInference.apiPath(fromSource: "[id].swift") == "/api/:id")
+    }
 }

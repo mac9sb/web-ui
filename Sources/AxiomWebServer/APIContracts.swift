@@ -2,6 +2,25 @@ import Foundation
 import HTTPTypes
 import AxiomWebUI
 
+private func normalizedRoutePath(_ path: String) -> String {
+    let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+        return "/"
+    }
+    if trimmed.hasPrefix("/") {
+        return trimmed
+    }
+    return "/\(trimmed)"
+}
+
+private func resolvedPageOverridePath(for document: any Document, source: String) -> String {
+    let explicitPath = document.path.trimmingCharacters(in: .whitespacesAndNewlines)
+    if explicitPath.isEmpty || explicitPath == "index" || explicitPath == "/index" {
+        return normalizedRoutePath(RoutePathInference.pagePath(fromSource: source))
+    }
+    return normalizedRoutePath(explicitPath)
+}
+
 public struct EmptyAPIRequest: Codable, Sendable {
     public init() {}
 }
@@ -51,51 +70,166 @@ public struct AnyAPIRouteContract: Sendable {
     private let bridge: @Sendable (HTTPRequest, Data?) async throws -> (HTTPResponse, Data)
 
     public init<C: APIRouteContract>(_ contract: C) {
-        self.path = C.path
-        self.method = C.method
+        self.init(path: C.path, method: C.method) { (decodedRequest: C.RequestBody, context: APIRequestContext) in
+            try await contract.handle(request: decodedRequest, context: context)
+        }
+    }
+
+    public init<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        path: String,
+        method: HTTPRequest.Method,
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        let normalizedPath = normalizedRoutePath(path)
+        self.path = normalizedPath
+        self.method = method
         self.bridge = { request, body in
-            let decodedRequest: C.RequestBody
-            if C.RequestBody.self == EmptyAPIRequest.self {
-                decodedRequest = EmptyAPIRequest() as! C.RequestBody
-            } else {
-                guard let body else {
-                    throw APIRouteContractError.missingRequestBody(path: C.path)
-                }
-                do {
-                    decodedRequest = try JSONDecoder().decode(C.RequestBody.self, from: body)
-                } catch {
-                    throw APIRouteContractError.requestDecodingFailed(path: C.path, message: String(describing: error))
-                }
-            }
-
+            let decodedRequest: RequestBody = try Self.decodeRequestBody(body, path: normalizedPath)
             let context = APIRequestContext(request: request, rawBody: body)
-            let apiResponse = try await contract.handle(request: decodedRequest, context: context)
+            let apiResponse = try await handle(decodedRequest, context)
+            return try Self.encodeResponse(apiResponse, path: normalizedPath)
+        }
+    }
 
-            let payload: Data
-            do {
-                payload = try JSONEncoder().encode(apiResponse.body)
-            } catch {
-                throw APIRouteContractError.responseEncodingFailed(path: C.path, message: String(describing: error))
-            }
-
-            var fields = HTTPFields()
-            for (name, value) in apiResponse.headers {
-                if let fieldName = HTTPField.Name(name) {
-                    fields[fieldName] = value
-                }
-            }
-            if fields[.contentType] == nil {
-                fields[.contentType] = "application/json; charset=utf-8"
-            }
-
-            let statusCode = max(100, min(599, apiResponse.statusCode))
-            let response = HTTPResponse(status: .init(code: statusCode), headerFields: fields)
-            return (response, payload)
+    public init<ResponseBody: Encodable & Sendable>(
+        path: String,
+        method: HTTPRequest.Method,
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        self.init(path: path, method: method) { (_: EmptyAPIRequest, context: APIRequestContext) in
+            try await handle(context)
         }
     }
 
     public func asRouteHandler() -> APIRouteHandler {
         APIRouteHandler(path: path, method: method, handle: bridge)
+    }
+
+    private static func decodeRequestBody<RequestBody: Decodable & Sendable>(
+        _ body: Data?,
+        path: String
+    ) throws -> RequestBody {
+        if RequestBody.self == EmptyAPIRequest.self {
+            return EmptyAPIRequest() as! RequestBody
+        }
+
+        guard let body else {
+            throw APIRouteContractError.missingRequestBody(path: path)
+        }
+
+        do {
+            return try JSONDecoder().decode(RequestBody.self, from: body)
+        } catch {
+            throw APIRouteContractError.requestDecodingFailed(path: path, message: String(describing: error))
+        }
+    }
+
+    private static func encodeResponse<ResponseBody: Encodable & Sendable>(
+        _ response: APIResponse<ResponseBody>,
+        path: String
+    ) throws -> (HTTPResponse, Data) {
+        let payload: Data
+        do {
+            payload = try JSONEncoder().encode(response.body)
+        } catch {
+            throw APIRouteContractError.responseEncodingFailed(path: path, message: String(describing: error))
+        }
+
+        var fields = HTTPFields()
+        for (name, value) in response.headers {
+            if let fieldName = HTTPField.Name(name) {
+                fields[fieldName] = value
+            }
+        }
+        if fields[.contentType] == nil {
+            fields[.contentType] = "application/json; charset=utf-8"
+        }
+
+        let statusCode = max(100, min(599, response.statusCode))
+        return (HTTPResponse(status: .init(code: statusCode), headerFields: fields), payload)
+    }
+}
+
+public final class APIMethodRouteBuilder {
+    public let path: String
+    private(set) var contracts: [AnyAPIRouteContract] = []
+
+    public init(path: String) {
+        self.path = normalizedRoutePath(path)
+    }
+
+    @discardableResult
+    public func on<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        _ method: HTTPRequest.Method,
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        contracts.append(AnyAPIRouteContract(path: path, method: method, handle: handle))
+        return self
+    }
+
+    @discardableResult
+    public func on<ResponseBody: Encodable & Sendable>(
+        _ method: HTTPRequest.Method,
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        contracts.append(AnyAPIRouteContract(path: path, method: method, handle: handle))
+        return self
+    }
+
+    @discardableResult
+    public func get<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.get, handle: handle)
+    }
+
+    @discardableResult
+    public func get<ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.get, handle: handle)
+    }
+
+    @discardableResult
+    public func post<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.post, handle: handle)
+    }
+
+    @discardableResult
+    public func post<ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.post, handle: handle)
+    }
+
+    @discardableResult
+    public func put<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.put, handle: handle)
+    }
+
+    @discardableResult
+    public func put<ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.put, handle: handle)
+    }
+
+    @discardableResult
+    public func patch<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.patch, handle: handle)
+    }
+
+    @discardableResult
+    public func patch<ResponseBody: Encodable & Sendable>(
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) -> Self {
+        on(.patch, handle: handle)
     }
 }
 
@@ -118,18 +252,69 @@ public struct RouteOverrides {
     }
 
     public mutating func page(_ path: String, document: any Document) {
-        pageOverrides.append(PageRouteOverride(path: path, document: document))
+        pageOverrides.append(PageRouteOverride(path: normalizedRoutePath(path), document: document))
+    }
+
+    public mutating func page(from source: String, document: any Document) {
+        let resolvedPath = resolvedPageOverridePath(for: document, source: source)
+        pageOverrides.append(PageRouteOverride(path: resolvedPath, document: document))
     }
 
     public mutating func api(_ path: String, method: HTTPRequest.Method = .get) {
-        apiOverrides.append(APIRouteOverride(path: path, method: method.rawValue))
+        apiOverrides.append(APIRouteOverride(path: normalizedRoutePath(path), method: method.rawValue))
+    }
+
+    public mutating func api(from source: String, method: HTTPRequest.Method = .get) {
+        api(RoutePathInference.apiPath(fromSource: source), method: method)
     }
 
     public mutating func api<C: APIRouteContract>(_ contract: C) {
         let erased = AnyAPIRouteContract(contract)
-        apiContracts.append(erased)
-        apiOverrides.append(APIRouteOverride(path: erased.path, method: erased.method.rawValue))
-        apiHandlers.append(erased.asRouteHandler())
+        register(contract: erased)
+    }
+
+    public mutating func api<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        _ path: String,
+        method: HTTPRequest.Method = .get,
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        register(contract: AnyAPIRouteContract(path: path, method: method, handle: handle))
+    }
+
+    public mutating func api<RequestBody: Decodable & Sendable, ResponseBody: Encodable & Sendable>(
+        from source: String,
+        method: HTTPRequest.Method = .get,
+        handle: @escaping @Sendable (RequestBody, APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        api(RoutePathInference.apiPath(fromSource: source), method: method, handle: handle)
+    }
+
+    public mutating func api<ResponseBody: Encodable & Sendable>(
+        _ path: String,
+        method: HTTPRequest.Method = .get,
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        register(contract: AnyAPIRouteContract(path: path, method: method, handle: handle))
+    }
+
+    public mutating func api<ResponseBody: Encodable & Sendable>(
+        from source: String,
+        method: HTTPRequest.Method = .get,
+        handle: @escaping @Sendable (APIRequestContext) async throws -> APIResponse<ResponseBody>
+    ) {
+        api(RoutePathInference.apiPath(fromSource: source), method: method, handle: handle)
+    }
+
+    public mutating func api(_ path: String, build: (APIMethodRouteBuilder) -> Void) {
+        let builder = APIMethodRouteBuilder(path: path)
+        build(builder)
+        for contract in builder.contracts {
+            register(contract: contract)
+        }
+    }
+
+    public mutating func api(from source: String, build: (APIMethodRouteBuilder) -> Void) {
+        api(RoutePathInference.apiPath(fromSource: source), build: build)
     }
 
     public mutating func api(
@@ -137,8 +322,17 @@ public struct RouteOverrides {
         method: HTTPRequest.Method = .get,
         handle: @escaping @Sendable (HTTPRequest, Data?) async throws -> (HTTPResponse, Data)
     ) {
-        apiOverrides.append(APIRouteOverride(path: path, method: method.rawValue))
-        apiHandlers.append(APIRouteHandler(path: path, method: method, handle: handle))
+        let normalizedPath = normalizedRoutePath(path)
+        apiOverrides.append(APIRouteOverride(path: normalizedPath, method: method.rawValue))
+        apiHandlers.append(APIRouteHandler(path: normalizedPath, method: method, handle: handle))
+    }
+
+    public mutating func api(
+        from source: String,
+        method: HTTPRequest.Method = .get,
+        handle: @escaping @Sendable (HTTPRequest, Data?) async throws -> (HTTPResponse, Data)
+    ) {
+        api(RoutePathInference.apiPath(fromSource: source), method: method, handle: handle)
     }
 
     public mutating func api(
@@ -150,5 +344,19 @@ public struct RouteOverrides {
         for method in orderedMethods {
             api(path, method: method, handle: handle)
         }
+    }
+
+    public mutating func api(
+        from source: String,
+        methods: [HTTPRequest.Method],
+        handle: @escaping @Sendable (HTTPRequest, Data?) async throws -> (HTTPResponse, Data)
+    ) {
+        api(RoutePathInference.apiPath(fromSource: source), methods: methods, handle: handle)
+    }
+
+    private mutating func register(contract: AnyAPIRouteContract) {
+        apiContracts.append(contract)
+        apiOverrides.append(APIRouteOverride(path: contract.path, method: contract.method.rawValue))
+        apiHandlers.append(contract.asRouteHandler())
     }
 }

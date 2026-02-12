@@ -167,4 +167,69 @@ struct APIRouteContractsTests {
         #expect(methods == ["GET", "POST"])
         #expect(overrides.apiHandlers.count == 2)
     }
+
+    @Test("RouteOverrides can infer API path from source and register typed handlers")
+    func routeOverridesCanInferPathFromSourceAndRegisterTypedHandlers() async throws {
+        struct CreateRequest: Codable, Sendable {
+            let name: String
+        }
+
+        struct MessageResponse: Codable, Equatable, Sendable {
+            let message: String
+        }
+
+        struct PatchRequest: Codable, Sendable {
+            let enabled: Bool
+        }
+
+        var overrides = RouteOverrides()
+        overrides.api(from: "hello.swift") { route in
+            route.get { _ in
+                APIResponse(body: MessageResponse(message: "hello:get"))
+            }
+
+            route.post { (request: CreateRequest, _) in
+                APIResponse(statusCode: 201, body: MessageResponse(message: "hello:\(request.name)"))
+            }
+
+            route.patch { (request: PatchRequest, _) in
+                APIResponse(body: MessageResponse(message: request.enabled ? "hello:on" : "hello:off"))
+            }
+        }
+
+        #expect(overrides.apiHandlers.count == 3)
+        #expect(overrides.apiOverrides.allSatisfy { $0.path == "/api/hello" })
+        #expect(Set(overrides.apiOverrides.map(\.method)) == ["GET", "PATCH", "POST"])
+
+        guard let getHandler = overrides.apiHandlers.first(where: { $0.path == "/api/hello" && $0.method == .get }) else {
+            #expect(Bool(false), "Expected GET handler at inferred path")
+            return
+        }
+
+        guard let postHandler = overrides.apiHandlers.first(where: { $0.path == "/api/hello" && $0.method == .post }) else {
+            #expect(Bool(false), "Expected POST handler at inferred path")
+            return
+        }
+
+        guard let patchHandler = overrides.apiHandlers.first(where: { $0.path == "/api/hello" && $0.method == .patch }) else {
+            #expect(Bool(false), "Expected PATCH handler at inferred path")
+            return
+        }
+
+        let getRequest = HTTPRequest(method: .get, scheme: nil, authority: nil, path: "/api/hello")
+        let (getResponse, getBody) = try await getHandler.handle(getRequest, nil)
+        #expect(getResponse.status.code == 200)
+        #expect(try JSONDecoder().decode(MessageResponse.self, from: getBody) == MessageResponse(message: "hello:get"))
+
+        let postBody = try JSONEncoder().encode(CreateRequest(name: "axiom"))
+        let postRequest = HTTPRequest(method: .post, scheme: nil, authority: nil, path: "/api/hello")
+        let (postResponse, postPayload) = try await postHandler.handle(postRequest, postBody)
+        #expect(postResponse.status.code == 201)
+        #expect(try JSONDecoder().decode(MessageResponse.self, from: postPayload) == MessageResponse(message: "hello:axiom"))
+
+        let patchBody = try JSONEncoder().encode(PatchRequest(enabled: true))
+        let patchRequest = HTTPRequest(method: .patch, scheme: nil, authority: nil, path: "/api/hello")
+        let (_, patchPayload) = try await patchHandler.handle(patchRequest, patchBody)
+        #expect(try JSONDecoder().decode(MessageResponse.self, from: patchPayload) == MessageResponse(message: "hello:on"))
+    }
 }

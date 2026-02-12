@@ -236,4 +236,43 @@ struct StaticBuildTests {
         #expect(report.writtenHTMLFiles.isEmpty)
         #expect(FileManager.default.fileExists(atPath: outputRoot.path()) == false)
     }
+
+    @Test("Page source inference uses filename by default and var path as override")
+    func pageSourceInferenceUsesFilenameAndHonorsPathOverride() throws {
+        struct ContactDoc: Document {
+            var metadata: Metadata { Metadata(title: "Contact") }
+            var body: some Markup { Main { Text("contact") } }
+        }
+
+        struct SupportDoc: Document {
+            var metadata: Metadata { Metadata(title: "Support") }
+            var path: String { "/support" }
+            var body: some Markup { Main { Text("support") } }
+        }
+
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-page-source-inference-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        var overrides = RouteOverrides()
+        overrides.page(from: "contact.swift", document: ContactDoc())
+        overrides.page(from: "help.swift", document: SupportDoc())
+
+        let report = try StaticSiteBuilder(
+            configuration: .init(
+                routesRoot: routesRoot,
+                outputDirectory: outputRoot,
+                assetsSourceDirectory: assetsRoot,
+                overrides: overrides,
+                buildMode: .staticSite
+            )
+        ).build()
+
+        #expect(report.pageCount == 2)
+        #expect(FileManager.default.fileExists(atPath: outputRoot.appending(path: "contact/index.html").path()))
+        #expect(FileManager.default.fileExists(atPath: outputRoot.appending(path: "support/index.html").path()))
+    }
 }

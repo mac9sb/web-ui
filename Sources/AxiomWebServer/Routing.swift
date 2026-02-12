@@ -17,6 +17,16 @@ public struct DiscoveredRoute: Sendable, Equatable {
     }
 }
 
+public enum RoutePathInference {
+    public static func pagePath(fromSource source: String) -> String {
+        path(fromRelativeSource: source, prefix: "")
+    }
+
+    public static func apiPath(fromSource source: String) -> String {
+        path(fromRelativeSource: source, prefix: "/api")
+    }
+}
+
 public enum RouteDiscovery {
     public static func discover(
         routesRoot: URL,
@@ -60,13 +70,16 @@ public enum RouteDiscovery {
             guard fileURL.pathExtension == "swift" else { continue }
             let relativeComponents = fileURL.standardizedFileURL.pathComponents.dropFirst(root.standardizedFileURL.pathComponents.count)
             let relative = relativeComponents.joined(separator: "/")
-            let routePath = path(fromRelativeSource: relative, prefix: prefix)
+            let routePath = RoutePathInference.path(fromRelativeSource: relative, prefix: prefix)
             routes.append(DiscoveredRoute(kind: kind, source: relative, path: routePath))
         }
 
         return routes
     }
 
+}
+
+private extension RoutePathInference {
     static func path(fromRelativeSource relative: String, prefix: String) -> String {
         let components = relative.split(separator: "/").map(String.init)
         guard !components.isEmpty else { return prefix.isEmpty ? "/" : prefix }
