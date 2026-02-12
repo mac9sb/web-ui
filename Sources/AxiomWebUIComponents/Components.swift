@@ -10,7 +10,7 @@ public struct Card<Content: Markup>: Markup {
     }
 
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        Div {
+        Stack {
             AnyMarkup(content)
         }
         .background(color: .white)
@@ -32,7 +32,7 @@ public struct AccordionItem<Content: Markup>: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         Details {
             Summary(title)
-            Div {
+            Stack {
                 AnyMarkup(content)
             }
             .margins(of: .two, at: .top)
