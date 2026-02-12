@@ -48,9 +48,20 @@ public enum RenderEngine {
         let documentRuntime = (document as? any RuntimeProgramProviding)?.runtimeProgram ?? .init()
         let mergedRuntime = documentRuntime.merging(runtime)
         let usesDOMRuntimeBindings = hasDOMRuntimeBindings(in: bodyNodes)
-        let javascript = options.includeJavaScript
-            ? RuntimeJavaScriptGenerator.generate(program: mergedRuntime, includeDOMBindings: usesDOMRuntimeBindings)
-            : ""
+        let usesWasmBindings = hasWasmBindings(in: bodyNodes)
+        let javascript: String
+        if options.includeJavaScript {
+            let runtimeJavaScript = RuntimeJavaScriptGenerator.generate(
+                program: mergedRuntime,
+                includeDOMBindings: usesDOMRuntimeBindings
+            )
+            let wasmJavaScript = usesWasmBindings ? WasmJavaScriptGenerator.generateDOMBindings() : ""
+            javascript = [runtimeJavaScript, wasmJavaScript]
+                .filter { !$0.isEmpty }
+                .joined()
+        } else {
+            javascript = ""
+        }
 
         var headTags = metadataTags(for: mergedMetadata)
 
@@ -179,6 +190,22 @@ public enum RenderEngine {
                 return false
             case .element(let element):
                 if element.attributes.contains(where: { $0.name.hasPrefix("data-ax-on-") || $0.name == RuntimeDOMCodec.statesAttributeName() }) {
+                    return true
+                }
+                return element.children.contains(where: walk)
+            }
+        }
+
+        return nodes.contains(where: walk)
+    }
+
+    private static func hasWasmBindings(in nodes: [HTMLNode]) -> Bool {
+        func walk(_ node: HTMLNode) -> Bool {
+            switch node {
+            case .text:
+                return false
+            case .element(let element):
+                if element.attributes.contains(where: { $0.name == WasmDOMCodec.moduleAttribute }) {
                     return true
                 }
                 return element.children.contains(where: walk)

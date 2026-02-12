@@ -51,6 +51,10 @@ public final class InteractionScope {
         actions.append(.navigate(path: path))
     }
 
+    public func invokeWasm(on canvasID: String, export: String, payload: WasmValue = .null) {
+        actions.append(.invokeWasm(canvasID: canvasID, export: export, payload: payload))
+    }
+
     private func registerState<Value: RuntimePrimitiveConvertible>(_ projection: State<Value>.Projection) {
         states.append(
             RuntimeStateDefinition(

@@ -58,4 +58,48 @@ struct RuntimeInteractivityTests {
         #expect(rendered.javascript.contains("setInterval"))
         #expect(rendered.javascript.contains("ticks"))
     }
+
+    @Test("Supports wasm invocation actions from .on interaction blocks")
+    func supportsWasmInvocationActionsFromOnBlocks() throws {
+        struct Doc: Document {
+            var metadata: Metadata { Metadata(title: "Wasm Action") }
+            var path: String { "/" }
+
+            var body: some Markup {
+                Button("Invoke")
+                    .on {
+                        $0.click {
+                            $0.invokeWasm(
+                                on: "render-canvas",
+                                export: "tick",
+                                payload: .object(["step": .int(1), "debug": .bool(true)])
+                            )
+                        }
+                    }
+            }
+        }
+
+        let rendered = try RenderEngine.render(document: Doc(), locale: .en)
+        #expect(rendered.html.contains("data-ax-on-click="))
+        #expect(rendered.javascript.contains("AxiomWasm.invoke"))
+    }
+
+    @Test("Includes wasm DOM bootstrap when wasm canvas bindings are present")
+    func includesWasmDOMBootstrapWhenBindingsArePresent() throws {
+        struct Doc: Document {
+            var metadata: Metadata { Metadata(title: "Wasm Canvas") }
+            var path: String { "/" }
+
+            var body: some Markup {
+                Node("canvas", attributes: [
+                    HTMLAttribute("id", "render-canvas"),
+                    HTMLAttribute(WasmDOMCodec.moduleAttribute, "/assets/wasm/renderer.mjs"),
+                ])
+            }
+        }
+
+        let rendered = try RenderEngine.render(document: Doc(), locale: .en)
+        #expect(rendered.javascript.contains("__ax_wasm_booted"))
+        #expect(rendered.javascript.contains("AxiomWasm.invoke"))
+    }
 }

@@ -134,6 +134,8 @@ let package = Package(
                 "AxiomWebCodegen",
                 "AxiomWebI18n",
                 "AxiomWebTesting",
+                "AxiomWebMarkdown",
+                "AxiomWebUIComponents",
             ]
         ),
     ]

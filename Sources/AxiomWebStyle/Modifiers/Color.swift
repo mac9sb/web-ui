@@ -8,6 +8,13 @@ public extension Markup {
         }
         return modifier("bg-\(color.classFragment)")
     }
+
+    func border(of width: Int = 1, color: ColorToken) -> some Markup {
+        if case let .custom(name, cssValue) = color {
+            ColorRegistry.register(name: name, cssValue: cssValue)
+        }
+        return modifiers(["border-\(max(1, width))", "border-\(color.classFragment)"])
+    }
 }
 
 public extension VariantScope {

@@ -48,7 +48,7 @@ public enum ColorToken: Sendable, Equatable {
 
     case custom(name: String, cssValue: String)
 
-    var classFragment: String {
+    public var classFragment: String {
         switch self {
         case .slate(let shade): return "slate-\(shade)"
         case .stone(let shade): return "stone-\(shade)"

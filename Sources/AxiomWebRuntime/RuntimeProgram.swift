@@ -63,6 +63,7 @@ public enum RuntimeAction: Sendable, Equatable {
     case decrement(key: String, by: Int)
     case toggle(key: String)
     case navigate(path: String)
+    case invokeWasm(canvasID: String, export: String, payload: WasmValue)
 }
 
 public struct RuntimeEventBinding: Sendable, Equatable {
@@ -249,6 +250,14 @@ public enum Runtime {
     public static func navigate(to path: String) -> RuntimeAction {
         .navigate(path: path)
     }
+
+    public static func invokeWasm(
+        canvasID: String,
+        export: String,
+        payload: WasmValue = .null
+    ) -> RuntimeAction {
+        .invokeWasm(canvasID: canvasID, export: export, payload: payload)
+    }
 }
 
 public protocol RuntimeProgramProviding {
@@ -296,6 +305,8 @@ public enum RuntimeDOMCodec {
                 return "tog|\(encodeBase64(key))"
             case .navigate(let path):
                 return "nav|\(encodeBase64(path))"
+            case .invokeWasm(let canvasID, let export, let payload):
+                return "wasm|\(encodeBase64(canvasID))|\(encodeBase64(export))|\(encodeBase64(payload.jsonString()))"
             }
         }.joined(separator: ",")
     }
@@ -357,10 +368,15 @@ public enum RuntimeJavaScriptGenerator {
             return "state[\"\(key)\"]=!state[\"\(key)\"];"
         case .navigate(let path):
             return "window.location.href=\"\(path.replacingOccurrences(of: "\"", with: "\\\""))\";"
+        case .invokeWasm(let canvasID, let export, let payload):
+            let encodedCanvasID = canvasID.replacingOccurrences(of: "\"", with: "\\\"")
+            let encodedExport = export.replacingOccurrences(of: "\"", with: "\\\"")
+            let payloadJSON = payload.jsonString().replacingOccurrences(of: "</script", with: "<\\/script")
+            return "if(window.AxiomWasm&&typeof window.AxiomWasm.invoke==='function'){window.AxiomWasm.invoke(\"\(encodedCanvasID)\",\"\(encodedExport)\",\(payloadJSON)).then(function(result){window.__ax_wasm_last=result;}).catch(function(error){window.__ax_wasm_error=String(error);});}"
         }
     }
 
     private static let domBindingScript = """
-const __axB64=function(v){try{const b=atob(v);let r=\"\";for(let i=0;i<b.length;i++){r+=\"%\"+(\"00\"+b.charCodeAt(i).toString(16)).slice(-2);}return decodeURIComponent(r);}catch(e){return\"\";}};const __axPrim=function(t,v){if(t===\"i\"){return parseInt(v,10)||0;}if(t===\"b\"){return v===\"1\";}return __axB64(v);};const __axEnsureState=function(raw){if(!raw){return;}raw.split(\",\").forEach(function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length<3){return;}const key=__axB64(parts[0]);if(key in state){return;}state[key]=__axPrim(parts[1],parts[2]);});};const __axApply=function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length===0){return;}const type=parts[0];if(type===\"nav\"){window.location.href=__axB64(parts[1]||\"\");return;}const key=__axB64(parts[1]||\"\");if(!(key in state)){state[key]=0;}if(type===\"set\"){state[key]=__axPrim(parts[2],parts[3]||\"\");return;}if(type===\"inc\"){state[key]=(state[key]||0)+(parseInt(parts[2],10)||0);return;}if(type===\"dec\"){state[key]=(state[key]||0)-(parseInt(parts[2],10)||0);return;}if(type===\"tog\"){state[key]=!state[key];}};const __axEvents=[\"click\",\"input\",\"change\",\"submit\"];const __axSelector=\"[data-ax-states],[data-ax-on-click],[data-ax-on-input],[data-ax-on-change],[data-ax-on-submit]\";document.querySelectorAll(__axSelector).forEach(function(element){__axEnsureState(element.getAttribute(\"data-ax-states\"));__axEvents.forEach(function(eventName){const raw=element.getAttribute(\"data-ax-on-\"+eventName);if(!raw){return;}element.addEventListener(eventName,function(event){if(eventName===\"submit\"){event.preventDefault();}raw.split(\",\").forEach(__axApply);});});});
+const __axB64=function(v){try{const b=atob(v);let r=\"\";for(let i=0;i<b.length;i++){r+=\"%\"+(\"00\"+b.charCodeAt(i).toString(16)).slice(-2);}return decodeURIComponent(r);}catch(e){return\"\";}};const __axPrim=function(t,v){if(t===\"i\"){return parseInt(v,10)||0;}if(t===\"b\"){return v===\"1\";}return __axB64(v);};const __axEnsureState=function(raw){if(!raw){return;}raw.split(\",\").forEach(function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length<3){return;}const key=__axB64(parts[0]);if(key in state){return;}state[key]=__axPrim(parts[1],parts[2]);});};const __axInvokeWasm=function(canvasID,exportName,payloadRaw){if(!(window.AxiomWasm&&typeof window.AxiomWasm.invoke==='function')){return;}let payload=null;try{payload=JSON.parse(__axB64(payloadRaw||\"\"));}catch(_){payload=null;}window.AxiomWasm.invoke(canvasID,exportName,payload).then(function(result){window.__ax_wasm_last=result;}).catch(function(error){window.__ax_wasm_error=String(error);});};const __axApply=function(token){if(!token){return;}const parts=token.split(\"|\");if(parts.length===0){return;}const type=parts[0];if(type===\"nav\"){window.location.href=__axB64(parts[1]||\"\");return;}if(type===\"wasm\"){__axInvokeWasm(__axB64(parts[1]||\"\"),__axB64(parts[2]||\"\"),parts[3]||\"\");return;}const key=__axB64(parts[1]||\"\");if(!(key in state)){state[key]=0;}if(type===\"set\"){state[key]=__axPrim(parts[2],parts[3]||\"\");return;}if(type===\"inc\"){state[key]=(state[key]||0)+(parseInt(parts[2],10)||0);return;}if(type===\"dec\"){state[key]=(state[key]||0)-(parseInt(parts[2],10)||0);return;}if(type===\"tog\"){state[key]=!state[key];}};const __axEvents=[\"click\",\"input\",\"change\",\"submit\"];const __axSelector=\"[data-ax-states],[data-ax-on-click],[data-ax-on-input],[data-ax-on-change],[data-ax-on-submit]\";document.querySelectorAll(__axSelector).forEach(function(element){__axEnsureState(element.getAttribute(\"data-ax-states\"));__axEvents.forEach(function(eventName){const raw=element.getAttribute(\"data-ax-on-\"+eventName);if(!raw){return;}element.addEventListener(eventName,function(event){if(eventName===\"submit\"){event.preventDefault();}raw.split(\",\").forEach(__axApply);});});});
 """
 }

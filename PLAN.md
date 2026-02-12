@@ -5,6 +5,21 @@
 - Plan version: v4 (includes structured data first-class metadata)
 - Scope source: "AxiomWeb Rebuild Plan (Finalized Spec v3)" + "AxiomWeb Rebuild Plan v4 (Structured Data Included)"
 - Branching policy: existing code in `legacy` branch, fresh implementation on `main`
+- Execution progress (as of 2026-02-12):
+  - `Phase 0` Foundation: complete
+  - `Phase 1` UI + Style + Render Core: complete
+  - `Phase 2` Runtime Interactivity: complete (state/events/timers + declarative motion + wasm runtime hooks)
+  - `Phase 3` Server + Routing + Data: complete
+  - `Phase 4` Components + Markdown: in progress
+  - `Phase 5` Testing + Accessibility + Performance: in progress (WKWebView + snapshots baseline present; audit expansion pending)
+  - `Phase 6` Localization + Docs Completion: in progress (routing/hreflang/sitemap implemented; docs completion pending)
+  - `Phase 7` Declarative Motion System: in progress (animation + `@starting-style` complete; view-transition API pending)
+- Latest completed slice:
+  - Expanded native-first component primitives (`Card`, `ActionButton`, `Alert`, `Badge`, `Accordion`, `Popover`, `ModalDialog`, `DropdownMenu`, form-field components).
+  - Added `WasmCanvas` with typed payload attributes and runtime wasm bootstrap/invocation plumbing.
+  - Upgraded markdown renderer with stylable classes, admonitions, fenced code blocks, lists, blockquotes, and inline code support.
+- Product note:
+  - Add a WebUI playground example powered by WASM and publish it via GitHub Pages as a canonical ecosystem demo.
 
 ## Non-Negotiable Constraints
 1. Preserve only the general declarative DSL feel from old WebUI (`Element`, `Document`, chained `.modifier` APIs, `.on {}` pattern).
@@ -43,12 +58,14 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 - `apple/swift-http-types` for typed HTTP request/response models.
 - `apple/swift-log` for logging API.
 - `apple/swift-metrics` for metrics API.
-- `swift-server/swift-service-lifecycle` for service lifecycle and graceful startup/shutdown.
 - `apple/swift-distributed-tracing` for tracing primitives.
-- `swift-server/async-http-client` for outbound HTTP.
 - `apple/swift-markdown` for markdown parsing.
 - `apple/swift-argument-parser` for CLI.
 - `swiftlang/swift-testing` for tests.
+
+### Dependency compatibility note
+- `swift-service-lifecycle` and `async-http-client` are temporarily deferred in the active package graph due Swift 6.3 snapshot transitive incompatibility (`swift-async-algorithms` compile failure in this environment).
+- They remain planned integrations and are to be reintroduced once compatible versions are available.
 
 ### Anti-Reimplementation Guard
 - For each new subsystem, record dependency review notes in `Documentation.docc/ADRs/`.
@@ -163,40 +180,48 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 ## Implementation Phases
 
 ### Phase 0: Foundation
+- Status: complete
 - Build clean package graph.
 - Scaffold module APIs and shared core types.
 - Add routing conventions and project structure contracts.
 
 ### Phase 1: UI + Style + Render Core
+- Status: complete
 - Implement base DSL node system and result builders.
 - Implement style token system and hybrid CSS generator.
 - Implement deterministic HTML/CSS output pipeline.
 
 ### Phase 2: Runtime Interactivity
+- Status: complete
 - Implement typed runtime IR and JS generation for state/events/timers.
 - Integrate runtime emission into renderer.
 - Add typed WASM call bridge primitives (module loading, function invocation, typed payload encode/decode, error paths).
 
 ### Phase 3: Server + Routing + Data
+- Status: complete
 - Implement route discovery from `Routes/pages` and `Routes/api`.
 - Add code-route overrides.
 - Add typed fetch/cache/revalidation and form validation infrastructure.
 
 ### Phase 4: Components + Markdown
+- Status: in progress
 - Build native-first UI component library.
 - Build stylable markdown renderer with admonitions and code blocks.
 - Add `WasmCanvas` component and first-class component-level WASM integration patterns.
 
 ### Phase 5: Testing + Accessibility + Performance
+- Status: in progress
 - Implement WKWebView-first test APIs.
 - Add snapshot testing, E2E flow testing, component-level testing.
 - Add accessibility auditing in CI.
 
 ### Phase 6: Localization + Docs Completion
+- Status: in progress
 - Finalize locale-aware build outputs and SEO metadata (`hreflang`, sitemap variants).
 - Complete `Documentation.docc` tutorials, references, explanations, and ADRs.
 
 ### Phase 7: Declarative Motion System
+- Status: in progress
 - Add typed animation/keyframe DSL in `AxiomWebStyle` authored via `.modifier` and `.on {}` patterns.
 - Support scoped variants (`hover`, `focus`, breakpoints, `dark`, `prefers-reduced-motion`) for motion behavior.
 - Generate deterministic CSS for transitions/animations with no raw CSS strings required.
