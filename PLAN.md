@@ -30,6 +30,7 @@
   - Added public locale-aware URL generation helper (`LocaleRouting.localizedURL`) and aligned static sitemap/alternate URL emission to use it.
   - Added localized build verification test coverage (localized routes, `hreflang`, canonical links, localized structured data output).
   - Expanded `Documentation.docc` with `LocalizationGuide`, `RoutingGuide`, Getting Started locale/audit examples, and ADR-0003 for localization/routing policy.
+  - Expanded `Documentation.docc` with `APIContractsGuide`, `BuildModesGuide`, `RuntimeInteractivityGuide`, and `ComponentsGuide` to document typed contracts, mode resolution, declarative runtime interactions, and native-first component authoring.
 - Latest completed slice (Phase 7):
   - Added typed view-transition declarations (`ViewTransitionConfiguration`, `ViewTransitionProviding`) for document/app-level transition control.
   - Wired render/runtime generation to emit typed `@view-transition`/root transition CSS and runtime navigation wrapping via `document.startViewTransition(...)` with fallback.
