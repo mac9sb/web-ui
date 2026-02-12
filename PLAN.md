@@ -1,0 +1,199 @@
+# AxiomWeb Implementation Plan
+
+## Status
+- Owner: Codex implementation stream
+- Plan version: v4 (includes structured data first-class metadata)
+- Scope source: "AxiomWeb Rebuild Plan (Finalized Spec v3)" + "AxiomWeb Rebuild Plan v4 (Structured Data Included)"
+- Branching policy: existing code in `legacy` branch, fresh implementation on `main`
+
+## Non-Negotiable Constraints
+1. Preserve only the general declarative DSL feel from old WebUI (`Element`, `Document`, chained `.modifier` APIs, `.on {}` pattern).
+2. Do not require users to author raw HTML/CSS/JS strings or interpolate file contents for app behavior/styling.
+3. Structured data is first-class metadata and emitted as validated JSON-LD from typed APIs.
+4. Routing is convention-based from filesystem plus optional code overrides.
+5. UI components are native-first: prefer HTML/CSS/native platform features (`popover`, `details`, semantic form controls). JS only when absolutely required.
+6. CSS output strategy is hybrid layers: utility-like atomic output + cascading component/base layers.
+7. WKWebView-first testing with pluggable engine architecture.
+8. Swift API Design Guidelines and readable declarative APIs are required.
+
+## Ecosystem Modules
+1. `AxiomWebUI`
+2. `AxiomWebStyle`
+3. `AxiomWebRuntime`
+4. `AxiomWebRender`
+5. `AxiomWebMarkdown`
+6. `AxiomWebUIComponents`
+7. `AxiomWebTesting`
+8. `AxiomWebServer`
+9. `AxiomWebCodegen`
+10. `AxiomWebCLI`
+11. `AxiomWebI18n`
+12. Umbrella export module `AxiomWeb`
+
+## Dependency Policy (Mandatory)
+Before implementing any infrastructure from scratch, evaluate and prefer packages from these sources first:
+1. Apple Collection: https://swiftpackageindex.com/apple/collection.json
+2. Swift.org Collection: https://swiftpackageindex.com/swiftlang/collection.json
+3. SSWG Collection: https://swiftpackageindex.com/sswg/collection.json
+4. Swift Server Community Collection: https://swiftpackageindex.com/swift-server-community/collection.json
+
+### Required baseline dependencies in this repository
+- `apple/swift-nio` for event loops and server networking primitives.
+- `apple/swift-http-types` for typed HTTP request/response models.
+- `apple/swift-log` for logging API.
+- `apple/swift-metrics` for metrics API.
+- `swift-server/swift-service-lifecycle` for service lifecycle and graceful startup/shutdown.
+- `apple/swift-distributed-tracing` for tracing primitives.
+- `swift-server/async-http-client` for outbound HTTP.
+- `apple/swift-markdown` for markdown parsing.
+- `apple/swift-argument-parser` for CLI.
+- `swiftlang/swift-testing` for tests.
+
+### Anti-Reimplementation Guard
+- For each new subsystem, record dependency review notes in `Documentation.docc/ADRs/`.
+- If a dependency can satisfy the requirement with acceptable constraints, use it.
+- Custom implementation is allowed only when:
+  - there is no suitable maintained dependency in the approved collections, or
+  - dependency behavior is materially incompatible with AxiomWeb constraints.
+- Every custom replacement decision must include a short ADR entry with rationale.
+
+## Routing Specification
+- Page routes root: `Routes/pages/**`
+- API routes root: `Routes/api/**`
+- Path mapping:
+  - `Routes/pages/index.swift` -> `/`
+  - `Routes/pages/contact.swift` -> `/contact`
+  - `Routes/pages/path/goodbye.swift` -> `/path/goodbye`
+  - `Routes/api/hello.swift` -> `/api/hello`
+  - `Routes/api/path/goodbye.swift` -> `/api/path/goodbye`
+- Dynamic routes:
+  - `[slug].swift` -> `:slug`
+  - `[...path].swift` -> catch-all
+
+## Full-Breadth Coverage Requirements
+
+### HTML Coverage
+- Implement typed coverage for full modern HTML element set (matching MDN/WHATWG references for document, metadata, sectioning, text, inline semantics, forms, interactive, media, table, scripting, web components-related primitives).
+- Coverage mechanism: generated APIs from spec snapshot data in `AxiomWebCodegen`.
+- Add per-element compile tests and rendering snapshots.
+
+### CSS Coverage
+- Implement typed support for full CSS property/value space (backed by generated registries from standards/MDN data).
+- Public authoring remains `.modifier` and `.on {}`; output is hybrid-layer CSS.
+- Support tokens (colors, spacing, typography, radius, motion, breakpoints), variants (`sm`, `md`, `lg`, `dark`, interactive states), and arbitrary generated values where standards allow.
+- Add property/value conformance tests and output snapshots.
+
+### Declarative JavaScript Coverage
+- Provide typed declarative runtime APIs for:
+  - local/page/app state
+  - event listeners and action dispatch
+  - timers and intervals
+  - navigation actions
+  - form interactions
+  - fetch/data actions with cache/revalidation integration
+- No user-authored JS strings required for supported behavior patterns.
+- Runtime generation must be deterministic and minifiable.
+
+## Metadata and Structured Data (v4)
+
+### Metadata Model
+- `Metadata.structuredData: [StructuredDataNode]`
+- Site defaults + page metadata merge supported.
+- Merge strategy supports append/replace where needed.
+
+### Structured Data Types
+- `StructuredDataNode` must support:
+  - `.organization`
+  - `.person`
+  - `.article`
+  - `.product`
+  - `.faqPage`
+  - `.breadcrumbList`
+  - `.website`
+  - `.webPage`
+  - `.event`
+  - `.custom(schemaType:..., properties:...)`
+- `StructuredDataGraph` supports linked graphs and `@id` references.
+- Deduplicate by identity at render time.
+- Validate required fields by node type.
+- Strict mode build failure on invalid graphs.
+- JSON-LD output with stable ordering and safe embedding.
+
+## Required Feature Set
+1. Typed data-fetching and cache/revalidation primitives (SSR/SSG/ISR aware).
+2. Form schema and typed validation pipeline across server/client.
+3. Accessibility audit runner integrated into `AxiomWebTesting` and CI.
+4. Asset pipeline defaults:
+   - Input: `Assets/`
+   - Output: `public/`
+   - Hashing, image optimization, font subsetting, cache headers.
+5. Observability defaults on (logs/metrics/traces), configurable off.
+6. First-class localization:
+   - typed localized keys
+   - locale-aware route/path generation
+   - static generation for multiple locales
+   - `hreflang`
+   - localized sitemap
+   - fallback resolution
+7. Compiler-plugin/analysis gate:
+   - enforce route contract integrity
+   - enforce no raw injection API surfaces
+   - enforce typed registration/indexing checks
+8. ADRs in `Documentation.docc/ADRs/`.
+9. Full `Documentation.docc` completion after feature completion.
+
+## Out of Scope (Explicitly Deferred)
+- Plugin extension system for render/server/components/tooling.
+
+## Implementation Phases
+
+### Phase 0: Foundation
+- Build clean package graph.
+- Scaffold module APIs and shared core types.
+- Add routing conventions and project structure contracts.
+
+### Phase 1: UI + Style + Render Core
+- Implement base DSL node system and result builders.
+- Implement style token system and hybrid CSS generator.
+- Implement deterministic HTML/CSS output pipeline.
+
+### Phase 2: Runtime Interactivity
+- Implement typed runtime IR and JS generation for state/events/timers.
+- Integrate runtime emission into renderer.
+
+### Phase 3: Server + Routing + Data
+- Implement route discovery from `Routes/pages` and `Routes/api`.
+- Add code-route overrides.
+- Add typed fetch/cache/revalidation and form validation infrastructure.
+
+### Phase 4: Components + Markdown
+- Build native-first UI component library.
+- Build stylable markdown renderer with admonitions and code blocks.
+
+### Phase 5: Testing + Accessibility + Performance
+- Implement WKWebView-first test APIs.
+- Add snapshot testing, E2E flow testing, component-level testing.
+- Add accessibility auditing in CI.
+
+### Phase 6: Localization + Docs Completion
+- Finalize locale-aware build outputs and SEO metadata (`hreflang`, sitemap variants).
+- Complete `Documentation.docc` tutorials, references, explanations, and ADRs.
+
+## Acceptance Criteria
+1. Full HTML element API breadth generated and tested.
+2. Full CSS property/value coverage strategy implemented and tested.
+3. Structured data metadata is typed, validated, deduped, and deterministic.
+4. Route discovery exactly follows filesystem conventions above.
+5. Components favor native features with JS fallback only where necessary.
+6. No required raw HTML/CSS/JS strings for standard framework use-cases.
+7. Tests pass across rendering, routing, metadata, structured data, localization, and accessibility checks.
+8. Documentation is complete and aligned with implemented behavior.
+
+## Implementation Guardrails
+- Prefer upstream libraries/collections before writing custom infra where equivalent exists.
+- Keep APIs declarative and readable.
+- Add tests with each major subsystem increment.
+- Do not silently alter DSL shape without explicit approval for rare breaking changes.
+
+## Tracking
+- This file is the authoritative implementation checklist and scope guard for current execution.
