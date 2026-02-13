@@ -28,6 +28,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.0"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle", from: "2.0.0"),
     ],
     targets: [
