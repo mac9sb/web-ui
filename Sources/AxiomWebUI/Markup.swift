@@ -144,7 +144,7 @@ public enum MarkupBuilder {
     }
 
     public static func buildExpression(_ expression: String) -> [AnyMarkup] {
-        [AnyMarkup(Text(expression))]
+        [AnyMarkup(RawText(expression))]
     }
 
     public static func buildExpression(_ expression: LocalizedText) -> [AnyMarkup] {

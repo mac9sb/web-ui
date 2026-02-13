@@ -1,27 +1,36 @@
 import Foundation
 import AxiomWebI18n
 
-public struct Details: Markup {
+public struct Details: HTMLTagElement {
+    public static let tagName: HTMLTagName = .details
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "details", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 
-public struct Summary: Markup {
-    public let value: String
+public struct Summary: HTMLTagElement {
+    public static let tagName: HTMLTagName = .summary
+    public let attributes: [HTMLAttribute]
+    public let content: [AnyMarkup]
 
-    public init(_ value: String) {
-        self.value = value
+    public init(_ value: String, attributes: [HTMLAttribute] = []) {
+        self.attributes = attributes
+        self.content = [AnyMarkup(RawText(value))]
     }
 
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "summary", children: [.text(value)]))]
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
+        self.content = content().content
     }
 }
 

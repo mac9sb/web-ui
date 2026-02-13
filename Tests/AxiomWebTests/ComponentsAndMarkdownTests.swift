@@ -38,6 +38,11 @@ struct ComponentsAndMarkdownTests {
                         Link("Delete", href: "/delete")
                     }
 
+                    NavigationMenu(items: [
+                        .init("Home", href: "/", current: true),
+                        .init("Docs", href: "/docs"),
+                    ])
+
                     Breadcrumbs(items: [
                         .init("Home", href: "/"),
                         .init("Settings", href: "/settings"),
@@ -49,6 +54,23 @@ struct ComponentsAndMarkdownTests {
                     ProgressBar(value: 64, maximum: 100, label: "Build Progress")
 
                     Separator()
+
+                    Collapsible(title: "Advanced Settings") {
+                        Paragraph("Additional controls")
+                    }
+
+                    ScrollArea(maxHeight: .length(8, .rem)) {
+                        for index in 1...4 {
+                            Paragraph("Scrollable item \(index)")
+                        }
+                    }
+
+                    AspectRatioFrame(width: 4, height: 3) {
+                        Stack {
+                            Text("Aspect ratio content")
+                        }
+                        .background(color: .stone(100))
+                    }
 
                     Avatar(imageURL: "/avatar.png", alt: "Profile image", fallbackText: "AW")
 
@@ -74,6 +96,33 @@ struct ComponentsAndMarkdownTests {
                         ],
                         caption: "Team"
                     )
+
+                    Tabs(items: [
+                        .init(id: "overview", title: "Overview") {
+                            Paragraph("Overview content")
+                        },
+                        .init(id: "activity", title: "Activity") {
+                            Paragraph("Activity content")
+                        },
+                    ])
+
+                    Tooltip("Helpful hint") {
+                        Text("Hover target")
+                    }
+
+                    ToastMessage(title: "Saved", message: "Settings were updated.")
+
+                    SheetPanel(id: "settings-sheet", triggerLabel: "Open Sheet", side: .right) {
+                        Paragraph("Sheet content")
+                    }
+
+                    CommandPalette(
+                        id: "command-palette",
+                        commands: [
+                            .init(value: "open", label: "Open Project"),
+                            .init(value: "build", label: "Build Site"),
+                        ]
+                    )
                 }
             }
         }
@@ -83,13 +132,22 @@ struct ComponentsAndMarkdownTests {
         #expect(rendered.html.contains("popover"))
         #expect(rendered.html.contains("commandfor=\"confirm-dialog\""))
         #expect(rendered.html.contains("<dialog"))
+        #expect(rendered.html.contains("aria-label=\"Primary Navigation\""))
         #expect(rendered.html.contains("aria-label=\"Breadcrumb\""))
         #expect(rendered.html.contains("aria-label=\"Pagination\""))
         #expect(rendered.html.contains("<progress"))
         #expect(rendered.html.contains("role=\"separator\""))
+        #expect(rendered.html.contains("data-ax-component=\"collapsible\""))
+        #expect(rendered.html.contains("data-ax-component=\"scroll-area\""))
+        #expect(rendered.html.contains("data-ax-component=\"aspect-ratio\""))
         #expect(rendered.html.contains("<table"))
         #expect(rendered.html.contains("role=\"switch\""))
         #expect(rendered.html.contains("<select"))
+        #expect(rendered.html.contains("aria-label=\"Tabs\""))
+        #expect(rendered.html.contains("title=\"Helpful hint\""))
+        #expect(rendered.html.contains("role=\"status\""))
+        #expect(rendered.html.contains("commandfor=\"settings-sheet\""))
+        #expect(rendered.html.contains("id=\"command-palette-list\""))
     }
 
     @Test("WasmCanvas emits typed wasm binding attributes and fallback")

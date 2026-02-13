@@ -99,11 +99,19 @@ public enum HybridCSSGenerator {
 
     private static func declarations(for baseClass: String) -> String? {
         if baseClass == "flex" { return "display:flex" }
+        if baseClass == "inline-flex" { return "display:inline-flex" }
+        if baseClass == "grid" { return "display:grid" }
         if baseClass == "flex-col" { return "flex-direction:column" }
         if baseClass == "flex-row" { return "flex-direction:row" }
         if baseClass == "items-center" { return "align-items:center" }
         if baseClass == "items-start" { return "align-items:flex-start" }
         if baseClass == "items-end" { return "align-items:flex-end" }
+        if baseClass == "justify-start" { return "justify-content:flex-start" }
+        if baseClass == "justify-center" { return "justify-content:center" }
+        if baseClass == "justify-end" { return "justify-content:flex-end" }
+        if baseClass == "justify-between" { return "justify-content:space-between" }
+        if baseClass == "justify-around" { return "justify-content:space-around" }
+        if baseClass == "justify-evenly" { return "justify-content:space-evenly" }
         if baseClass == "grow" || baseClass == "grow-1" { return "flex-grow:1" }
         if baseClass == "relative" { return "position:relative" }
         if baseClass == "absolute" { return "position:absolute" }

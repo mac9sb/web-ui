@@ -239,6 +239,36 @@ struct StaticBuildTests {
         #expect(FileManager.default.fileExists(atPath: outputRoot.path()) == false)
     }
 
+    @Test("Auto mode defaults to server-side when websocket routes exist")
+    func autoModeDefaultsToServerSideWithWebSockets() throws {
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-auto-websocket-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let pagesRoot = routesRoot.appending(path: "pages")
+        let wsRoot = routesRoot.appending(path: "ws")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: pagesRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: wsRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: pagesRoot.appending(path: "index.swift").path(), contents: Data())
+        FileManager.default.createFile(atPath: wsRoot.appending(path: "events.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        let report = try StaticSiteBuilder(
+            configuration: .init(
+                routesRoot: routesRoot,
+                outputDirectory: outputRoot,
+                assetsSourceDirectory: assetsRoot
+            )
+        ).build()
+
+        #expect(report.buildMode == .serverSide)
+        #expect(report.websocketRouteCount == 1)
+        #expect(report.writtenHTMLFiles.isEmpty)
+        #expect(FileManager.default.fileExists(atPath: outputRoot.path()) == false)
+    }
+
     @Test("Page source inference uses filename by default and var path as override")
     func pageSourceInferenceUsesFilenameAndHonorsPathOverride() throws {
         struct ContactDoc: Document {
@@ -542,5 +572,103 @@ struct StaticBuildTests {
         #expect(enHTML.contains("rel=\"canonical\" href=\"https://example.com/\""))
         #expect(frHTML.contains("rel=\"canonical\" href=\"https://example.com/fr\""))
         #expect(frHTML.contains("<html lang=\"fr\">"))
+    }
+
+    @Test("Strict route contracts fail when discovered page file has no typed document")
+    func strictRouteContractsFailForUnregisteredPageFile() throws {
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-strict-page-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let pagesRoot = routesRoot.appending(path: "pages")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: pagesRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: pagesRoot.appending(path: "index.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        do {
+            _ = try StaticSiteBuilder(
+                configuration: .init(
+                    routesRoot: routesRoot,
+                    outputDirectory: outputRoot,
+                    assetsSourceDirectory: assetsRoot,
+                    strictRouteContracts: true
+                )
+            ).build()
+            #expect(Bool(false), "Expected strict page route contract failure")
+        } catch let error as ServerBuildError {
+            #expect(error == .missingPageDocument(path: "/", source: "index.swift"))
+        }
+    }
+
+    @Test("Strict route contracts fail when discovered API file has no handler")
+    func strictRouteContractsFailForUnregisteredAPIFile() throws {
+        struct HomeDoc: Document {
+            var metadata: Metadata { Metadata(title: "Home") }
+            var path: String { "/" }
+            var body: some Markup { Main { Text("home") } }
+        }
+
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-strict-api-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let apiRoot = routesRoot.appending(path: "api")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: apiRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: apiRoot.appending(path: "hello.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        do {
+            _ = try StaticSiteBuilder(
+                configuration: .init(
+                    routesRoot: routesRoot,
+                    outputDirectory: outputRoot,
+                    assetsSourceDirectory: assetsRoot,
+                    pageOverrides: [.init(path: "/", document: HomeDoc())],
+                    strictRouteContracts: true
+                )
+            ).build()
+            #expect(Bool(false), "Expected strict API route contract failure")
+        } catch let error as ServerBuildError {
+            #expect(error == .missingAPIHandler(path: "/api/hello", source: "hello.swift"))
+        }
+    }
+
+    @Test("Strict route contracts fail when discovered websocket file has no handler")
+    func strictRouteContractsFailForUnregisteredWebSocketFile() throws {
+        struct HomeDoc: Document {
+            var metadata: Metadata { Metadata(title: "Home") }
+            var path: String { "/" }
+            var body: some Markup { Main { Text("home") } }
+        }
+
+        let tempRoot = FileManager.default.temporaryDirectory.appending(path: "axiomweb-strict-websocket-\(UUID().uuidString)")
+        let routesRoot = tempRoot.appending(path: "Routes")
+        let wsRoot = routesRoot.appending(path: "ws")
+        let assetsRoot = tempRoot.appending(path: "Assets")
+        let outputRoot = tempRoot.appending(path: "Output")
+
+        try FileManager.default.createDirectory(at: wsRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: assetsRoot, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: wsRoot.appending(path: "events.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        do {
+            _ = try StaticSiteBuilder(
+                configuration: .init(
+                    routesRoot: routesRoot,
+                    outputDirectory: outputRoot,
+                    assetsSourceDirectory: assetsRoot,
+                    pageOverrides: [.init(path: "/", document: HomeDoc())],
+                    strictRouteContracts: true
+                )
+            ).build()
+            #expect(Bool(false), "Expected strict websocket route contract failure")
+        } catch let error as ServerBuildError {
+            #expect(error == .missingWebSocketHandler(path: "/ws/events", source: "events.swift"))
+        }
     }
 }

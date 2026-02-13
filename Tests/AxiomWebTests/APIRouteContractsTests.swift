@@ -100,6 +100,23 @@ struct APIRouteContractsTests {
         }
     }
 
+    @Test("Strict contract mode fails when discovered API route has no typed handler")
+    func strictContractModeFailsWhenDiscoveredRouteIsUnregistered() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "axiomweb-api-strict-\(UUID().uuidString)")
+        let api = root.appending(path: "api")
+        try FileManager.default.createDirectory(at: api, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: api.appending(path: "health.swift").path(), contents: Data())
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        #expect(throws: APIRouteResolutionError.self) {
+            _ = try APIRouteResolver.resolve(
+                routesRoot: root,
+                apiDirectory: "api",
+                strictContracts: true
+            )
+        }
+    }
+
     @Test("Supports multiple methods for the same API path via contracts")
     func supportsMultipleMethodsForSamePathViaContracts() async throws {
         struct MultiGetContract: APIRouteContract {

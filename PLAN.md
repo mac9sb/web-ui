@@ -19,6 +19,10 @@
   - Expanded component breadth with native-first primitives for navigation/data/forms (`Breadcrumbs`, `Pagination`, `ProgressBar`, `Separator`, `Avatar`, `Skeleton`, `CheckboxField`, `SwitchField`, `SelectField`, `DataTable`).
   - Added `WasmCanvas` with typed payload attributes and runtime wasm bootstrap/invocation plumbing.
   - Upgraded markdown renderer with stylable classes, admonitions, fenced code blocks, lists, blockquotes, and inline code support.
+- Latest in-progress slice (Phase 4):
+  - Replaced remaining raw string element/layout usage in component surfaces with typed DSL elements and semantic layout helpers (`Button`/`Canvas`/`NoScript`, `.flex(...)`, `.grid(gap: ...)`).
+  - Expanded native-first component coverage with `NavigationMenu`, `Collapsible`, `ScrollArea`, and `AspectRatioFrame`.
+  - Extended typed element capabilities needed by components (`Button` attributes/content support, `Paragraph` attributes support, `Details` attributes support).
 - Latest in-progress slice (Phase 5):
   - Expanded `AxiomWebTesting` browser flow API surface (`attribute`, `submit`, `waitForText`, normalized snapshots).
   - Added richer accessibility auditing with structured findings/severity, role/focus/contrast checks, and CI-friendly markdown/JSON reporting.
@@ -60,9 +64,8 @@
 6. `AxiomWebUIComponents`
 7. `AxiomWebTesting`
 8. `AxiomWebServer`
-9. `AxiomWebCodegen`
-10. `AxiomWebCLI`
-11. `AxiomWebI18n`
+9. `AxiomWebCLI`
+10. `AxiomWebI18n`
 12. Umbrella export module `AxiomWeb`
 
 ## Dependency Policy (Mandatory)
@@ -74,17 +77,15 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 
 ### Required baseline dependencies in this repository
 - `apple/swift-nio` for event loops and server networking primitives.
+- `apple/swift-nio` `NIOWebSocket` for typed websocket frame/message support.
 - `apple/swift-http-types` for typed HTTP request/response models.
 - `apple/swift-log` for logging API.
 - `apple/swift-metrics` for metrics API.
 - `apple/swift-distributed-tracing` for tracing primitives.
 - `apple/swift-markdown` for markdown parsing.
 - `apple/swift-argument-parser` for CLI.
+- `swift-server/swift-service-lifecycle` for managed runtime lifecycle.
 - `swiftlang/swift-testing` for tests.
-
-### Dependency compatibility note
-- `swift-service-lifecycle` and `async-http-client` are temporarily deferred in the active package graph due Swift 6.3 snapshot transitive incompatibility (`swift-async-algorithms` compile failure in this environment).
-- They remain planned integrations and are to be reintroduced once compatible versions are available.
 
 ### Anti-Reimplementation Guard
 - For each new subsystem, record dependency review notes in `Documentation.docc/ADRs/`.
@@ -97,12 +98,15 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 ## Routing Specification
 - Page routes root: `Routes/pages/**`
 - API routes root: `Routes/api/**`
+- WebSocket routes root: `Routes/ws/**`
 - Path mapping:
   - `Routes/pages/index.swift` -> `/`
   - `Routes/pages/contact.swift` -> `/contact`
   - `Routes/pages/path/goodbye.swift` -> `/path/goodbye`
   - `Routes/api/hello.swift` -> `/api/hello`
   - `Routes/api/path/goodbye.swift` -> `/api/path/goodbye`
+  - `Routes/ws/echo.swift` -> `/ws/echo`
+  - `Routes/ws/path/updates.swift` -> `/ws/path/updates`
 - Page document path behavior:
   - default route path is inferred from the route file location/name.
   - `var path: String` on a page document is an explicit override and takes precedence over inferred path.
@@ -116,7 +120,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 
 ### HTML Coverage
 - Implement typed coverage for full modern HTML element set (matching MDN/WHATWG references for document, metadata, sectioning, text, inline semantics, forms, interactive, media, table, scripting, web components-related primitives).
-- Coverage mechanism: explicit category-based DSL APIs in source (`Elements/*`) with spec snapshot parity tests from `AxiomWebCodegen`.
+- Coverage mechanism: explicit category-based DSL APIs in source (`Elements/*`) with parity tests against canonical typed registries (`HTMLTagName`, `CSSPropertyCatalog`).
 - Add per-element compile tests and rendering snapshots.
 
 ### CSS Coverage
@@ -218,7 +222,7 @@ Before implementing any infrastructure from scratch, evaluate and prefer package
 
 ### Phase 3: Server + Routing + Data
 - Status: complete
-- Implement route discovery from `Routes/pages` and `Routes/api`.
+- Implement route discovery from `Routes/pages`, `Routes/api`, and `Routes/ws`.
 - Add code-route overrides.
 - Add typed fetch/cache/revalidation and form validation infrastructure.
 

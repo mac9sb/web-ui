@@ -63,15 +63,13 @@ public struct ActionButton: Markup {
 
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
-        var attributes: [HTMLAttribute] = [HTMLAttribute("type", kind.rawValue)]
+        var attributes: [HTMLAttribute] = []
         if let id, !id.isEmpty {
             attributes.append(HTMLAttribute("id", id))
         }
 
         let styled: any Markup = {
-            let base = Node("button", attributes: attributes) {
-                Text(label)
-            }
+            let base = Button(label, type: kind.rawValue, attributes: attributes)
             .padding(activeTheme.spacing(3))
             .borderRadius(activeTheme.cornerRadius)
             .font(weight: .semibold)
@@ -135,10 +133,10 @@ public struct Badge: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
         let (background, text) = toneColors(theme: activeTheme)
-        return Node("span", attributes: [HTMLAttribute("class", "ax-badge")]) {
+        return Span(attributes: [HTMLAttribute("class", "ax-badge")]) {
             Text(value)
         }
-        .display(.keyword("inline-flex"))
+        .flex(inline: true, align: .center)
         .padding(.raw("0.35rem 0.6rem"))
         .borderRadius(.raw("9999px"))
         .font(size: .sm, weight: .semibold, color: text)
@@ -233,8 +231,7 @@ public struct Accordion: Markup {
         return Stack {
             content
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(2))
+        .grid(gap: activeTheme.spacing(2))
         .makeNodes(locale: locale)
     }
 }
@@ -343,22 +340,22 @@ public struct ModalDialog: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
         return [
-            .element(
-                HTMLElementNode(
-                    tag: "button",
+            AnyMarkup(
+                Button(
+                    triggerLabel,
                     attributes: [
-                        HTMLAttribute("type", "button"),
                         HTMLAttribute("commandfor", id),
                         HTMLAttribute("command", "show-modal"),
-                    ],
-                    children: [.text(triggerLabel)]
+                    ]
                 )
-            ),
+            )
+            .makeNodes(locale: locale)
+            .first ?? .text(""),
             AnyMarkup(
-                Node("dialog", attributes: [HTMLAttribute("id", id)]) {
+                Dialog(attributes: [HTMLAttribute("id", id)]) {
                     Stack {
                         content
-                        Node("form", attributes: [HTMLAttribute("method", "dialog")]) {
+                        Form(attributes: [HTMLAttribute("method", "dialog")]) {
                             ActionButton(dismissLabel, tone: .secondary, kind: .submit, theme: activeTheme)
                         }
                         .margins(of: .three, at: .top)
@@ -400,8 +397,7 @@ public struct DropdownMenu: Markup {
             Stack {
                 items
             }
-            .display(.keyword("grid"))
-            .rowGap(activeTheme.spacing(1))
+            .grid(gap: activeTheme.spacing(1))
             .margins(of: .two, at: .top)
         }
         .background(color: activeTheme.surfaceColor)
@@ -451,8 +447,7 @@ public struct FormTextField: Markup {
                 .font(color: activeTheme.foregroundColor)
                 .borderRadius(activeTheme.cornerRadius)
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(1))
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 }
@@ -495,8 +490,7 @@ public struct FormTextArea: Markup {
                 .borderRadius(activeTheme.cornerRadius)
                 .minHeight(.length(8, .rem))
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(1))
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 }
@@ -537,27 +531,76 @@ public struct Breadcrumbs: Markup {
                             Link(item.label, href: href)
                                 .font(size: .sm, color: activeTheme.mutedColor)
                         } else {
-                            Node("span", attributes: isCurrent ? [HTMLAttribute("aria-current", "page")] : []) {
+                            Span(attributes: isCurrent ? [HTMLAttribute("aria-current", "page")] : []) {
                                 Text(item.label)
                             }
                             .font(size: .sm, weight: .semibold, color: activeTheme.foregroundColor)
                         }
 
                         if index < items.count - 1 {
-                            Node("span", attributes: [HTMLAttribute("aria-hidden", "true")]) {
+                            Span(attributes: [HTMLAttribute("aria-hidden", "true")]) {
                                 Text(separator)
                             }
                             .font(size: .sm, color: activeTheme.mutedColor)
                         }
                     }
-                    .display(.keyword("inline-flex"))
-                    .alignItems(.keyword("center"))
-                    .columnGap(activeTheme.spacing(2))
+                    .flex(inline: true, align: .center, gap: activeTheme.spacing(2))
                 }
             }
-            .display(.keyword("flex"))
-            .alignItems(.keyword("center"))
-            .columnGap(activeTheme.spacing(2))
+            .flex(align: .center, gap: activeTheme.spacing(2))
+            .css(.listStyle, .keyword("none"))
+            .css(.paddingLeft, .number(0))
+            .css(.margin, .number(0))
+        }
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct NavigationMenu: Markup {
+    public struct Item: Sendable, Equatable {
+        public let label: String
+        public let href: String
+        public let current: Bool
+
+        public init(_ label: String, href: String, current: Bool = false) {
+            self.label = label
+            self.href = href
+            self.current = current
+        }
+    }
+
+    public let items: [Item]
+    public let label: String
+    private let theme: ComponentTheme?
+
+    public init(items: [Item], label: String = "Primary Navigation", theme: ComponentTheme? = nil) {
+        self.items = items
+        self.label = label
+        self.theme = theme
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+
+        return Navigation(attributes: [HTMLAttribute("aria-label", label)]) {
+            UnorderedList {
+                for item in items {
+                    ListItem {
+                        if item.current {
+                            Span(attributes: [HTMLAttribute("aria-current", "page")]) {
+                                Text(item.label)
+                            }
+                            .font(size: .sm, weight: .semibold, color: activeTheme.foregroundColor)
+                        } else {
+                            Link(item.label, href: item.href)
+                                .font(size: .sm, color: activeTheme.mutedColor)
+                        }
+                    }
+                    .padding(activeTheme.spacing(1))
+                    .borderRadius(activeTheme.cornerRadius)
+                }
+            }
+            .flex(align: .center, gap: activeTheme.spacing(2))
             .css(.listStyle, .keyword("none"))
             .css(.paddingLeft, .number(0))
             .css(.margin, .number(0))
@@ -603,7 +646,7 @@ public struct Pagination: Markup {
                 for page in 1...totalPages {
                     ListItem {
                         if page == current {
-                            Node("span", attributes: [HTMLAttribute("aria-current", "page")]) {
+                            Span(attributes: [HTMLAttribute("aria-current", "page")]) {
                                 Text("\(page)")
                             }
                             .font(size: .sm, weight: .semibold, color: activeTheme.foregroundColor)
@@ -626,9 +669,7 @@ public struct Pagination: Markup {
                     }
                 }
             }
-            .display(.keyword("flex"))
-            .alignItems(.keyword("center"))
-            .columnGap(activeTheme.spacing(2))
+            .flex(align: .center, gap: activeTheme.spacing(2))
             .css(.listStyle, .keyword("none"))
             .css(.paddingLeft, .number(0))
             .css(.margin, .number(0))
@@ -682,7 +723,7 @@ public struct ProgressBar: Markup {
 
         return Stack {
             if let label, !label.isEmpty {
-                Node("label", attributes: [HTMLAttribute("id", labelID), HTMLAttribute("for", progressID)]) {
+                Label(for: progressID, attributes: [HTMLAttribute("id", labelID)]) {
                     Text(label)
                 }
                 .font(size: .sm, weight: .medium, color: activeTheme.foregroundColor)
@@ -695,8 +736,7 @@ public struct ProgressBar: Markup {
             .font(color: activeTheme.accentColor)
             .borderRadius(activeTheme.cornerRadius)
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(1))
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 
@@ -736,18 +776,123 @@ public struct Separator: Markup {
             .modifier("border-\(activeTheme.borderColor.classFragment)")
             .makeNodes(locale: locale)
         case .vertical:
-            return Node(
-                "div",
+            return Stack(
                 attributes: [
                     HTMLAttribute("role", "separator"),
                     HTMLAttribute("aria-orientation", "vertical"),
                 ]
-            )
+            ) { }
             .background(color: activeTheme.borderColor)
             .width(.length(1, .px))
             .height(.length(100, .percent))
             .makeNodes(locale: locale)
         }
+    }
+}
+
+public struct Collapsible: Markup {
+    public let title: String
+    public let expanded: Bool
+    private let content: MarkupGroup
+    private let theme: ComponentTheme?
+
+    public init(
+        title: String,
+        expanded: Bool = false,
+        theme: ComponentTheme? = nil,
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.title = title
+        self.expanded = expanded
+        self.theme = theme
+        self.content = content()
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        var attributes: [HTMLAttribute] = [HTMLAttribute("data-ax-component", "collapsible")]
+        if expanded {
+            attributes.append(HTMLAttribute("open"))
+        }
+
+        return Details(attributes: attributes) {
+            Summary(title)
+                .font(weight: .semibold, color: activeTheme.foregroundColor)
+            Section {
+                content
+            }
+            .margins(of: .two, at: .top)
+        }
+        .background(color: activeTheme.surfaceColor)
+        .border(of: 1, color: activeTheme.borderColor)
+        .padding(activeTheme.spacing(3))
+        .borderRadius(activeTheme.cornerRadius)
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct ScrollArea: Markup {
+    public let maxHeight: CSSValue
+    public let horizontal: Bool
+    private let content: MarkupGroup
+    private let theme: ComponentTheme?
+
+    public init(
+        maxHeight: CSSValue = .length(18, .rem),
+        horizontal: Bool = false,
+        theme: ComponentTheme? = nil,
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.maxHeight = maxHeight
+        self.horizontal = horizontal
+        self.theme = theme
+        self.content = content()
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+
+        return Section(attributes: [HTMLAttribute("data-ax-component", "scroll-area")]) {
+            content
+        }
+        .maxHeight(maxHeight)
+        .overflowY(.keyword("auto"))
+        .overflowX(horizontal ? .keyword("auto") : .keyword("hidden"))
+        .padding(activeTheme.spacing(2))
+        .border(of: 1, color: activeTheme.borderColor)
+        .borderRadius(activeTheme.cornerRadius)
+        .background(color: activeTheme.surfaceColor)
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct AspectRatioFrame: Markup {
+    public let widthUnits: Int
+    public let heightUnits: Int
+    private let content: MarkupGroup
+    private let theme: ComponentTheme?
+
+    public init(
+        width: Int = 16,
+        height: Int = 9,
+        theme: ComponentTheme? = nil,
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.widthUnits = max(1, width)
+        self.heightUnits = max(1, height)
+        self.theme = theme
+        self.content = content()
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        return Stack(attributes: [HTMLAttribute("data-ax-component", "aspect-ratio")]) {
+            content
+        }
+        .aspectRatio(.raw("\(widthUnits) / \(heightUnits)"))
+        .overflow(.keyword("hidden"))
+        .borderRadius(activeTheme.cornerRadius)
+        .makeNodes(locale: locale)
     }
 }
 
@@ -775,7 +920,7 @@ public struct Avatar: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
 
-        return Node("span", attributes: [HTMLAttribute("aria-label", alt)]) {
+        return Span(attributes: [HTMLAttribute("aria-label", alt)]) {
             if let imageURL, !imageURL.isEmpty {
                 Image(attributes: [HTMLAttribute("src", imageURL), HTMLAttribute("alt", alt)])
                     .width(.length(100, .percent))
@@ -785,9 +930,7 @@ public struct Avatar: Markup {
                 Text(fallbackText)
             }
         }
-        .display(.keyword("inline-flex"))
-        .alignItems(.keyword("center"))
-        .justifyContent(.keyword("center"))
+        .flex(inline: true, align: .center, justify: .center)
         .width(size)
         .height(size)
         .borderRadius(.raw("9999px"))
@@ -812,7 +955,7 @@ public struct Skeleton: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
 
-        return Node("div", attributes: [HTMLAttribute("aria-hidden", "true")]) { }
+        return Stack(attributes: [HTMLAttribute("aria-hidden", "true")]) { }
             .width(width)
             .height(height)
             .borderRadius(activeTheme.cornerRadius)
@@ -866,15 +1009,19 @@ public struct CheckboxField: Markup {
             inputAttributes.append(HTMLAttribute("disabled"))
         }
 
-        return Node("label", attributes: [HTMLAttribute("for", id)]) {
-            Node("input", attributes: inputAttributes) { }
+        return Label(for: id) {
+            Input(
+                name: name,
+                type: "checkbox",
+                id: id,
+                checked: checked,
+                disabled: disabled
+            )
                 .accentColor(.keyword("currentColor"))
                 .font(color: activeTheme.accentColor)
             Text(label)
         }
-        .display(.keyword("inline-flex"))
-        .alignItems(.keyword("center"))
-        .columnGap(activeTheme.spacing(2))
+        .flex(inline: true, align: .center, gap: activeTheme.spacing(2))
         .font(size: .sm, color: activeTheme.foregroundColor)
         .makeNodes(locale: locale)
     }
@@ -919,15 +1066,20 @@ public struct SwitchField: Markup {
             inputAttributes.append(HTMLAttribute("disabled"))
         }
 
-        return Node("label", attributes: [HTMLAttribute("for", id)]) {
-            Node("input", attributes: inputAttributes) { }
+        return Label(for: id) {
+            Input(
+                name: name,
+                type: "checkbox",
+                id: id,
+                checked: on,
+                disabled: disabled,
+                attributes: [HTMLAttribute("role", "switch")]
+            )
                 .accentColor(.keyword("currentColor"))
                 .font(color: activeTheme.accentColor)
             Text(label)
         }
-        .display(.keyword("inline-flex"))
-        .alignItems(.keyword("center"))
-        .columnGap(activeTheme.spacing(2))
+        .flex(inline: true, align: .center, gap: activeTheme.spacing(2))
         .font(size: .sm, color: activeTheme.foregroundColor)
         .makeNodes(locale: locale)
     }
@@ -1002,8 +1154,7 @@ public struct SelectField: Markup {
             .font(color: activeTheme.foregroundColor)
             .borderRadius(activeTheme.cornerRadius)
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(1))
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 }
@@ -1032,10 +1183,10 @@ public struct DataTable: Markup {
     public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
         let activeTheme = theme ?? ComponentThemeStore.current
 
-        return Node("div") {
+        return Stack {
             Table {
                 if let caption, !caption.isEmpty {
-                    Node("caption") {
+                    Caption {
                         Text(caption)
                     }
                     .font(size: .sm, color: activeTheme.mutedColor)
@@ -1064,19 +1215,312 @@ public struct DataTable: Markup {
                                 .font(size: .sm, color: activeTheme.foregroundColor)
                                 .padding(activeTheme.spacing(2))
                             }
-                        }
-                        .css(.borderTop, .raw("1px solid"))
-                        .modifier("border-\(activeTheme.borderColor.classFragment)")
+                }
+                .css(.borderTop, .raw("1px solid"))
+                .modifier("border-\(activeTheme.borderColor.classFragment)")
                     }
                 }
             }
             .width(.length(100, .percent))
             .css(.borderCollapse, .keyword("collapse"))
             .background(color: activeTheme.surfaceColor)
-            .border(of: 1, color: activeTheme.borderColor)
-            .borderRadius(activeTheme.cornerRadius)
+                .border(of: 1, color: activeTheme.borderColor)
+                .borderRadius(activeTheme.cornerRadius)
         }
         .overflowX(.keyword("auto"))
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct Tabs: Markup {
+    public struct Item {
+        public let id: String
+        public let title: String
+        public let content: MarkupGroup
+
+        public init(
+            id: String,
+            title: String,
+            @MarkupBuilder content: () -> MarkupGroup
+        ) {
+            self.id = id
+            self.title = title
+            self.content = content()
+        }
+    }
+
+    public let items: [Item]
+    public let selectedID: String?
+    private let theme: ComponentTheme?
+
+    public init(
+        items: [Item],
+        selectedID: String? = nil,
+        theme: ComponentTheme? = nil
+    ) {
+        self.items = items
+        self.selectedID = selectedID
+        self.theme = theme
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        let selected = selectedID ?? items.first?.id
+
+        return Stack {
+            Navigation(attributes: [HTMLAttribute("aria-label", "Tabs")]) {
+                Stack {
+                    for item in items {
+                        let isSelected = item.id == selected
+                        Link(item.title, href: "#\(item.id)")
+                            .font(
+                                size: .sm,
+                                weight: isSelected ? .semibold : .medium,
+                                color: isSelected ? activeTheme.foregroundColor : activeTheme.mutedColor
+                            )
+                            .padding(activeTheme.spacing(2))
+                            .borderRadius(activeTheme.cornerRadius)
+                            .background(color: isSelected ? activeTheme.surfaceColor : .transparent)
+                            .border(of: 1, color: activeTheme.borderColor)
+                            .modifier("role-tab")
+                    }
+                }
+                .flex(gap: activeTheme.spacing(2))
+            }
+
+            Stack {
+                for item in items {
+                    let isSelected = item.id == selected
+                    Section(attributes: [
+                        HTMLAttribute("id", item.id),
+                        HTMLAttribute("role", "tabpanel"),
+                        HTMLAttribute("aria-hidden", isSelected ? "false" : "true"),
+                    ]) {
+                        item.content
+                    }
+                    .display(isSelected ? .keyword("block") : .keyword("none"))
+                }
+            }
+            .padding(activeTheme.spacing(3))
+            .border(of: 1, color: activeTheme.borderColor)
+            .borderRadius(activeTheme.cornerRadius)
+            .background(color: activeTheme.surfaceColor)
+        }
+        .grid(gap: activeTheme.spacing(2))
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct Tooltip: Markup {
+    public let text: String
+    private let content: MarkupGroup
+    private let theme: ComponentTheme?
+
+    public init(
+        _ text: String,
+        theme: ComponentTheme? = nil,
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.text = text
+        self.theme = theme
+        self.content = content()
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        return Span(attributes: [HTMLAttribute("title", text)]) {
+            content
+        }
+        .flex(inline: true, align: .center, gap: activeTheme.spacing(1))
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct ToastMessage: Markup {
+    public enum Tone: Sendable {
+        case info
+        case success
+        case warning
+        case error
+    }
+
+    public let title: String
+    public let message: String
+    public let tone: Tone
+    private let theme: ComponentTheme?
+
+    public init(
+        title: String,
+        message: String,
+        tone: Tone = .info,
+        theme: ComponentTheme? = nil
+    ) {
+        self.title = title
+        self.message = message
+        self.tone = tone
+        self.theme = theme
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        let accent: ColorToken = switch tone {
+        case .info: activeTheme.accentColor
+        case .success: .emerald(600)
+        case .warning: .amber(600)
+        case .error: activeTheme.destructiveColor
+        }
+
+        return Output(attributes: [HTMLAttribute("role", "status"), HTMLAttribute("aria-live", "polite")]) {
+            Heading(.h3, title)
+                .font(size: .sm, weight: .semibold, color: activeTheme.foregroundColor)
+            Paragraph(message)
+                .font(size: .sm, color: activeTheme.foregroundColor)
+                .margins(of: .one, at: .top)
+        }
+        .background(color: activeTheme.surfaceColor)
+        .border(of: 1, color: accent)
+        .padding(activeTheme.spacing(3))
+        .borderRadius(activeTheme.cornerRadius)
+        .makeNodes(locale: locale)
+    }
+}
+
+public struct SheetPanel: Markup {
+    public enum Side: Sendable {
+        case left
+        case right
+        case bottom
+    }
+
+    public let id: String
+    public let triggerLabel: String
+    public let dismissLabel: String
+    public let side: Side
+    private let content: MarkupGroup
+    private let theme: ComponentTheme?
+
+    public init(
+        id: String,
+        triggerLabel: String,
+        dismissLabel: String = "Close",
+        side: Side = .right,
+        theme: ComponentTheme? = nil,
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.id = id
+        self.triggerLabel = triggerLabel
+        self.dismissLabel = dismissLabel
+        self.side = side
+        self.theme = theme
+        self.content = content()
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        let placement = panelPlacementStyles()
+
+        return [
+            AnyMarkup(
+                Button(
+                    triggerLabel,
+                    attributes: [
+                        HTMLAttribute("commandfor", id),
+                        HTMLAttribute("command", "show-modal"),
+                    ]
+                )
+            )
+            .makeNodes(locale: locale)
+            .first ?? .text(""),
+            AnyMarkup(
+                Dialog(attributes: [HTMLAttribute("id", id)]) {
+                    Section {
+                        content
+                        Form(attributes: [HTMLAttribute("method", "dialog")]) {
+                            ActionButton(dismissLabel, tone: .secondary, kind: .submit, theme: activeTheme)
+                        }
+                        .margins(of: .three, at: .top)
+                    }
+                    .background(color: activeTheme.surfaceColor)
+                    .font(color: activeTheme.foregroundColor)
+                    .padding(activeTheme.spacing(4))
+                    .border(of: 1, color: activeTheme.borderColor)
+                    .borderRadius(activeTheme.cornerRadius)
+                    .width(placement.width)
+                    .height(placement.height)
+                    .css(.margin, .keyword("0"))
+                }
+                .css(.padding, .number(0))
+            )
+            .makeNodes(locale: locale)
+            .first ?? .text(""),
+        ]
+    }
+
+    private func panelPlacementStyles() -> (width: CSSValue, height: CSSValue) {
+        switch side {
+        case .left, .right:
+            return (.raw("min(90vw, 26rem)"), .length(100, .percent))
+        case .bottom:
+            return (.length(100, .percent), .raw("min(70vh, 20rem)"))
+        }
+    }
+}
+
+public struct CommandPalette: Markup {
+    public struct Command: Sendable, Equatable {
+        public let value: String
+        public let label: String
+
+        public init(value: String, label: String) {
+            self.value = value
+            self.label = label
+        }
+    }
+
+    public let id: String
+    public let placeholder: String
+    public let commands: [Command]
+    private let theme: ComponentTheme?
+
+    public init(
+        id: String,
+        placeholder: String = "Search commands",
+        commands: [Command],
+        theme: ComponentTheme? = nil
+    ) {
+        self.id = id
+        self.placeholder = placeholder
+        self.commands = commands
+        self.theme = theme
+    }
+
+    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
+        let activeTheme = theme ?? ComponentThemeStore.current
+        let listID = "\(id)-list"
+
+        return Stack {
+            Input(
+                name: id,
+                type: "search",
+                placeholder: placeholder,
+                id: id,
+                list: listID
+            )
+            .padding(activeTheme.spacing(2))
+            .border(of: 1, color: activeTheme.borderColor)
+            .background(color: activeTheme.surfaceColor)
+            .font(color: activeTheme.foregroundColor)
+            .borderRadius(activeTheme.cornerRadius)
+
+            DataList(attributes: [HTMLAttribute("id", listID)]) {
+                for command in commands {
+                    Option(attributes: [HTMLAttribute("value", command.value)]) {
+                        Text(command.label)
+                    }
+                }
+            }
+        }
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 }

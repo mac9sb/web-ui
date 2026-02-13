@@ -118,6 +118,7 @@ public struct ServerBuildConfiguration {
     public var routesRoot: URL
     public var pagesDirectoryName: String
     public var apiDirectoryName: String
+    public var websocketDirectoryName: String
     public var outputDirectory: URL
     public var assetsSourceDirectory: URL
     public var publicAssetsDirectoryName: String
@@ -125,6 +126,8 @@ public struct ServerBuildConfiguration {
     public var pageOverrides: [PageRouteOverride]
     public var apiOverrides: [APIRouteOverride]
     public var apiContractOverrides: [AnyAPIRouteContract]
+    public var websocketOverrides: [WebSocketRouteOverride]
+    public var websocketContractOverrides: [AnyWebSocketRouteContract]
     public var defaultLocale: LocaleCode
     public var locales: [LocaleCode]
     public var baseURL: String?
@@ -133,6 +136,7 @@ public struct ServerBuildConfiguration {
     public var accessibilityAudit: BuildAccessibilityAuditConfiguration
     public var buildMode: ApplicationBuildMode
     public var routeConflictPolicy: RouteConflictPolicy
+    public var strictRouteContracts: Bool
     public var renderOptions: RenderOptions
     public var viewTransition: ViewTransitionConfiguration?
 
@@ -140,6 +144,7 @@ public struct ServerBuildConfiguration {
         routesRoot: URL = URL(filePath: "Routes"),
         pagesDirectoryName: String = "pages",
         apiDirectoryName: String = "api",
+        websocketDirectoryName: String = "ws",
         outputDirectory: URL = URL(filePath: ".output"),
         assetsSourceDirectory: URL = URL(filePath: "Assets"),
         publicAssetsDirectoryName: String = "public",
@@ -147,6 +152,8 @@ public struct ServerBuildConfiguration {
         pageOverrides: [PageRouteOverride] = [],
         apiOverrides: [APIRouteOverride] = [],
         apiContractOverrides: [AnyAPIRouteContract] = [],
+        websocketOverrides: [WebSocketRouteOverride] = [],
+        websocketContractOverrides: [AnyWebSocketRouteContract] = [],
         defaultLocale: LocaleCode = .en,
         locales: [LocaleCode] = [.en],
         baseURL: String? = nil,
@@ -155,12 +162,14 @@ public struct ServerBuildConfiguration {
         accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
+        strictRouteContracts: Bool = false,
         renderOptions: RenderOptions = .init(),
         viewTransition: ViewTransitionConfiguration? = nil
     ) {
         self.routesRoot = routesRoot
         self.pagesDirectoryName = pagesDirectoryName
         self.apiDirectoryName = apiDirectoryName
+        self.websocketDirectoryName = websocketDirectoryName
         self.outputDirectory = outputDirectory
         self.assetsSourceDirectory = assetsSourceDirectory
         self.publicAssetsDirectoryName = publicAssetsDirectoryName
@@ -168,6 +177,8 @@ public struct ServerBuildConfiguration {
         self.pageOverrides = pageOverrides
         self.apiOverrides = apiOverrides
         self.apiContractOverrides = apiContractOverrides
+        self.websocketOverrides = websocketOverrides
+        self.websocketContractOverrides = websocketContractOverrides
         self.defaultLocale = defaultLocale
         self.locales = locales
         self.baseURL = baseURL
@@ -176,6 +187,7 @@ public struct ServerBuildConfiguration {
         self.accessibilityAudit = accessibilityAudit
         self.buildMode = buildMode
         self.routeConflictPolicy = routeConflictPolicy
+        self.strictRouteContracts = strictRouteContracts
         self.renderOptions = renderOptions
         self.viewTransition = viewTransition
     }
@@ -184,6 +196,7 @@ public struct ServerBuildConfiguration {
         routesRoot: URL = URL(filePath: "Routes"),
         pagesDirectoryName: String = "pages",
         apiDirectoryName: String = "api",
+        websocketDirectoryName: String = "ws",
         outputDirectory: URL = URL(filePath: ".output"),
         assetsSourceDirectory: URL = URL(filePath: "Assets"),
         publicAssetsDirectoryName: String = "public",
@@ -197,6 +210,7 @@ public struct ServerBuildConfiguration {
         accessibilityAudit: BuildAccessibilityAuditConfiguration = .init(),
         buildMode: ApplicationBuildMode = .auto,
         routeConflictPolicy: RouteConflictPolicy = .preferOverrides,
+        strictRouteContracts: Bool = false,
         renderOptions: RenderOptions = .init(),
         viewTransition: ViewTransitionConfiguration? = nil
     ) {
@@ -204,6 +218,7 @@ public struct ServerBuildConfiguration {
             routesRoot: routesRoot,
             pagesDirectoryName: pagesDirectoryName,
             apiDirectoryName: apiDirectoryName,
+            websocketDirectoryName: websocketDirectoryName,
             outputDirectory: outputDirectory,
             assetsSourceDirectory: assetsSourceDirectory,
             publicAssetsDirectoryName: publicAssetsDirectoryName,
@@ -211,6 +226,8 @@ public struct ServerBuildConfiguration {
             pageOverrides: overrides.pageOverrides,
             apiOverrides: overrides.apiOverrides,
             apiContractOverrides: overrides.apiContracts,
+            websocketOverrides: overrides.websocketOverrides,
+            websocketContractOverrides: overrides.websocketContracts,
             defaultLocale: defaultLocale,
             locales: locales,
             baseURL: baseURL,
@@ -219,6 +236,7 @@ public struct ServerBuildConfiguration {
             accessibilityAudit: accessibilityAudit,
             buildMode: buildMode,
             routeConflictPolicy: routeConflictPolicy,
+            strictRouteContracts: strictRouteContracts,
             renderOptions: renderOptions,
             viewTransition: viewTransition
         )
@@ -298,6 +316,7 @@ public struct ServerBuildReport: Sendable, Equatable {
     public let pageCount: Int
     public let localeCount: Int
     public let apiRouteCount: Int
+    public let websocketRouteCount: Int
     public let writtenHTMLFiles: [String]
     public let assetManifest: [AssetManifestEntry]
     public let sitemapPath: String?
@@ -311,6 +330,7 @@ public struct ServerBuildReport: Sendable, Equatable {
         pageCount: Int,
         localeCount: Int,
         apiRouteCount: Int,
+        websocketRouteCount: Int,
         writtenHTMLFiles: [String],
         assetManifest: [AssetManifestEntry],
         sitemapPath: String?,
@@ -323,6 +343,7 @@ public struct ServerBuildReport: Sendable, Equatable {
         self.pageCount = pageCount
         self.localeCount = localeCount
         self.apiRouteCount = apiRouteCount
+        self.websocketRouteCount = websocketRouteCount
         self.writtenHTMLFiles = writtenHTMLFiles
         self.assetManifest = assetManifest
         self.sitemapPath = sitemapPath
@@ -336,6 +357,10 @@ public struct ServerBuildReport: Sendable, Equatable {
 public enum ServerBuildError: Error, Equatable {
     case routeConflict(path: String)
     case apiRouteConflict(path: String, method: String)
+    case missingPageDocument(path: String, source: String)
+    case missingAPIHandler(path: String, source: String)
+    case websocketRouteConflict(path: String)
+    case missingWebSocketHandler(path: String, source: String)
     case performanceBudgetExceeded(path: String, errorCount: Int, warningCount: Int)
     case accessibilityAuditFailed(path: String, errorCount: Int, warningCount: Int)
 }
@@ -358,19 +383,28 @@ public struct StaticSiteBuilder {
         let discovered = try RouteDiscovery.discover(
             routesRoot: configuration.routesRoot,
             pagesDirectory: configuration.pagesDirectoryName,
-            apiDirectory: configuration.apiDirectoryName
+            apiDirectory: configuration.apiDirectoryName,
+            websocketDirectory: configuration.websocketDirectoryName
         )
 
         let discoveredPages = discovered.filter { $0.kind == .page }
         let discoveredAPIs = discovered.filter { $0.kind == .api }
+        let discoveredWebSockets = discovered.filter { $0.kind == .websocket }
 
         let pageDocuments = try mergedPageDocuments(discoveredPages: discoveredPages)
         let apiRoutes = try mergedAPIRoutes(discoveredAPIs: discoveredAPIs)
+        let websocketRoutes = try mergedWebSocketRoutes(discoveredWebSockets: discoveredWebSockets)
         let locales = resolvedLocales()
-        let resolvedBuildMode = resolveBuildMode(apiRoutes: apiRoutes)
+        let resolvedBuildMode = resolveBuildMode(apiRoutes: apiRoutes, websocketRoutes: websocketRoutes)
+
+        if configuration.strictRouteContracts {
+            try ensureNoPlaceholderPages(in: pageDocuments)
+            try ensureAPIRoutesHaveHandlers(discoveredAPIs: discoveredAPIs)
+            try ensureWebSocketRoutesHaveHandlers(discoveredWebSockets: discoveredWebSockets)
+        }
 
         if configuration.observability.enabled {
-            logger.info("Resolved mode=\(resolvedBuildMode.rawValue) pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
+            logger.info("Resolved mode=\(resolvedBuildMode.rawValue) pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count) websockets=\(websocketRoutes.count)")
         }
 
         guard resolvedBuildMode == .staticSite else {
@@ -379,6 +413,7 @@ public struct StaticSiteBuilder {
                 pageCount: pageDocuments.count,
                 localeCount: locales.count,
                 apiRouteCount: apiRoutes.count,
+                websocketRouteCount: websocketRoutes.count,
                 writtenHTMLFiles: [],
                 assetManifest: [],
                 sitemapPath: nil,
@@ -435,7 +470,7 @@ public struct StaticSiteBuilder {
         let accessibility = try buildAccessibilityAudit(pages: writtenPages)
 
         if configuration.observability.enabled {
-            logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count)")
+            logger.info("Build complete. pages=\(pageDocuments.count) locales=\(locales.count) apis=\(apiRoutes.count) websockets=\(websocketRoutes.count)")
             if let performanceReport = performance.report {
                 logger.info("Performance audit complete. pages=\(performanceReport.pages.count) hasErrors=\(performanceReport.hasErrors) hasWarnings=\(performanceReport.hasWarnings)")
             }
@@ -449,6 +484,7 @@ public struct StaticSiteBuilder {
             pageCount: pageDocuments.count,
             localeCount: locales.count,
             apiRouteCount: apiRoutes.count,
+            websocketRouteCount: websocketRoutes.count,
             writtenHTMLFiles: writtenHTMLFiles.sorted(),
             assetManifest: assetManifest,
             sitemapPath: sitemapPath,
@@ -526,6 +562,64 @@ public struct StaticSiteBuilder {
         return routes
     }
 
+    private func mergedWebSocketRoutes(discoveredWebSockets: [DiscoveredRoute]) throws -> Set<ResolvedWebSocketRoute> {
+        var routes: Set<ResolvedWebSocketRoute> = []
+
+        for discovered in discoveredWebSockets {
+            let route = ResolvedWebSocketRoute(path: normalizeWebSocketPath(discovered.path))
+            try registerWebSocketRoute(route, into: &routes, isOverride: false)
+        }
+
+        for override in configuration.websocketOverrides {
+            let route = ResolvedWebSocketRoute(path: normalizeWebSocketPath(override.path))
+            try registerWebSocketRoute(route, into: &routes, isOverride: true)
+        }
+
+        for override in configuration.websocketContractOverrides {
+            let route = ResolvedWebSocketRoute(path: normalizeWebSocketPath(override.path))
+            try registerWebSocketRoute(route, into: &routes, isOverride: true)
+        }
+
+        return routes
+    }
+
+    private func ensureNoPlaceholderPages(in pageDocuments: [String: any Document]) throws {
+        for (path, document) in pageDocuments {
+            guard let placeholder = document as? PlaceholderDiscoveredDocument else {
+                continue
+            }
+            throw ServerBuildError.missingPageDocument(path: path, source: placeholder.source)
+        }
+    }
+
+    private func ensureAPIRoutesHaveHandlers(discoveredAPIs: [DiscoveredRoute]) throws {
+        let registeredPaths = Set(
+            configuration.apiOverrides.map { normalizePath($0.path) } +
+            configuration.apiContractOverrides.map { normalizePath($0.path) }
+        )
+
+        for discovered in discoveredAPIs {
+            let path = normalizePath(discovered.path)
+            if !registeredPaths.contains(path) {
+                throw ServerBuildError.missingAPIHandler(path: path, source: discovered.source)
+            }
+        }
+    }
+
+    private func ensureWebSocketRoutesHaveHandlers(discoveredWebSockets: [DiscoveredRoute]) throws {
+        let registeredPaths = Set(
+            configuration.websocketOverrides.map { normalizeWebSocketPath($0.path) } +
+            configuration.websocketContractOverrides.map { normalizeWebSocketPath($0.path) }
+        )
+
+        for discovered in discoveredWebSockets {
+            let path = normalizeWebSocketPath(discovered.path)
+            if !registeredPaths.contains(path) {
+                throw ServerBuildError.missingWebSocketHandler(path: path, source: discovered.source)
+            }
+        }
+    }
+
     private func registerPageRoute(
         path: String,
         document: any Document,
@@ -564,11 +658,41 @@ public struct StaticSiteBuilder {
         routes.insert(route)
     }
 
+    private func registerWebSocketRoute(
+        _ route: ResolvedWebSocketRoute,
+        into routes: inout Set<ResolvedWebSocketRoute>,
+        isOverride: Bool
+    ) throws {
+        if routes.contains(route) {
+            switch configuration.routeConflictPolicy {
+            case .failBuild:
+                throw ServerBuildError.websocketRouteConflict(path: route.path)
+            case .preferOverrides:
+                if !isOverride {
+                    return
+                }
+                routes.remove(route)
+            }
+        }
+        routes.insert(route)
+    }
+
     private func normalizePath(_ path: String) -> String {
         if path.isEmpty { return "/" }
         if path == "index" { return "/" }
         if path.hasPrefix("/") { return path }
         return "/\(path)"
+    }
+
+    private func normalizeWebSocketPath(_ path: String) -> String {
+        let normalized = normalizePath(path)
+        if normalized == "/ws" || normalized.hasPrefix("/ws/") {
+            return normalized
+        }
+        if normalized == "/" {
+            return "/ws"
+        }
+        return "/ws\(normalized)"
     }
 
     private func writeHTML(_ html: String, forRoutePath routePath: String) throws -> URL {
@@ -848,10 +972,13 @@ public struct StaticSiteBuilder {
         return String(format: "%016llx", hash)
     }
 
-    private func resolveBuildMode(apiRoutes: Set<ResolvedAPIRoute>) -> ResolvedApplicationBuildMode {
+    private func resolveBuildMode(
+        apiRoutes: Set<ResolvedAPIRoute>,
+        websocketRoutes: Set<ResolvedWebSocketRoute>
+    ) -> ResolvedApplicationBuildMode {
         switch configuration.buildMode {
         case .auto:
-            return apiRoutes.isEmpty ? .staticSite : .serverSide
+            return apiRoutes.isEmpty && websocketRoutes.isEmpty ? .staticSite : .serverSide
         case .staticSite:
             return .staticSite
         case .serverSide:
@@ -863,6 +990,10 @@ public struct StaticSiteBuilder {
 private struct ResolvedAPIRoute: Hashable {
     let path: String
     let method: String
+}
+
+private struct ResolvedWebSocketRoute: Hashable {
+    let path: String
 }
 
 private struct PlaceholderDiscoveredDocument: Document {

@@ -1,24 +1,47 @@
 import Testing
-@testable import AxiomWebCodegen
 @testable import AxiomWebUI
 
 @Suite("HTML Coverage")
 struct HTMLCoverageTests {
-    @Test("Tag enum aligns to HTML spec snapshot")
-    func tagEnumAlignsToSpecSnapshot() {
-        let snapshot = CodegenSpecRegistry.builtinSnapshot(for: .htmlElements)
-        let tags = Set(snapshot.entries)
-        #expect(tags == HTMLTagName.supportedNames)
+    @Test("Tag enum aligns to DSL coverage registry")
+    func tagEnumAlignsToDSLCoverageRegistry() {
+        #expect(HTMLTagName.supportedNames == HTMLTagName.dslCoveredNames)
     }
 
-    @Test("DSL members cover every HTML tag")
-    func dslMembersCoverEveryHTMLTag() {
-        #expect(HTMLTagName.dslCoveredNames == HTMLTagName.supportedNames)
+    @Test("Typed DSL source coverage matches HTML tag enum")
+    func dslSourceCoverageMatchesHTMLTagEnum() throws {
+        let packageRoot = SourceParitySupport.packageRoot()
+        let elementsRoot = packageRoot.appending(path: "Sources/AxiomWebUI/Elements")
+        let files = try SourceParitySupport.swiftFileContents(in: elementsRoot)
+
+        var discovered: Set<String> = []
+        for source in files.values {
+            let enumBackedTags = SourceParitySupport.allMatches(
+                pattern: #"tagName\s*:\s*HTMLTagName\s*=\s*\.(`?[A-Za-z0-9_]+`?)"#,
+                in: source
+            ).map { $0.replacingOccurrences(of: "`", with: "") }
+
+            let explicitElementTags = SourceParitySupport.allMatches(
+                pattern: #"HTMLElementNode\s*\(\s*tag:\s*"([a-z0-9]+)""#,
+                in: source
+            )
+
+            let nodeTags = SourceParitySupport.allMatches(
+                pattern: #"Node\s*\(\s*"([a-z0-9]+)""#,
+                in: source
+            )
+
+            discovered.formUnion(enumBackedTags)
+            discovered.formUnion(explicitElementTags)
+            discovered.formUnion(nodeTags)
+        }
+
+        #expect(discovered == HTMLTagName.supportedNames)
     }
 
-    @Test("Snapshot includes modern broad HTML coverage")
-    func snapshotIncludesModernBroadCoverage() {
-        let tags = Set(CodegenSpecRegistry.builtinSnapshot(for: .htmlElements).entries)
+    @Test("Tag enum includes modern broad HTML coverage")
+    func tagEnumIncludesModernBroadCoverage() {
+        let tags = HTMLTagName.supportedNames
 
         #expect(tags.contains("article"))
         #expect(tags.contains("dialog"))
@@ -54,11 +77,10 @@ struct HTMLCoverageTests {
         #expect(html.contains("<img src=\"/hero.png\" alt=\"Hero\">"))
     }
 
-    @Test("HTML snapshot is deterministic and unique")
-    func snapshotIsDeterministicAndUnique() {
-        let snapshot = CodegenSpecRegistry.builtinSnapshot(for: .htmlElements)
-        #expect(snapshot.version == "baseline-2026-02-12")
-        #expect(snapshot.entries == snapshot.entries.sorted())
-        #expect(Set(snapshot.entries).count == snapshot.entries.count)
+    @Test("HTML tag enum is deterministic and unique")
+    func htmlTagEnumIsDeterministicAndUnique() {
+        let entries = HTMLTagName.allCases.map(\.rawValue)
+        #expect(entries.sorted() == entries)
+        #expect(Set(entries).count == entries.count)
     }
 }

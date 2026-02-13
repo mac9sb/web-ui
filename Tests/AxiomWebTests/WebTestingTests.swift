@@ -361,4 +361,65 @@ struct WebTestingTests {
         )
         #expect((gateFailureCounter.lastValue ?? 0) >= 1)
     }
+
+#if canImport(WebKit)
+    @Test("BrowserPage supports click, fill, submit, and attribute flows")
+    @MainActor
+    func browserPageSupportsInteractionFlow() async throws {
+        let page = BrowserPage()
+        let html = """
+<!doctype html>
+<html lang="en">
+  <body>
+    <main>
+      <p id="count">0</p>
+      <button id="inc" type="button" onclick="const c=document.getElementById('count');c.textContent=String((parseInt(c.textContent,10)||0)+1)">Inc</button>
+      <form id="profile" onsubmit="event.preventDefault();document.getElementById('status').textContent='submitted:'+document.getElementById('name').value;">
+        <input id="name" name="name" value="">
+        <button id="save" type="submit">Save</button>
+      </form>
+      <p id="status"></p>
+    </main>
+  </body>
+</html>
+"""
+
+        try await page.setHTML(html)
+        try await page.click("#inc")
+        #expect(try await page.textContent(of: "#count") == "1")
+
+        try await page.fill("#name", with: "Axiom")
+        #expect(try await page.attribute(of: "#name", name: "name") == "name")
+
+        try await page.submit("#profile")
+        try await page.waitForText("submitted:Axiom", in: "#status")
+        #expect(try await page.textContent(of: "#status") == "submitted:Axiom")
+    }
+
+    @Test("BrowserPage waits for async DOM updates and emits normalized snapshots")
+    @MainActor
+    func browserPageWaitAndSnapshotFlow() async throws {
+        let page = BrowserPage()
+        let html = """
+<!doctype html>
+<html lang="en">
+  <body>
+    <main>
+      <p id="async">pending</p>
+      <script>
+        setTimeout(function(){
+          document.getElementById('async').textContent = 'ready';
+        }, 20);
+      </script>
+    </main>
+  </body>
+</html>
+"""
+
+        try await page.setHTML(html)
+        try await page.waitForText("ready", in: "#async", timeout: .seconds(2), pollEvery: .milliseconds(20))
+        let snapshot = try await page.normalizedSnapshot()
+        #expect(snapshot.contains("id=\"async\">ready</p>"))
+    }
+#endif
 }

@@ -91,7 +91,7 @@ struct RuntimeInteractivityTests {
             var path: String { "/" }
 
             var body: some Markup {
-                Node("canvas", attributes: [
+                Canvas(attributes: [
                     HTMLAttribute("id", "render-canvas"),
                     HTMLAttribute(WasmDOMCodec.moduleAttribute, "/assets/wasm/renderer.mjs"),
                 ])

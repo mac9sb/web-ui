@@ -3,6 +3,7 @@ import HTTPTypes
 
 public enum APIRouteResolutionError: Error, Equatable {
     case routeConflict(path: String, method: String)
+    case missingHandlerForDiscoveredRoute(path: String)
 }
 
 public enum APIRouteResolver {
@@ -11,18 +12,18 @@ public enum APIRouteResolver {
         apiDirectory: String = "api",
         overrides: [APIRouteHandler] = [],
         contracts: [AnyAPIRouteContract] = [],
-        conflictPolicy: RouteConflictPolicy = .preferOverrides
+        conflictPolicy: RouteConflictPolicy = .preferOverrides,
+        strictContracts: Bool = false
     ) throws -> [APIRouteHandler] {
-        let discovered = try RouteDiscovery.discover(routesRoot: routesRoot, pagesDirectory: "pages", apiDirectory: apiDirectory)
+        let discovered = try RouteDiscovery.discover(
+            routesRoot: routesRoot,
+            pagesDirectory: "pages",
+            apiDirectory: apiDirectory,
+            websocketDirectory: "ws"
+        )
             .filter { $0.kind == .api }
 
         var byKey: [RouteKey: APIRouteHandler] = [:]
-
-        for route in discovered {
-            let normalizedPath = normalizePath(route.path)
-            let handler = placeholderHandler(path: normalizedPath)
-            try register(handler: handler, into: &byKey, conflictPolicy: conflictPolicy, override: false)
-        }
 
         for override in overrides {
             try register(handler: normalize(handler: override), into: &byKey, conflictPolicy: conflictPolicy, override: true)
@@ -30,6 +31,28 @@ public enum APIRouteResolver {
 
         for contract in contracts {
             try register(handler: normalize(handler: contract.asRouteHandler()), into: &byKey, conflictPolicy: conflictPolicy, override: true)
+        }
+
+        for route in discovered {
+            let normalizedPath = normalizePath(route.path)
+            let getKey = RouteKey(path: normalizedPath, method: HTTPRequest.Method.get.rawValue.uppercased())
+            if byKey[getKey] != nil {
+                if conflictPolicy == .failBuild {
+                    throw APIRouteResolutionError.routeConflict(path: normalizedPath, method: getKey.method)
+                }
+                continue
+            }
+
+            let hasRegisteredHandler = byKey.keys.contains { $0.path == normalizedPath }
+            if hasRegisteredHandler {
+                continue
+            }
+            if strictContracts {
+                throw APIRouteResolutionError.missingHandlerForDiscoveredRoute(path: normalizedPath)
+            }
+
+            let handler = placeholderHandler(path: normalizedPath)
+            try register(handler: handler, into: &byKey, conflictPolicy: conflictPolicy, override: false)
         }
 
         return byKey

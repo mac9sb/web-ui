@@ -1,5 +1,4 @@
 @_exported import AxiomWebCLI
-@_exported import AxiomWebCodegen
 @_exported import AxiomWebI18n
 @_exported import AxiomWebMarkdown
 @_exported import AxiomWebRender

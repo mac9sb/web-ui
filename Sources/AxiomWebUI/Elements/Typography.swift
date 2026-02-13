@@ -1,19 +1,22 @@
 import Foundation
 import AxiomWebI18n
 
-public struct Paragraph: Markup {
+public struct Paragraph: HTMLTagElement {
+    public static let tagName: HTMLTagName = .p
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
     }
 
-    public init(_ value: String) {
-        self.content = [AnyMarkup(Text(value))]
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "p", children: content.flatMap { $0.makeNodes(locale: locale) }))]
+    public init(_ value: String, attributes: [HTMLAttribute] = []) {
+        self.attributes = attributes
+        self.content = [AnyMarkup(RawText(value))]
     }
 }
 
@@ -42,28 +45,20 @@ public struct Heading: Markup {
     }
 }
 
-public struct Link: Markup {
-    public let href: String
+public struct Link: HTMLTagElement {
+    public static let tagName: HTMLTagName = .a
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
     public init(_ href: String, @MarkupBuilder content: () -> MarkupGroup) {
-        self.href = href
+        self.attributes = [HTMLAttribute("href", href)]
         self.content = content().content
     }
 
     public init(_ title: String, href: String) {
-        self.href = href
-        self.content = [AnyMarkup(Text(title))]
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(
-            HTMLElementNode(
-                tag: "a",
-                attributes: [HTMLAttribute("href", href)],
-                children: content.flatMap { $0.makeNodes(locale: locale) }
-            )
-        )]
+        self.init(href) {
+            RawText(title)
+        }
     }
 }
 

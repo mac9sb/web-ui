@@ -32,14 +32,35 @@ public enum AccessibilityReportFormatOption: String, ExpressibleByArgument {
     }
 }
 
+public enum BuildModeOption: String, ExpressibleByArgument {
+    case auto
+    case staticSite
+    case serverSide
+
+    var buildMode: ApplicationBuildMode {
+        switch self {
+        case .auto:
+            return .auto
+        case .staticSite:
+            return .staticSite
+        case .serverSide:
+            return .serverSide
+        }
+    }
+}
+
 public struct AxiomWebBuildCommand: ParsableCommand {
     public static let configuration = CommandConfiguration(
-        commandName: "axiomweb-build",
-        abstract: "Build a static AxiomWeb site from Routes and Assets"
+        commandName: "build",
+        abstract: "Build a static AxiomWeb site from Routes and Assets",
+        aliases: ["axiomweb-build"]
     )
 
     @Option(help: "Output directory for generated static site")
     public var output: String = ".output"
+
+    @Option(help: "Build mode: auto, staticSite, or serverSide")
+    public var buildMode: BuildModeOption = .auto
 
     @Option(help: "Base URL for sitemap generation")
     public var baseURL: String?
@@ -92,6 +113,9 @@ public struct AxiomWebBuildCommand: ParsableCommand {
     @Option(help: "Custom accessibility report file path relative to output directory")
     public var accessibilityReportFile: String?
 
+    @Flag(help: "Fail build when discovered page/API route files are missing typed contracts/handlers")
+    public var strictRouteContracts: Bool = false
+
     public init() {}
 
     public mutating func run() throws {
@@ -134,11 +158,14 @@ public struct AxiomWebBuildCommand: ParsableCommand {
                 reportFormat: accessibilityReportFormat.reportFormat,
                 writeReport: true,
                 reportFileName: accessibilityReportFile
-            )
+            ),
+            buildMode: buildMode.buildMode,
+            strictRouteContracts: strictRouteContracts
         )
         let report = try StaticSiteBuilder(configuration: config).build()
         print("Built \(report.pageCount) page routes across \(report.localeCount) locale(s)")
         print("API routes discovered: \(report.apiRouteCount)")
+        print("WebSocket routes discovered: \(report.websocketRouteCount)")
         if let sitemapPath = report.sitemapPath {
             print("Sitemap: \(sitemapPath)")
         }
@@ -163,4 +190,18 @@ public enum AxiomWebCLI {
     public static func buildSite(_ config: ServerBuildConfiguration = .init()) throws -> ServerBuildReport {
         try StaticSiteBuilder(configuration: config).build()
     }
+}
+
+public struct AxiomWebCommand: ParsableCommand {
+    public static let configuration = CommandConfiguration(
+        commandName: "axiomweb",
+        abstract: "AxiomWeb build and project tooling",
+        subcommands: [
+            AxiomWebBuildCommand.self,
+            AxiomWebInitCommand.self,
+        ],
+        defaultSubcommand: AxiomWebBuildCommand.self
+    )
+
+    public init() {}
 }

@@ -3,6 +3,7 @@ import Foundation
 public enum RouteKind: Sendable, Equatable {
     case page
     case api
+    case websocket
 }
 
 public struct DiscoveredRoute: Sendable, Equatable {
@@ -25,19 +26,25 @@ public enum RoutePathInference {
     public static func apiPath(fromSource source: String) -> String {
         path(fromRelativeSource: source, prefix: "/api")
     }
+
+    public static func websocketPath(fromSource source: String) -> String {
+        path(fromRelativeSource: source, prefix: "/ws")
+    }
 }
 
 public enum RouteDiscovery {
     public static func discover(
         routesRoot: URL,
         pagesDirectory: String = "pages",
-        apiDirectory: String = "api"
+        apiDirectory: String = "api",
+        websocketDirectory: String = "ws"
     ) throws -> [DiscoveredRoute] {
         var routes: [DiscoveredRoute] = []
         let fileManager = FileManager.default
 
         let pagesRoot = routesRoot.appending(path: pagesDirectory)
         let apiRoot = routesRoot.appending(path: apiDirectory)
+        let websocketRoot = routesRoot.appending(path: websocketDirectory)
 
         if fileManager.fileExists(atPath: pagesRoot.path()) {
             routes.append(contentsOf: try discoverRoutes(in: pagesRoot, kind: .page, prefix: ""))
@@ -47,11 +54,15 @@ public enum RouteDiscovery {
             routes.append(contentsOf: try discoverRoutes(in: apiRoot, kind: .api, prefix: "/api"))
         }
 
+        if fileManager.fileExists(atPath: websocketRoot.path()) {
+            routes.append(contentsOf: try discoverRoutes(in: websocketRoot, kind: .websocket, prefix: "/ws"))
+        }
+
         return routes.sorted {
             if $0.kind == $1.kind {
                 return $0.path < $1.path
             }
-            return ($0.kind == .page && $1.kind == .api)
+            return kindSortOrder($0.kind) < kindSortOrder($1.kind)
         }
     }
 
@@ -75,6 +86,17 @@ public enum RouteDiscovery {
         }
 
         return routes
+    }
+
+    private static func kindSortOrder(_ kind: RouteKind) -> Int {
+        switch kind {
+        case .page:
+            return 0
+        case .api:
+            return 1
+        case .websocket:
+            return 2
+        }
     }
 
 }

@@ -131,6 +131,15 @@ public enum FlexAlign: String, Sendable {
     case end
 }
 
+public enum FlexJustify: String, Sendable {
+    case start
+    case center
+    case end
+    case between
+    case around
+    case evenly
+}
+
 public enum PositionType: String, Sendable {
     case relative
     case absolute

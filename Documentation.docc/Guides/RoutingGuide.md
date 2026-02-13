@@ -15,6 +15,11 @@ AxiomWeb uses convention-first route discovery with optional typed overrides.
 - `Routes/api/hello.swift` -> `/api/hello`
 - `Routes/api/path/goodbye.swift` -> `/api/path/goodbye`
 
+### WebSockets
+
+- `Routes/ws/echo.swift` -> `/ws/echo`
+- `Routes/ws/path/updates.swift` -> `/ws/path/updates`
+
 ### Dynamic Segments
 
 - `Routes/pages/blog/[slug].swift` -> `/blog/:slug`
@@ -68,9 +73,8 @@ struct HelloPost: APIRouteContract {
 
 `ServerBuildConfiguration.buildMode` supports:
 
-- `.auto` (default): resolves to `.serverSide` if API routes exist, otherwise `.staticSite`
+- `.auto` (default): resolves to `.serverSide` if API or websocket routes exist, otherwise `.staticSite`
 - `.staticSite`: always emit static output
 - `.serverSide`: skip static artifact emission
 
 This allows static-first behavior by discovery while preserving explicit overrides.
-

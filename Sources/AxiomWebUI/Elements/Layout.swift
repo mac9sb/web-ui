@@ -1,63 +1,73 @@
 import Foundation
 import AxiomWebI18n
 
-public struct Stack: Markup {
+public struct Stack: HTMLTagElement {
+    public static let tagName: HTMLTagName = .div
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup = { MarkupGroup([]) }
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "div", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 
-public struct Main: Markup {
+public struct Main: HTMLTagElement {
+    public static let tagName: HTMLTagName = .main
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "main", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 
-public struct Header: Markup {
+public struct Header: HTMLTagElement {
+    public static let tagName: HTMLTagName = .header
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "header", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 
-public struct Footer: Markup {
+public struct Footer: HTMLTagElement {
+    public static let tagName: HTMLTagName = .footer
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "footer", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 
-public struct Section: Markup {
+public struct Section: HTMLTagElement {
+    public static let tagName: HTMLTagName = .section
+    public let attributes: [HTMLAttribute]
     public let content: [AnyMarkup]
 
-    public init(@MarkupBuilder content: () -> MarkupGroup) {
+    public init(
+        attributes: [HTMLAttribute] = [],
+        @MarkupBuilder content: () -> MarkupGroup
+    ) {
+        self.attributes = attributes
         self.content = content().content
-    }
-
-    public func makeNodes(locale: LocaleCode) -> [HTMLNode] {
-        [.element(HTMLElementNode(tag: "section", children: content.flatMap { $0.makeNodes(locale: locale) }))]
     }
 }
 

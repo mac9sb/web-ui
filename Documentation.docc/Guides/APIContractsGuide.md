@@ -6,6 +6,7 @@ AxiomWeb supports typed API handlers with one or multiple methods on a single ro
 
 - `Routes/api/hello.swift` maps to `/api/hello`
 - `Routes/api/path/goodbye.swift` maps to `/api/path/goodbye`
+- `Routes/ws/echo.swift` maps to `/ws/echo` (websocket route files are separate from REST API files)
 
 Path is inferred from file location by default.
 
@@ -60,8 +61,33 @@ import AxiomWebServer
 
 let config = ServerBuildConfiguration(
     outputDirectory: URL(filePath: ".output"),
-    overrides: overrides
+    overrides: overrides,
+    strictRouteContracts: true
 )
 ```
 
 The same typed route contracts are used by static-build route resolution and server runtime routing.
+
+## WebSocket Contracts
+
+Use websocket contracts/handlers for `Routes/ws/**` paths.
+
+```swift
+import AxiomWebServer
+
+var overrides = RouteOverrides()
+overrides.websocket(from: "echo.swift") { message, _ in
+    message
+}
+```
+
+## Runtime Strict Mode
+
+For server runtime route resolution, enable strict contract enforcement:
+
+```swift
+let runtime = try AxiomWebServerRuntime(
+    overrides: overrides,
+    strictContracts: true
+)
+```

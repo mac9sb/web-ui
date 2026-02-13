@@ -7,7 +7,6 @@ public extension CSSProperty {
     static let alignSelf: CSSProperty = "align-self"
     static let columnCount: CSSProperty = "column-count"
     static let columnFill: CSSProperty = "column-fill"
-    static let columnGap: CSSProperty = "column-gap"
     static let columnRule: CSSProperty = "column-rule"
     static let columnRuleColor: CSSProperty = "column-rule-color"
     static let columnRuleStyle: CSSProperty = "column-rule-style"
@@ -44,7 +43,6 @@ public extension CSSProperty {
     static let placeContent: CSSProperty = "place-content"
     static let placeItems: CSSProperty = "place-items"
     static let placeSelf: CSSProperty = "place-self"
-    static let rowGap: CSSProperty = "row-gap"
 }
 
 public extension Markup {
@@ -66,10 +64,6 @@ public extension Markup {
 
     func columnFill(_ value: CSSValue) -> some Markup {
         css(.columnFill, value)
-    }
-
-    func columnGap(_ value: CSSValue) -> some Markup {
-        css(.columnGap, value)
     }
 
     func columnRule(_ value: CSSValue) -> some Markup {
@@ -216,10 +210,6 @@ public extension Markup {
         css(.placeSelf, value)
     }
 
-    func rowGap(_ value: CSSValue) -> some Markup {
-        css(.rowGap, value)
-    }
-
 }
 
 public extension VariantScope {
@@ -241,10 +231,6 @@ public extension VariantScope {
 
     func columnFill(_ value: CSSValue) {
         css(.columnFill, value)
-    }
-
-    func columnGap(_ value: CSSValue) {
-        css(.columnGap, value)
     }
 
     func columnRule(_ value: CSSValue) {
@@ -389,10 +375,6 @@ public extension VariantScope {
 
     func placeSelf(_ value: CSSValue) {
         css(.placeSelf, value)
-    }
-
-    func rowGap(_ value: CSSValue) {
-        css(.rowGap, value)
     }
 
 }

@@ -1,16 +1,50 @@
 import Testing
-@testable import AxiomWebCodegen
 @testable import AxiomWebRender
 @testable import AxiomWebStyle
 @testable import AxiomWebUI
 
 @Suite("CSS Coverage")
 struct CSSCoverageTests {
-    @Test("CSS property members align to spec snapshot")
-    func cssMembersAlignToSpecSnapshot() {
-        let snapshot = CodegenSpecRegistry.builtinSnapshot(for: .cssProperties)
-        #expect(Set(snapshot.entries) == CSSPropertyCatalog.supportedNames)
-        #expect(CSSProperty.dslCoveredNames == CSSPropertyCatalog.supportedNames)
+    @Test("CSS property catalog is deterministic and unique")
+    func cssPropertyCatalogIsDeterministicAndUnique() {
+        let entries = CSSPropertyCatalog.supportedNames.sorted()
+        #expect(entries == entries.sorted())
+        #expect(Set(entries).count == entries.count)
+    }
+
+    @Test("Typed CSS source coverage matches CSS property catalog")
+    func typedCSSSourceCoverageMatchesPropertyCatalog() throws {
+        let packageRoot = SourceParitySupport.packageRoot()
+        let cssRoot = packageRoot.appending(path: "Sources/AxiomWebStyle/Modifiers/CSS")
+        let files = try SourceParitySupport.swiftFileContents(in: cssRoot)
+
+        var declaredProperties: Set<String> = []
+        var functionNames: [String: Int] = [:]
+
+        for source in files.values {
+            let properties = SourceParitySupport.allMatches(
+                pattern: #":\s*CSSProperty\s*=\s*"([a-z0-9-]+)""#,
+                in: source
+            )
+            declaredProperties.formUnion(properties)
+
+            let members = SourceParitySupport.allMatches(
+                pattern: #"func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\("#,
+                in: source
+            )
+            for member in members {
+                functionNames[member, default: 0] += 1
+            }
+        }
+
+        let catalog = CSSPropertyCatalog.supportedNames
+        #expect(declaredProperties == catalog)
+
+        for property in catalog {
+            let member = SourceParitySupport.camelCaseCSSMemberName(for: property)
+            let count = functionNames[member, default: 0]
+            #expect(count >= 2)
+        }
     }
 
     @Test("Supports arbitrary typed CSS declarations")

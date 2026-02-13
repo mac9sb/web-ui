@@ -57,12 +57,21 @@ Theme knobs include:
 ## Additional Native-First Components
 
 - `Breadcrumbs`
+- `NavigationMenu`
 - `Pagination`
 - `ProgressBar`
 - `Separator`
+- `Collapsible`
+- `ScrollArea`
+- `AspectRatioFrame`
 - `Avatar`
 - `Skeleton`
 - `CheckboxField`
 - `SwitchField`
 - `SelectField`
 - `DataTable`
+- `Tabs`
+- `Tooltip`
+- `ToastMessage`
+- `SheetPanel`
+- `CommandPalette`

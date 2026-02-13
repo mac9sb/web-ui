@@ -238,17 +238,26 @@ public struct RouteOverrides {
     public private(set) var apiOverrides: [APIRouteOverride]
     public private(set) var apiContracts: [AnyAPIRouteContract]
     public private(set) var apiHandlers: [APIRouteHandler]
+    public private(set) var websocketOverrides: [WebSocketRouteOverride]
+    public private(set) var websocketContracts: [AnyWebSocketRouteContract]
+    public private(set) var websocketHandlers: [WebSocketRouteHandler]
 
     public init(
         pageOverrides: [PageRouteOverride] = [],
         apiOverrides: [APIRouteOverride] = [],
         apiContracts: [AnyAPIRouteContract] = [],
-        apiHandlers: [APIRouteHandler] = []
+        apiHandlers: [APIRouteHandler] = [],
+        websocketOverrides: [WebSocketRouteOverride] = [],
+        websocketContracts: [AnyWebSocketRouteContract] = [],
+        websocketHandlers: [WebSocketRouteHandler] = []
     ) {
         self.pageOverrides = pageOverrides
         self.apiOverrides = apiOverrides
         self.apiContracts = apiContracts
         self.apiHandlers = apiHandlers
+        self.websocketOverrides = websocketOverrides
+        self.websocketContracts = websocketContracts
+        self.websocketHandlers = websocketHandlers
     }
 
     public mutating func page(_ path: String, document: any Document) {
@@ -354,9 +363,41 @@ public struct RouteOverrides {
         api(RoutePathInference.apiPath(fromSource: source), methods: methods, handle: handle)
     }
 
+    public mutating func websocket(_ path: String) {
+        websocketOverrides.append(WebSocketRouteOverride(path: path))
+    }
+
+    public mutating func websocket(from source: String) {
+        websocket(RoutePathInference.websocketPath(fromSource: source))
+    }
+
+    public mutating func websocket<C: WebSocketRouteContract>(_ contract: C) {
+        register(websocketContract: AnyWebSocketRouteContract(contract))
+    }
+
+    public mutating func websocket(
+        _ path: String,
+        handle: @escaping @Sendable (WebSocketMessage, WebSocketConnectionContext) async throws -> WebSocketMessage?
+    ) {
+        register(websocketContract: AnyWebSocketRouteContract(path: path, handle: handle))
+    }
+
+    public mutating func websocket(
+        from source: String,
+        handle: @escaping @Sendable (WebSocketMessage, WebSocketConnectionContext) async throws -> WebSocketMessage?
+    ) {
+        websocket(RoutePathInference.websocketPath(fromSource: source), handle: handle)
+    }
+
     private mutating func register(contract: AnyAPIRouteContract) {
         apiContracts.append(contract)
         apiOverrides.append(APIRouteOverride(path: contract.path, method: contract.method.rawValue))
         apiHandlers.append(contract.asRouteHandler())
+    }
+
+    private mutating func register(websocketContract: AnyWebSocketRouteContract) {
+        websocketContracts.append(websocketContract)
+        websocketOverrides.append(WebSocketRouteOverride(path: websocketContract.path))
+        websocketHandlers.append(websocketContract.asRouteHandler())
     }
 }

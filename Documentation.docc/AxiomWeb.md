@@ -11,6 +11,9 @@ AxiomWeb is a modular Swift web framework ecosystem focused on typed generation 
 - <doc:BuildModesGuide>
 - <doc:RuntimeInteractivityGuide>
 - <doc:ComponentsGuide>
+- <doc:FullStackGuide>
+- <doc:DataAndFormsGuide>
+- <doc:WasmGuide>
 - <doc:LocalizationGuide>
 - <doc:ViewTransitionsGuide>
 - <doc:StructuredDataGuide>

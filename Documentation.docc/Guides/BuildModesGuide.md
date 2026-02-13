@@ -10,8 +10,8 @@ AxiomWeb supports three build modes through `ServerBuildConfiguration.buildMode`
 
 Auto mode resolution:
 
-- if discovered API routes are empty -> `.staticSite`
-- if discovered API routes exist -> `.serverSide`
+- if discovered API and websocket routes are empty -> `.staticSite`
+- if discovered API or websocket routes exist -> `.serverSide`
 
 ## Configuration
 
@@ -33,8 +33,25 @@ axiomweb-build --build-mode staticSite
 axiomweb-build --build-mode serverSide
 ```
 
+## Strict Route Contract Validation
+
+Enable strict route validation when you want builds to fail if discovered route files do not have typed route registrations:
+
+```bash
+axiomweb-build --strict-route-contracts
+```
+
+In Swift:
+
+```swift
+let config = ServerBuildConfiguration(
+    outputDirectory: URL(filePath: ".output"),
+    strictRouteContracts: true
+)
+```
+
 ## Full-Stack vs Static
 
-Use `.serverSide` when you are shipping a Swift server binary with API routes and server integrations.
+Use `.serverSide` when you are shipping a Swift server binary with API/websocket routes and server integrations.
 
 Use `.staticSite` when you only need generated static output for deployment to static hosting/CDN.

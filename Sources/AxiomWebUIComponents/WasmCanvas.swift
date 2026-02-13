@@ -57,29 +57,26 @@ public struct WasmCanvas: Markup {
         }
 
         return Stack {
-            Node("canvas", attributes: canvasAttributes)
+            Canvas(attributes: canvasAttributes)
                 .display(.keyword("block"))
                 .width(.keyword("100%"))
                 .background(color: activeTheme.surfaceColor)
                 .border(of: 1, color: activeTheme.borderColor)
                 .borderRadius(activeTheme.cornerRadius)
-            Node(
-                "p",
+            Paragraph(
+                fallbackMessage,
                 attributes: [
                     HTMLAttribute("class", "ax-wasm-fallback"),
                     HTMLAttribute(WasmDOMCodec.fallbackAttribute, id),
                 ]
-            ) {
-                Text(fallbackMessage)
-            }
+            )
             .font(size: .sm, color: activeTheme.mutedColor)
             .margins(of: .two, at: .top)
-            Node("noscript") {
+            NoScript {
                 Paragraph(fallbackMessage)
             }
         }
-        .display(.keyword("grid"))
-        .rowGap(activeTheme.spacing(1))
+        .grid(gap: activeTheme.spacing(1))
         .makeNodes(locale: locale)
     }
 }

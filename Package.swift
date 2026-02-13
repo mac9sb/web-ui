@@ -17,7 +17,6 @@ let package = Package(
         .library(name: "AxiomWebUIComponents", targets: ["AxiomWebUIComponents"]),
         .library(name: "AxiomWebTesting", targets: ["AxiomWebTesting"]),
         .library(name: "AxiomWebServer", targets: ["AxiomWebServer"]),
-        .library(name: "AxiomWebCodegen", targets: ["AxiomWebCodegen"]),
         .library(name: "AxiomWebCLI", targets: ["AxiomWebCLI"]),
         .library(name: "AxiomWebI18n", targets: ["AxiomWebI18n"]),
     ],
@@ -29,6 +28,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle", from: "2.0.0"),
     ],
     targets: [
         .target(
@@ -42,7 +42,6 @@ let package = Package(
                 "AxiomWebUIComponents",
                 "AxiomWebTesting",
                 "AxiomWebServer",
-                "AxiomWebCodegen",
                 "AxiomWebCLI",
                 "AxiomWebI18n",
             ]
@@ -109,13 +108,14 @@ let package = Package(
                 "AxiomWebI18n",
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
+                .product(name: "NIOWebSocket", package: "swift-nio"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "Tracing", package: "swift-distributed-tracing"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
             ]
         ),
-        .target(name: "AxiomWebCodegen"),
         .target(
             name: "AxiomWebCLI",
             dependencies: [
@@ -135,7 +135,7 @@ let package = Package(
                 "AxiomWebRuntime",
                 "AxiomWebRender",
                 "AxiomWebServer",
-                "AxiomWebCodegen",
+                "AxiomWebCLI",
                 "AxiomWebI18n",
                 "AxiomWebTesting",
                 "AxiomWebMarkdown",
